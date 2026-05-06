@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0",
+  "description": "Placeholder schema for future OpenRepro-Agent benchmark tasks. v0.1.0 does not report benchmark scores.",
+  "required_fields": [
+    "task_id",
+    "paper_title",
+    "source_files",
+    "expected_artifacts",
+    "evaluation_metrics"
+  ],
+  "properties": {
+    "task_id": {"type": "string"},
+    "paper_title": {"type": "string"},
+    "source_files": {"type": "array", "items": {"type": "string"}},
+    "expected_artifacts": {"type": "array", "items": {"type": "string"}},
+    "evaluation_metrics": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,24 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local env files
+.venv/
+venv/
+.env
+
+# Packaging/build outputs
+build/
+dist/
+*.egg-info/
+
+# Local verification and generated archives
+.codex_tmp/
+ZIP/
+
+# Quick-start or smoke-test projects generated at the repo root
+boc_demo/
+openrepro_smoke_*/

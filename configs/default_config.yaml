@@ -1,0 +1,17 @@
+project_name: openrepro_project
+version: 0.1.0
+description: Default OpenRepro-Agent configuration template.
+demo:
+  seed: 42
+  code_length: 128
+  samples_per_chip: 16
+  subcarrier_cycles_per_chip: 2
+  noise_std: 0.05
+  output_name: boc_demo
+api:
+  default_provider: mock
+  default_model: mock-llm
+  enable_real_api: false
+analysis:
+  analyzer_version: v0.1.0-rule-mock
+  max_source_preview_chars: 4000
