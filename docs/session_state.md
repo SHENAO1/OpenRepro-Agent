@@ -26,10 +26,13 @@ python -m pytest -q --basetemp E:\Code\OpenRepro-Agent\.codex_tmp\pytest-basetem
 - Full CLI smoke flow passed from `.codex_tmp\smoke_workspace` after changing the CLI success prefix from a Unicode checkmark to ASCII `OK`.
 - The generated `figures/correlation.png` was opened and visually confirmed as non-empty.
 - Git repository was initialized on `main`, the v0.1.0 baseline was committed, and the `v0.1.0` tag was created.
+- Public GitHub repository was created and pushed: `https://github.com/SHENAO1/OpenRepro-Agent`.
+- Remote `origin` uses SSH: `git@github.com:SHENAO1/OpenRepro-Agent.git`.
+- Remote default branch is `main`; tag `v0.1.0` is present on GitHub.
 
 ## Exact Next Step
 
-Push `main` and tag `v0.1.0` to the intended GitHub remote, or start v0.2.0 with artifact manifest design.
+Start v0.2.0 with artifact manifest design, or create GitHub issues for the deferred roadmap items.
 
 ## Deferred v0.2.0 Work
 
