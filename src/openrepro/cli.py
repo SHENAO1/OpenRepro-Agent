@@ -10,7 +10,8 @@ from rich.table import Table
 
 from . import __version__
 from .analyzer import analyze_project
-from .demo_runner import run_demo
+from .artifact_manager import latest_run_dir, validate_run_manifest
+from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .handoff_generator import generate_handoff
 from .planner import generate_experiment_plan
@@ -21,6 +22,7 @@ app = typer.Typer(
     name="openrepro",
     help="OpenRepro-Agent: minimal paper reproduction workflow CLI.",
     no_args_is_help=True,
+    invoke_without_command=True,
 )
 console = Console()
 
@@ -59,16 +61,18 @@ def init_cmd(project_name: str = typer.Argument(..., help="Project directory nam
 @app.command("ingest")
 def ingest_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
-    source: Path = typer.Option(..., "--source", "-s", help="Markdown/txt source file; PDF is placeholder only."),
+    source: Path = typer.Option(..., "--source", "-s", help="Markdown/txt/PDF source file."),
 ) -> None:
-    """Ingest Markdown/txt research notes or copy a PDF placeholder."""
+    """Ingest Markdown/txt research notes or extract a PDF."""
     project_dir = require_project(project_name)
     record = ingest_source(project_dir, source)
-    if record.status == "placeholder":
+    if record.status != "ready":
         _warn(record.note)
     else:
         _success(f"Ingested {record.source_name}")
     console.print(f"Copied path: {record.copied_path}")
+    if record.extracted_text_path:
+        console.print(f"Extracted text: {record.extracted_text_path}")
     console.print(f"Updated: {project_dir / 'workspace' / 'source_index.json'}")
 
 
@@ -99,6 +103,64 @@ def run_demo_cmd(project_name: str = typer.Argument(..., help="Project directory
     _success("Demo run completed.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Metrics: {metadata['metrics']}")
+
+
+@app.command("run-sweep")
+def run_sweep_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    noise_std: list[float] | None = typer.Option(
+        None,
+        "--noise-std",
+        help="Noise standard deviation value. Repeat to build a sweep grid.",
+    ),
+    seed: list[int] | None = typer.Option(
+        None,
+        "--seed",
+        help="Random seed value. Repeat to build a sweep grid.",
+    ),
+) -> None:
+    """Run the built-in lightweight BOC-like parameter sweep."""
+    project_dir = require_project(project_name)
+    metadata = run_sweep(project_dir, noise_std_values=noise_std, seeds=seed)
+    _success("Sweep run completed.")
+    console.print(f"Run directory: {metadata['run_dir']}")
+    console.print(f"Result count: {metadata['result_count']}")
+
+
+@app.command("validate")
+def validate_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_dir: Path | None = typer.Option(
+        None,
+        "--run-dir",
+        help="Run directory to validate. Defaults to the latest project run.",
+    ),
+) -> None:
+    """Validate a run manifest and required artifacts."""
+    project_dir = require_project(project_name)
+    target = run_dir
+    if target is None:
+        target = latest_run_dir(project_dir)
+    elif not target.is_absolute() and not target.exists():
+        target = project_dir / target
+
+    if target is None:
+        _warn("No run directory found to validate.")
+        raise typer.Exit(1)
+
+    result = validate_run_manifest(target)
+    if result["valid"]:
+        _success(f"Validated {result['checked_artifacts']} artifacts in {target}")
+        for warning in result.get("warnings", []):
+            _warn(warning)
+        return
+
+    _warn(f"Validation failed for {target}")
+    for error in result.get("errors", []):
+        console.print(f"  - {error}")
+    for warning in result.get("warnings", []):
+        _warn(warning)
+    raise typer.Exit(1)
 
 
 @app.command("report")

@@ -16,15 +16,15 @@
 
 ## v0.2.0 — Better paper and model extraction
 
-- Artifact manifest and run-evidence validation.
-- PDF text extraction with explicit provenance.
-- Formula candidate detection.
-- Parameter table extraction.
-- More structured model ledger schema.
-- Experiment plan validation.
-- More demo configurations and parameter sweeps.
+- [x] Artifact manifest and run-evidence validation.
+- [x] PDF text extraction with explicit provenance.
+- [x] Formula candidate detection.
+- [x] Parameter and table candidate extraction.
+- [x] More structured model ledger schema.
+- [x] Experiment plan validation.
+- [x] More demo configurations and parameter sweeps.
 
-Recommended first implementation order: artifact manifest, PDF text extraction, formula candidates, parameter extraction, then demo parameter sweeps.
+Released in v0.2.0 with `openrepro validate` and `openrepro run-sweep`.
 
 ## v0.3.0 — Provider and benchmark layer
 

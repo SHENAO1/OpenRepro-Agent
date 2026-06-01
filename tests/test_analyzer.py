@@ -10,7 +10,8 @@ def _prepare_project(tmp_path: Path) -> Path:
     init_project("boc_demo", base_dir=tmp_path)
     source = tmp_path / "notes.md"
     source.write_text(
-        "# BOC Test\n\nA BOC subcarrier and pseudo-random spreading code can be analyzed by autocorrelation.",
+        "# BOC Test\n\nA BOC subcarrier and pseudo-random spreading code can be analyzed by autocorrelation.\n\n"
+        "Formula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 128",
         encoding="utf-8",
     )
     project = tmp_path / "boc_demo"
@@ -26,8 +27,13 @@ def test_analyze_generates_summary_and_ledger(tmp_path: Path):
     assert (project / "workspace" / "paper_summary.md").exists()
     assert (project / "workspace" / "MODEL_LEDGER.md").exists()
     assert (project / "workspace" / "analysis_result.json").exists()
+    assert (project / "workspace" / "formula_candidates.json").exists()
+    assert (project / "workspace" / "parameter_candidates.json").exists()
+    assert (project / "workspace" / "model_ledger.json").exists()
     assert result["project_name"] == "boc_demo"
     assert "BOC modulation" in result["detected_keywords"]
+    assert result["formula_candidate_count"] >= 1
+    assert result["parameter_candidate_count"] >= 1
 
 
 def test_plan_generates_experiment_plan(tmp_path: Path):
@@ -39,4 +45,5 @@ def test_plan_generates_experiment_plan(tmp_path: Path):
     assert path.exists()
     text = path.read_text(encoding="utf-8")
     assert "实验目标" in text
-    assert "v0.1.0 Demo" in text
+    assert "v0.2.0 Demo" in text
+    assert (project / "workspace" / "experiment_plan_validation.json").exists()

@@ -23,6 +23,14 @@ def _latest_run_summary(project_dir: Path) -> tuple[str, dict[str, Any] | None, 
     if latest is None:
         return "暂无 Demo 运行目录。", None, None
     metrics = read_json(latest / "data" / "demo_metrics.json", default=None)
+    if metrics is None:
+        sweep = read_json(latest / "data" / "sweep_results.json", default=None)
+        if isinstance(sweep, dict):
+            metrics = {
+                "sweep_result_count": len(sweep.get("results", [])),
+                "noise_std_values": sweep.get("noise_std_values", []),
+                "seeds": sweep.get("seeds", []),
+            }
     api_summary = read_json(latest / "api_usage" / "api_usage_summary.json", default=None)
     summary = f"最近一次运行目录：`{latest}`"
     return summary, metrics, api_summary
@@ -66,7 +74,9 @@ def generate_report(project_dir: Path) -> Path:
             [
                 str(latest / "figures" / "correlation.png"),
                 str(latest / "data" / "demo_metrics.json"),
+                str(latest / "data" / "sweep_results.json"),
                 str(latest / "reports" / "demo_report.md"),
+                str(latest / "manifest.json"),
             ]
         )
     output_block = "\n".join(f"- `{p}`" for p in output_paths)
@@ -115,20 +125,20 @@ OpenRepro-Agent v{__version__}
 
 {api_block}
 
-说明：v0.1.0 默认不调用真实 API，mock 事件不计为真实调用，也不会虚构 Token 消耗或成本。
+说明：v0.2.0 默认不调用真实 API，mock 事件不计为真实调用，也不会虚构 Token 消耗或成本。
 
 ## 10. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
-- PDF 仅复制占位，不进行正文抽取。
+- PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
 ## 11. 下一阶段建议
 
-- 补充论文原始 Markdown/txt 资料并人工核对模型账本。
+- 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
-- 在 v0.2.0 中增加 PDF 提取、公式候选识别和参数扫描。
+- 使用 manifest 和 `openrepro validate` 校验运行产物。
 - 在 v0.3.0 中加入真实 Provider、缓存统计与可复现实验 benchmark。
 """
     path = project_dir / "reports" / "report.md"

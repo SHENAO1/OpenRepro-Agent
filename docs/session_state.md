@@ -1,17 +1,19 @@
 # Session State
 
-Updated: 2026-05-06
+Updated: 2026-06-01
 
 ## Current Goal
 
-Solidify OpenRepro-Agent v0.1.0 as a trustworthy baseline before adding v0.2.0 features.
+Release OpenRepro-Agent v0.2.0 with manifests, PDF extraction, candidate extraction, validation, and sweep runs.
 
 ## Current State
 
-- The repository has the v0.1.0 Python CLI scaffold in place.
+- The repository has the v0.2.0 Python CLI workflow in place.
 - The local working directory started without a Git repository.
 - No project-specific `AGENTS.md` or prior baton files were present.
-- v0.1.0 keeps mock API usage, mock/rule-based analysis, PDF placeholder ingestion, and a lightweight BOC-like demo by design.
+- v0.2.0 keeps mock API usage and rule-based candidate analysis by design.
+- PDF ingestion extracts text and page provenance with `pdfplumber`.
+- Demo and sweep runs write `manifest.json` and can be checked with `openrepro validate`.
 
 ## Latest Evidence
 
@@ -32,12 +34,12 @@ python -m pytest -q --basetemp E:\Code\OpenRepro-Agent\.codex_tmp\pytest-basetem
 
 ## Exact Next Step
 
-Start v0.2.0 with artifact manifest design, or create GitHub issues for the deferred roadmap items.
+Run full v0.2.0 verification, then commit, tag, push, update GitHub About, and create the v0.2.0 release.
 
-## Deferred v0.2.0 Work
+## Completed v0.2.0 Work
 
 - Artifact manifest and run-evidence validation.
 - PDF text extraction with provenance.
 - Formula candidate detection.
-- Parameter table extraction.
+- Parameter and table candidate extraction.
 - Parameter sweeps for demo runs.

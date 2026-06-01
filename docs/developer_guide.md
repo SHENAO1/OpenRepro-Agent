@@ -34,6 +34,18 @@ PowerShell:
 4. Update README and docs.
 5. Ensure generated artifacts are timestamped or safely overwritten only when appropriate.
 
+## Artifact manifests
+
+Demo and sweep runs must write `manifest.json` after all run artifacts are complete.
+When adding a new run command, define its required artifacts in `artifact_manager.py`,
+write the manifest at the end of the command, and add validation tests.
+
+## PDF and candidate extraction
+
+PDF ingestion uses `pdfplumber`. Extracted text and page provenance should stay under
+`workspace/extracted_sources/`, and all generated formulas or parameters must remain
+marked as candidates until a human verifies them.
+
 ## API provider extensions
 
 Real providers should be opt-in. They must write actual usage records and must not fabricate tokens or costs.

@@ -1,6 +1,6 @@
 # API Usage Policy
 
-OpenRepro-Agent v0.1.0 does not call real API providers by default.
+OpenRepro-Agent v0.2.0 does not call real API providers by default.
 
 ## Files
 
@@ -51,7 +51,7 @@ The implementation may include `mock_events` to show how many mock bookkeeping e
 
 ## Principles
 
-1. v0.1.0 defaults to mock mode only.
+1. v0.2.0 defaults to mock mode only.
 2. Future versions may support real providers.
 3. Token counts, costs, cache hits, and task types must be tracked when real providers are used.
 4. The project must not invent token usage or cost data.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import shutil
 import time
 from pathlib import Path
@@ -14,7 +15,7 @@ import numpy as np
 
 from . import __version__
 from .api_usage import write_mock_usage_files
-from .artifact_manager import RunDirectory
+from .artifact_manager import RunDirectory, write_run_manifest
 from .config import get_demo_config, load_project_config
 from .document_loader import load_source_index
 from .utils import iso_now, read_yaml, relpath, safe_write_text, write_json, write_yaml
@@ -103,7 +104,7 @@ def _write_demo_report(run_dirs: RunDirectory, project_name: str, metrics: dict[
 
 ## Demo 类型
 
-Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.1.0 的实验闭环，不声称完整复现任何论文或工程级 BOC 捕获/跟踪算法。
+Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.2.0 的实验闭环，不声称完整复现任何论文或工程级 BOC 捕获/跟踪算法。
 
 ## 已完成
 
@@ -111,7 +112,7 @@ Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.1.0 
 - [x] 生成简单方波子载波
 - [x] 合成 BOC-like 调制信号并添加噪声
 - [x] 计算自相关函数
-- [x] 保存数据、图表、日志、metadata、API usage 占位统计和 handoff
+- [x] 保存数据、图表、日志、metadata、manifest、API usage 占位统计和 handoff
 
 ## 部分完成
 
@@ -145,6 +146,7 @@ Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.1.0 
 - api_usage/api_usage.jsonl
 - api_usage/api_usage_summary.json
 - metadata.json
+- manifest.json
 
 ## 待确认
 
@@ -170,7 +172,7 @@ def _write_run_handoff(run_dirs: RunDirectory, project_name: str, metrics: dict[
 ## 本次运行状态
 
 - 已完成：lightweight BOC-like Demo 运行完成。
-- 部分完成：产物齐全，但算法仅是 v0.1.0 演示版本。
+- 部分完成：产物齐全，但算法仅是 v0.2.0 演示版本。
 - 未完成：论文级 BOC 捕获/跟踪复现、参数扫描、benchmark 对比。
 - 待确认：真实论文模型和参数。
 
@@ -224,7 +226,7 @@ def run_demo(project_dir: Path) -> dict[str, Any]:
 
     safe_write_text(run_dirs.code / "README.md", """# Code Snapshot Placeholder
 
-v0.1.0 records the demo algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
+v0.2.0 records the demo algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
 """)
 
     project_config_snapshot = project_dir / "project_config.yaml"
@@ -258,6 +260,7 @@ v0.1.0 records the demo algorithm in `src/openrepro/demo_runner.py` in the repos
             "metrics": relpath(run_dirs.data / "demo_metrics.json", run_dirs.root),
             "demo_report": relpath(run_dirs.reports / "demo_report.md", run_dirs.root),
             "api_usage_summary": relpath(run_dirs.api_usage / "api_usage_summary.json", run_dirs.root),
+            "manifest": "manifest.json",
         },
         "api_usage_summary": api_summary,
         "limitations": [
@@ -278,4 +281,204 @@ v0.1.0 records the demo algorithm in `src/openrepro/demo_runner.py` in the repos
         ]
     )
     _write_run_log(run_dirs, log_lines)
+    write_run_manifest(run_dirs.root, "run-demo")
+    return metadata
+
+
+def _write_sweep_metrics_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    fieldnames = [
+        "seed",
+        "noise_std",
+        "signal_length",
+        "correlation_peak",
+        "correlation_peak_index",
+        "run_time_seconds",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field) for field in fieldnames})
+
+
+def _write_sweep_figure(rows: list[dict[str, Any]], path: Path) -> None:
+    fig = plt.figure(figsize=(8, 4.5))
+    noise_values = [float(row["noise_std"]) for row in rows]
+    peaks = [float(row["correlation_peak"]) for row in rows]
+    seeds = [int(row["seed"]) for row in rows]
+    scatter = plt.scatter(noise_values, peaks, c=seeds, cmap="viridis", edgecolor="black", linewidth=0.4)
+    plt.title("Sweep: correlation peak by noise")
+    plt.xlabel("noise_std")
+    plt.ylabel("Normalized correlation peak")
+    plt.grid(True, alpha=0.3)
+    plt.colorbar(scatter, label="seed")
+    plt.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
+
+
+def _write_sweep_report(
+    run_dirs: RunDirectory,
+    project_name: str,
+    rows: list[dict[str, Any]],
+    noise_values: list[float],
+    seeds: list[int],
+) -> Path:
+    best = max(rows, key=lambda row: abs(float(row["correlation_peak"]))) if rows else None
+    report = f"""# Sweep Run Report
+
+## 项目
+
+{project_name}
+
+## Sweep 类型
+
+Lightweight BOC-like demo parameter sweep。该 sweep 用于比较不同 `noise_std` 与 `seed` 下的演示指标，不声称 benchmark 成绩或完整论文复现。
+
+## 参数网格
+
+- noise_std: {noise_values}
+- seed: {seeds}
+- combinations: {len(rows)}
+
+## 最佳候选
+
+```json
+{best or {}}
+```
+
+## 输出产物
+
+- data/sweep_results.json
+- data/sweep_metrics.csv
+- figures/sweep_correlation_peak.png
+- reports/sweep_report.md
+- metadata.json
+- manifest.json
+
+## 待确认
+
+- sweep 参数是否来自目标论文。
+- normalized correlation peak 是否足以表达目标实验；后续可增加旁瓣水平、捕获概率和 SNR 扫描指标。
+"""
+    path = run_dirs.reports / "sweep_report.md"
+    safe_write_text(path, report)
+    return path
+
+
+def run_sweep(
+    project_dir: Path,
+    noise_std_values: list[float] | None = None,
+    seeds: list[int] | None = None,
+) -> dict[str, Any]:
+    """Run the built-in BOC-like demo across a noise/seed parameter grid."""
+    project_dir = Path(project_dir)
+    if not project_dir.exists():
+        raise FileNotFoundError(f"Project directory not found: {project_dir}")
+
+    start = time.perf_counter()
+    config = load_project_config(project_dir)
+    project_name = config.get("project_name", project_dir.name)
+    demo_config = get_demo_config(project_dir)
+    noise_values = noise_std_values or [0.0, 0.05, 0.1, 0.2]
+    seed_values = seeds or [int(demo_config.get("seed", 42))]
+    if any(float(value) < 0 for value in noise_values):
+        raise ValueError("noise_std values must be non-negative")
+
+    run_dirs = RunDirectory.create(project_dir, project_name)
+    log_lines = [
+        f"[{iso_now()}] Starting OpenRepro-Agent sweep run",
+        f"Project: {project_name}",
+        f"noise_std values: {noise_values}",
+        f"seed values: {seed_values}",
+    ]
+
+    rows: list[dict[str, Any]] = []
+    for seed in seed_values:
+        for noise_std in noise_values:
+            combo_start = time.perf_counter()
+            combo_config = demo_config.copy()
+            combo_config["seed"] = int(seed)
+            combo_config["noise_std"] = float(noise_std)
+            signal, correlation, resolved_params = generate_boc_like_signal(combo_config)
+            peak_index = int(np.argmax(np.abs(correlation)))
+            rows.append(
+                {
+                    "seed": resolved_params["seed"],
+                    "noise_std": resolved_params["noise_std"],
+                    "signal_length": int(signal.size),
+                    "correlation_peak": float(correlation[peak_index]),
+                    "correlation_peak_index": peak_index,
+                    "run_time_seconds": round(float(time.perf_counter() - combo_start), 6),
+                }
+            )
+
+    write_json(
+        run_dirs.data / "sweep_results.json",
+        {
+            "schema_version": "0.2.0",
+            "project_name": project_name,
+            "created_at": iso_now(),
+            "noise_std_values": [float(value) for value in noise_values],
+            "seeds": [int(seed) for seed in seed_values],
+            "results": rows,
+        },
+    )
+    _write_sweep_metrics_csv(run_dirs.data / "sweep_metrics.csv", rows)
+    _write_sweep_figure(rows, run_dirs.figures / "sweep_correlation_peak.png")
+    _write_sweep_report(run_dirs, project_name, rows, [float(value) for value in noise_values], [int(seed) for seed in seed_values])
+
+    safe_write_text(run_dirs.code / "README.md", """# Code Snapshot Placeholder
+
+v0.2.0 records the sweep algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
+""")
+    project_config_snapshot = project_dir / "project_config.yaml"
+    if project_config_snapshot.exists():
+        shutil.copy2(project_config_snapshot, run_dirs.configs / "project_config_snapshot.yaml")
+    else:
+        write_yaml(run_dirs.configs / "project_config_snapshot.yaml", config)
+    api_summary = write_mock_usage_files(run_dirs.api_usage, task="run-sweep")
+
+    elapsed = round(float(time.perf_counter() - start), 6)
+    source_index = load_source_index(project_dir)
+    metadata = {
+        "project_name": project_name,
+        "openrepro_version": __version__,
+        "run_id": run_dirs.root.name,
+        "run_dir": str(run_dirs.root),
+        "created_at": iso_now(),
+        "demo_type": "lightweight_boc_like_parameter_sweep",
+        "sweep_parameters": {
+            "noise_std": [float(value) for value in noise_values],
+            "seed": [int(seed) for seed in seed_values],
+        },
+        "result_count": len(rows),
+        "run_time_seconds": elapsed,
+        "source_files": [s.get("source_name") for s in source_index.get("sources", [])],
+        "artifact_paths": {
+            "results": relpath(run_dirs.data / "sweep_results.json", run_dirs.root),
+            "metrics_csv": relpath(run_dirs.data / "sweep_metrics.csv", run_dirs.root),
+            "figure": relpath(run_dirs.figures / "sweep_correlation_peak.png", run_dirs.root),
+            "sweep_report": relpath(run_dirs.reports / "sweep_report.md", run_dirs.root),
+            "api_usage_summary": relpath(run_dirs.api_usage / "api_usage_summary.json", run_dirs.root),
+            "manifest": "manifest.json",
+        },
+        "api_usage_summary": api_summary,
+        "limitations": [
+            "Sweep uses the lightweight BOC-like demo only.",
+            "No real model API was called.",
+            "No benchmark result is claimed.",
+        ],
+    }
+    write_json(run_dirs.root / "metadata.json", metadata)
+    log_lines.extend(
+        [
+            f"[{iso_now()}] Saved sweep data, figure, and report artifacts",
+            f"[{iso_now()}] Saved mock API usage summary",
+            f"[{iso_now()}] Completed sweep in {elapsed} seconds",
+        ]
+    )
+    _write_run_log(run_dirs, log_lines)
+    write_run_manifest(run_dirs.root, "run-sweep")
     return metadata

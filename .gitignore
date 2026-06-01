@@ -21,4 +21,5 @@ ZIP/
 
 # Quick-start or smoke-test projects generated at the repo root
 boc_demo/
+boc_demo_smoke/
 openrepro_smoke_*/

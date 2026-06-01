@@ -1,38 +1,39 @@
 # OpenRepro-Agent
 
-OpenRepro-Agent is a minimal Python CLI workflow for paper reproduction projects: it initializes a reproducible workspace, ingests paper notes, creates a rule-based summary and model ledger, generates an experiment plan, runs a lightweight demo, saves artifacts, writes reports, tracks mock API usage, and produces multi-agent handoff files.
+OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, runs lightweight demos and parameter sweeps, validates generated artifacts, writes reports, tracks mock API usage, and produces multi-agent handoff files.
 
-Current version: **v0.1.0**. This is an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.2.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
-Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent v0.1.0 focuses on one practical goal: make the end-to-end project loop runnable and inspectable before adding more ambitious automation.
+Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.1.0 workflow is:
+The v0.2.0 workflow is:
 
 ```text
-init → ingest → analyze → plan → run-demo → report → handoff → status
+init → ingest → analyze → plan → run-demo → validate → run-sweep → report → handoff → status
 ```
 
-## What v0.1.0 supports
+## What v0.2.0 supports
 
 - Create a standard paper reproduction project directory.
 - Ingest Markdown and text notes into `sources/`.
-- Copy PDF files as placeholders with an explicit limitation message.
-- Generate `paper_summary.md` using rule-based keyword detection and mock analysis.
-- Generate `MODEL_LEDGER.md` with model candidates, variables, equation placeholders, and verification status.
-- Generate `EXPERIMENT_PLAN.md`.
+- Ingest PDFs, extract text and page-level provenance with `pdfplumber`, and record extraction status.
+- Generate `paper_summary.md` using rule-based keyword detection and candidate extraction.
+- Generate Markdown and JSON model ledgers with formula and parameter candidates marked `candidate_unverified`.
+- Generate `EXPERIMENT_PLAN.md` and `experiment_plan_validation.json`.
 - Run a lightweight BOC-like signal and autocorrelation demo.
-- Save run artifacts: logs, figures, NumPy data, metrics, reports, config snapshot, metadata, mock API usage, and handoff notes.
+- Run a noise/seed parameter sweep for the built-in demo.
+- Save run artifacts: logs, figures, data, metrics, reports, config snapshots, metadata, manifest, mock API usage, and handoff notes.
+- Validate run manifests, required artifacts, file sizes, and SHA-256 hashes.
 - Generate a project-level Markdown report.
 - Generate multi-agent handoff files for Claude Code, Codex, GitHub Copilot, or human maintainers.
 - Run pytest tests for the minimum workflow.
 
-## What v0.1.0 does not support
+## What v0.2.0 does not support
 
 - It does not fully read or understand papers.
-- It does not extract text from PDFs.
-- It does not automatically extract verified mathematical formulas.
+- It does not verify mathematical formulas automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
 - It does not call real LLM APIs by default.
@@ -81,9 +82,25 @@ openrepro ingest boc_demo --source examples/boc_notes.md
 openrepro analyze boc_demo
 openrepro plan boc_demo
 openrepro run-demo boc_demo
+openrepro validate boc_demo
+openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
+openrepro validate boc_demo
 openrepro report boc_demo
 openrepro handoff boc_demo
 openrepro status boc_demo
+```
+
+PDF ingestion is also supported:
+
+```bash
+openrepro ingest boc_demo --source path/to/paper.pdf
+```
+
+PDF text is extracted to:
+
+```text
+workspace/extracted_sources/<paper>.txt
+workspace/extracted_sources/<paper>.pages.json
 ```
 
 ## Command overview
@@ -111,17 +128,24 @@ handoff/AGENT_HANDOFF.md
 handoff/NEXT_STEPS.md
 ```
 
-Existing project directories are not overwritten.
-
 ### `openrepro ingest <project_name> --source <path>`
 
-Copies Markdown/txt sources into `sources/` and updates:
+Copies Markdown/txt/PDF sources into `sources/` and updates:
 
 ```text
 workspace/source_index.json
 ```
 
-PDF files are copied as placeholders. v0.1.0 does not extract PDF text.
+For PDFs, v0.2.0 records:
+
+- `extraction_status`
+- `extracted_text_path`
+- `pages_path`
+- `page_count`
+- `char_count`
+- `table_count`
+
+Extraction failures do not remove the copied source. They are recorded as `extraction_failed` so the rest of the workflow can continue.
 
 ### `openrepro analyze <project_name>`
 
@@ -131,9 +155,12 @@ Generates:
 workspace/paper_summary.md
 workspace/MODEL_LEDGER.md
 workspace/analysis_result.json
+workspace/formula_candidates.json
+workspace/parameter_candidates.json
+workspace/model_ledger.json
 ```
 
-The analyzer is rule-based and mock-only. It is meant to create a reviewable scaffold, not verified scientific conclusions.
+The analyzer is rule-based. Formula, parameter, and model records are candidates and require human verification.
 
 ### `openrepro plan <project_name>`
 
@@ -141,7 +168,10 @@ Generates:
 
 ```text
 workspace/EXPERIMENT_PLAN.md
+workspace/experiment_plan_validation.json
 ```
+
+The validation file checks whether sources exist, PDF extraction needs review, candidate formulas/parameters were detected, and demo configuration values are valid.
 
 ### `openrepro run-demo <project_name>`
 
@@ -161,9 +191,43 @@ outputs/2026-xx-xx_20-30-15_boc_demo/
   api_usage/api_usage_summary.json
   handoff/AGENT_HANDOFF.md
   metadata.json
+  manifest.json
 ```
 
 The demo generates a pseudo-random spreading code, a square-wave subcarrier, a lightweight BOC-like signal, a noisy observation, and a normalized autocorrelation function.
+
+### `openrepro validate <project_name> [--run-dir PATH]`
+
+Validates the latest run directory by default, or a specific run directory when `--run-dir` is provided.
+
+It checks:
+
+- `manifest.json` exists and is readable
+- required artifacts exist
+- manifest entries match current file size
+- manifest entries match current SHA-256 hashes
+
+The command exits with code `0` when valid and code `1` when validation fails.
+
+### `openrepro run-sweep <project_name> [--noise-std FLOAT]... [--seed INT]...`
+
+Runs the built-in BOC-like demo across a noise/seed grid. Defaults:
+
+```text
+noise_std = [0.0, 0.05, 0.1, 0.2]
+seed = project_config.yaml demo.seed
+```
+
+Outputs include:
+
+```text
+data/sweep_results.json
+data/sweep_metrics.csv
+figures/sweep_correlation_peak.png
+reports/sweep_report.md
+metadata.json
+manifest.json
+```
 
 ### `openrepro report <project_name>`
 
@@ -191,17 +255,35 @@ handoff/AGENT_HANDOFF.md
 
 ### `openrepro status <project_name>`
 
-Prints whether the project exists, whether each workflow stage has completed, the most recent demo run directory, report status, handoff completeness, and the next suggested command.
+Prints whether the project exists, whether each workflow stage has completed, the most recent run directory, report status, handoff completeness, and the next suggested command.
 
-## Output directory design
+## Artifact manifest design
 
-Project-level files live under `workspace/`, `reports/`, and `handoff/`. Each demo run is isolated under `outputs/<timestamp>_<project>/` so that repeated experiments do not overwrite one another.
+Each demo or sweep run writes:
 
-This design allows future versions to add parameter sweeps, benchmark runs, and regression comparisons without losing prior artifacts.
+```text
+manifest.json
+```
+
+The manifest records:
+
+- schema version
+- OpenRepro-Agent version
+- run id
+- command type
+- created timestamp
+- required artifacts
+- relative artifact paths
+- artifact category
+- existence flag
+- file size
+- SHA-256 digest
+
+This lets later agents, humans, and CI checks verify that reports and metrics are backed by actual files.
 
 ## API Usage design
 
-v0.1.0 does **not** call real APIs by default. It writes mock usage files to preserve the accounting schema:
+v0.2.0 does **not** call real APIs by default. It writes mock usage files to preserve the accounting schema:
 
 ```text
 api_usage/api_usage.jsonl
@@ -223,23 +305,23 @@ Future versions can add real providers while tracking:
 
 The `handoff/` directory is designed for both humans and coding agents. It separates project context, paper summary, model ledger, experiment plan, code status, run logs, error notes, next steps, and the final handoff memo.
 
-Important rule: handoff files must distinguish between confirmed facts, assumptions, placeholders, and future work.
+Important rule: handoff files must distinguish between confirmed facts, assumptions, placeholders, candidates, and future work.
 
 ## Benchmark plan
 
-The `benchmarks/` directory currently contains only a schema and a sample task. v0.1.0 does not report benchmark results. Future versions may add a benchmark runner that executes defined reproduction tasks and records actual metrics from actual runs.
+The `benchmarks/` directory currently contains only a schema and a sample task. v0.2.0 does not report benchmark results. Future versions may add a benchmark runner that executes defined reproduction tasks and records actual metrics from actual runs.
 
 ## Roadmap snapshot
 
 - v0.1.0: runnable CLI workflow and lightweight BOC-like demo.
-- v0.2.0: PDF text extraction, formula candidates, parameter extraction, richer experiment plans.
+- v0.2.0: PDF text extraction, artifact manifests, formula/parameter candidates, experiment plan validation, demo parameter sweeps.
 - v0.3.0: real LLM provider interfaces, cache-aware API usage, benchmark runner, experiment repair loop.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.1.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.2.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

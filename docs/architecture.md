@@ -1,16 +1,16 @@
 # Architecture
 
-OpenRepro-Agent v0.1.0 uses a small modular CLI architecture.
+OpenRepro-Agent v0.2.0 uses a small modular CLI architecture.
 
 ## Modules
 
 - `cli.py`: Typer command definitions and user-facing output.
 - `project_manager.py`: project initialization and status checks.
-- `document_loader.py`: source ingestion and source index management.
-- `analyzer.py`: rule-based/mock analysis.
-- `planner.py`: experiment plan generation.
-- `demo_runner.py`: lightweight BOC-like signal demo.
-- `artifact_manager.py`: run directory and artifact path utilities.
+- `document_loader.py`: source ingestion, PDF extraction, and source index management.
+- `analyzer.py`: rule-based candidate analysis.
+- `planner.py`: experiment plan generation and validation.
+- `demo_runner.py`: lightweight BOC-like signal demo and parameter sweep.
+- `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `api_usage.py`: mock usage record and summary schema.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
@@ -23,8 +23,10 @@ OpenRepro-Agent v0.1.0 uses a small modular CLI architecture.
 sources/ + project_config.yaml
   → workspace/source_index.json
   → workspace/paper_summary.md + MODEL_LEDGER.md + analysis_result.json
-  → workspace/EXPERIMENT_PLAN.md
+  → workspace/formula_candidates.json + parameter_candidates.json + model_ledger.json
+  → workspace/EXPERIMENT_PLAN.md + experiment_plan_validation.json
   → outputs/<timestamp>_<project>/...
+  → outputs/<timestamp>_<project>/manifest.json
   → reports/report.md
   → handoff/*.md
 ```

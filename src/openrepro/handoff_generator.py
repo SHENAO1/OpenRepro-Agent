@@ -67,12 +67,12 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.1.0 命令入口。
+- `cli.py`：已完成 v0.2.0 命令入口。
 - `project_manager.py`：已完成 init/status。
-- `document_loader.py`：已完成 Markdown/txt 导入，PDF 占位。
-- `analyzer.py`：已完成规则分析与 Mock LLM 占位。
-- `planner.py`：已完成实验计划模板。
-- `demo_runner.py`：已完成 lightweight BOC-like Demo。
+- `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
+- `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
+- `planner.py`：已完成实验计划模板与校验文件。
+- `demo_runner.py`：已完成 lightweight BOC-like Demo 和参数扫掠。
 - `report_generator.py`：已完成项目报告。
 - `handoff_generator.py`：已完成多 Agent 交接文件生成。
 - `api_usage.py`：已完成零 Token mock usage 统计。
@@ -90,7 +90,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## 部分完成
 
-- [ ] 真实论文解析与公式抽取尚未实现
+- [ ] 真实论文公式和参数尚未人工验证
 
 ## 未完成
 
@@ -120,12 +120,12 @@ def _error_notes(project_dir: Path) -> str:
 
 - 如果 CLI 找不到命令，确认已运行 `pip install -e \".[dev]\"`。
 - 如果图表无法生成，确认 matplotlib 可用并使用非交互后端。
-- 如果 analyze 输出为空，确认已导入 Markdown/txt，而不是仅导入 PDF 占位。
+- 如果 analyze 输出为空，确认已导入 Markdown/txt，或 PDF 具有可抽取文本层。
 
 ## 状态
 
 - 已完成：错误记录模板创建。
-- 部分完成：仅记录 v0.1.0 常见问题。
+- 部分完成：仅记录 v0.2.0 常见问题。
 - 待确认：后续真实实验中的错误类型。
 """
 
@@ -138,7 +138,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.1.0 闭环检查
+## v0.2.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -151,8 +151,8 @@ def _next_steps(project_dir: Path) -> str:
 
 1. 人工核对 `workspace/MODEL_LEDGER.md` 中的模型变量和方程占位。
 2. 将论文真实参数填入 `workspace/EXPERIMENT_PLAN.md`。
-3. 增加 PDF 文本抽取和公式候选识别。
-4. 为 Demo Runner 增加参数扫描和 benchmark schema。
+3. 使用 `openrepro validate` 校验最新运行 manifest。
+4. 为后续版本增加 benchmark schema 执行器。
 """
 
 
@@ -234,8 +234,9 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ## 未完成
 
-- [ ] 真实 PDF 解析
-- [ ] 自动公式抽取
+- [x] PDF 文本抽取
+- [x] 公式候选和参数候选抽取
+- [ ] 自动公式验证
 - [ ] 完整仿真代码生成与修复循环
 - [ ] Benchmark 结果
 

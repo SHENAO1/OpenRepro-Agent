@@ -28,7 +28,7 @@ class DemoConfig:
 class APIConfig:
     """API provider configuration.
 
-    v0.1.0 keeps real model calls disabled by default.  The fields are kept so
+    v0.2.0 keeps real model calls disabled by default.  The fields are kept so
     later releases can add providers without changing the project schema.
     """
 
@@ -41,7 +41,7 @@ class APIConfig:
 class AnalysisConfig:
     """Rule/mock analyzer configuration."""
 
-    analyzer_version: str = "v0.1.0-rule-mock"
+    analyzer_version: str = "v0.2.0-rule"
     max_source_preview_chars: int = 4000
 
 
