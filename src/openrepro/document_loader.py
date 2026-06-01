@@ -153,7 +153,7 @@ def ingest_source(project_dir: Path, source: Path) -> SourceRecord:
 
     suffix = source.suffix.lower()
     if suffix not in SUPPORTED_TEXT_SUFFIXES and suffix != PDF_SUFFIX:
-        raise ValueError("v0.2.0 supports Markdown, txt, and PDF ingestion only.")
+        raise ValueError("v0.3.0 supports Markdown, txt, and PDF ingestion only.")
 
     dest_dir = project_dir / "sources"
     dest_dir.mkdir(parents=True, exist_ok=True)

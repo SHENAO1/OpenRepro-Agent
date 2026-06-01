@@ -45,5 +45,5 @@ def test_plan_generates_experiment_plan(tmp_path: Path):
     assert path.exists()
     text = path.read_text(encoding="utf-8")
     assert "实验目标" in text
-    assert "v0.2.0 Demo" in text
+    assert "v0.3.0 Demo" in text
     assert (project / "workspace" / "experiment_plan_validation.json").exists()

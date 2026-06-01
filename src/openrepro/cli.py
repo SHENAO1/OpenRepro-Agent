@@ -11,6 +11,8 @@ from rich.table import Table
 from . import __version__
 from .analyzer import analyze_project
 from .artifact_manager import latest_run_dir, validate_run_manifest
+from .benchmark_runner import run_benchmark
+from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .handoff_generator import generate_handoff
@@ -160,7 +162,59 @@ def validate_cmd(
         console.print(f"  - {error}")
     for warning in result.get("warnings", []):
         _warn(warning)
+    diagnosis = diagnose_validation_result(result)
+    if diagnosis:
+        console.print("\nDiagnosis:")
+        for item in diagnosis:
+            console.print(f"  - {item['code']}: {item['repair_suggestion']}")
     raise typer.Exit(1)
+
+
+@app.command("diagnose")
+def diagnose_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_dir: Path | None = typer.Option(
+        None,
+        "--run-dir",
+        help="Run directory to diagnose. Defaults to the latest project run.",
+    ),
+) -> None:
+    """Classify project/run failures and suggest repairs."""
+    project_dir = require_project(project_name)
+    target = run_dir
+    if target is not None and not target.is_absolute() and not target.exists():
+        target = project_dir / target
+    result = diagnose_project(project_dir, target)
+    if result["healthy"]:
+        _success("No diagnosis issues found.")
+        return
+    _warn("Diagnosis found issues.")
+    for item in result["issues"]:
+        console.print(f"  - {item['code']}: {item['message']}")
+        console.print(f"    repair: {item['repair_suggestion']}")
+
+
+@app.command("benchmark")
+def benchmark_cmd(
+    task: Path = typer.Option(..., "--task", help="Benchmark task JSON file."),
+    project: str | None = typer.Option(None, "--project", help="Project directory. Defaults to task_id."),
+) -> None:
+    """Run a workflow-compliance benchmark task."""
+    try:
+        result = run_benchmark(task, project_name=project)
+    except Exception as exc:
+        diagnosis = diagnose_error(str(exc), source="benchmark")
+        _warn(str(exc))
+        console.print(f"Diagnosis: {diagnosis['code']}")
+        console.print(f"Repair: {diagnosis['repair_suggestion']}")
+        raise typer.Exit(1) from exc
+
+    if result["status"] == "passed":
+        _success(f"Benchmark completed: {result['benchmark_dir']}")
+    else:
+        _warn(f"Benchmark completed with review needed: {result['benchmark_dir']}")
+        for item in result.get("diagnosis", []):
+            console.print(f"  - {item['code']}: {item['repair_suggestion']}")
 
 
 @app.command("report")

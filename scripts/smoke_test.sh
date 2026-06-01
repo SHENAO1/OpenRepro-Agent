@@ -12,6 +12,8 @@ openrepro run-demo "$PROJECT"
 openrepro validate "$PROJECT"
 openrepro run-sweep "$PROJECT" --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate "$PROJECT"
+openrepro diagnose "$PROJECT"
+openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
 openrepro report "$PROJECT"
 openrepro handoff "$PROJECT"
 openrepro status "$PROJECT"

@@ -22,7 +22,7 @@ RUN_SUBDIRS = [
     "handoff",
 ]
 
-MANIFEST_SCHEMA_VERSION = "0.2.0"
+MANIFEST_SCHEMA_VERSION = "0.3.0"
 
 REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
     "run-demo": [
@@ -50,6 +50,12 @@ REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
         "api_usage/api_usage.jsonl",
         "api_usage/api_usage_summary.json",
         "metadata.json",
+    ],
+    "benchmark": [
+        "benchmark_result.json",
+        "benchmark_report.md",
+        "api_usage/api_usage.jsonl",
+        "api_usage/api_usage_summary.json",
     ],
 }
 
@@ -105,7 +111,7 @@ def latest_run_dir(project_dir: Path) -> Path | None:
 
 
 def required_handoff_files() -> list[str]:
-    """Return all project-level handoff files required by v0.2.0."""
+    """Return all project-level handoff files required by v0.3.0."""
     return [
         "PROJECT_CONTEXT.md",
         "PAPER_SUMMARY.md",

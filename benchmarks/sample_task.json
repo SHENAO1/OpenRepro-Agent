@@ -1,4 +1,5 @@
 {
+  "schema_version": "0.3.0",
   "task_id": "sample_boc_like_demo",
   "paper_title": "Sample BOC-like notes task",
   "source_files": ["examples/boc_notes.md"],
@@ -7,7 +8,8 @@
     "workspace/MODEL_LEDGER.md",
     "workspace/EXPERIMENT_PLAN.md",
     "outputs/<timestamp>_<project>/figures/correlation.png",
-    "outputs/<timestamp>_<project>/data/demo_metrics.json"
+    "outputs/<timestamp>_<project>/data/demo_metrics.json",
+    "outputs/<timestamp>_<project>/manifest.json"
   ],
   "evaluation_metrics": [
     "signal_length",
@@ -15,5 +17,5 @@
     "correlation_peak_index",
     "run_time_seconds"
   ],
-  "note": "This is a schema example only. It is not a benchmark result."
+  "notes": "This task checks workflow evidence only. It is not a benchmark score or a paper reproduction claim."
 }

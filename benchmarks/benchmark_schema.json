@@ -1,6 +1,6 @@
 {
-  "schema_version": "0.1.0",
-  "description": "Placeholder schema for future OpenRepro-Agent benchmark tasks. v0.1.0 does not report benchmark scores.",
+  "schema_version": "0.3.0",
+  "description": "Schema for OpenRepro-Agent workflow-compliance benchmark tasks. v0.3.0 records evidence only and does not report scientific benchmark scores.",
   "required_fields": [
     "task_id",
     "paper_title",
@@ -13,6 +13,7 @@
     "paper_title": {"type": "string"},
     "source_files": {"type": "array", "items": {"type": "string"}},
     "expected_artifacts": {"type": "array", "items": {"type": "string"}},
-    "evaluation_metrics": {"type": "array", "items": {"type": "string"}}
+    "evaluation_metrics": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "string"}
   }
 }

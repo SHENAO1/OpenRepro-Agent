@@ -67,12 +67,14 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.2.0 命令入口。
+- `cli.py`：已完成 v0.3.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
 - `planner.py`：已完成实验计划模板与校验文件。
 - `demo_runner.py`：已完成 lightweight BOC-like Demo 和参数扫掠。
+- `benchmark_runner.py`：已完成 workflow-compliance benchmark runner。
+- `diagnostics.py`：已完成失败分类与修复建议。
 - `report_generator.py`：已完成项目报告。
 - `handoff_generator.py`：已完成多 Agent 交接文件生成。
 - `api_usage.py`：已完成零 Token mock usage 统计。
@@ -96,7 +98,7 @@ def _code_status(project_dir: Path) -> str:
 
 - [ ] Web UI
 - [ ] 真实 LLM Provider
-- [ ] 完整 benchmark runner
+- [x] workflow-compliance benchmark runner
 
 ## 待确认
 
@@ -125,7 +127,7 @@ def _error_notes(project_dir: Path) -> str:
 ## 状态
 
 - 已完成：错误记录模板创建。
-- 部分完成：仅记录 v0.2.0 常见问题。
+- 部分完成：仅记录 v0.3.0 常见问题。
 - 待确认：后续真实实验中的错误类型。
 """
 
@@ -138,7 +140,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.2.0 闭环检查
+## v0.3.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -152,7 +154,7 @@ def _next_steps(project_dir: Path) -> str:
 1. 人工核对 `workspace/MODEL_LEDGER.md` 中的模型变量和方程占位。
 2. 将论文真实参数填入 `workspace/EXPERIMENT_PLAN.md`。
 3. 使用 `openrepro validate` 校验最新运行 manifest。
-4. 为后续版本增加 benchmark schema 执行器。
+4. 使用 `openrepro benchmark --task benchmarks/sample_task.json` 记录 workflow-compliance evidence。
 """
 
 

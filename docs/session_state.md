@@ -4,16 +4,17 @@ Updated: 2026-06-01
 
 ## Current Goal
 
-Release OpenRepro-Agent v0.2.0 with manifests, PDF extraction, candidate extraction, validation, and sweep runs.
+Release OpenRepro-Agent v0.3.0 with provider/cache scaffolding, benchmark runner, diagnostics, and release documentation.
 
 ## Current State
 
-- The repository has the v0.2.0 Python CLI workflow in place.
+- The repository has the v0.3.0 Python CLI workflow in place.
 - The local working directory started without a Git repository.
 - No project-specific `AGENTS.md` or prior baton files were present.
-- v0.2.0 keeps mock API usage and rule-based candidate analysis by design.
+- v0.3.0 keeps real APIs disabled and uses deterministic mock provider/cache accounting by design.
 - PDF ingestion extracts text and page provenance with `pdfplumber`.
-- Demo and sweep runs write `manifest.json` and can be checked with `openrepro validate`.
+- Demo, sweep, and benchmark runs write `manifest.json`; demo/sweep outputs can be checked with `openrepro validate`.
+- Benchmark runs record workflow-compliance evidence only.
 
 ## Latest Evidence
 
@@ -34,12 +35,12 @@ python -m pytest -q --basetemp E:\Code\OpenRepro-Agent\.codex_tmp\pytest-basetem
 
 ## Exact Next Step
 
-Run full v0.2.0 verification, then commit, tag, push, update GitHub About, and create the v0.2.0 release.
+Run full v0.3.0 verification, then commit, tag, push, update GitHub About, and create the v0.3.0 release.
 
-## Completed v0.2.0 Work
+## Completed v0.3.0 Work
 
-- Artifact manifest and run-evidence validation.
-- PDF text extraction with provenance.
-- Formula candidate detection.
-- Parameter and table candidate extraction.
-- Parameter sweeps for demo runs.
+- Provider interface with deterministic mock provider.
+- Cache-aware API usage accounting.
+- Workflow-compliance benchmark runner.
+- Failure classification and repair suggestions.
+- Regression tests for generated artifacts.

@@ -28,11 +28,20 @@ Released in v0.2.0 with `openrepro validate` and `openrepro run-sweep`.
 
 ## v0.3.0 — Provider and benchmark layer
 
-- Real LLM Provider interface, disabled by default.
-- Cache-aware API usage tracking.
-- Benchmark runner based on `benchmarks/benchmark_schema.json`.
-- Experiment failure classification and repair suggestions.
-- Regression tests for generated artifacts.
+- [x] Provider interface with deterministic mock provider, real APIs disabled by default.
+- [x] Cache-aware API usage tracking.
+- [x] Benchmark runner based on `benchmarks/benchmark_schema.json`.
+- [x] Experiment failure classification and repair suggestions.
+- [x] Regression tests for generated artifacts.
+
+Released in v0.3.0 with `openrepro benchmark` and `openrepro diagnose`.
+
+## v0.4.0 — Opt-in provider and paper-to-code layer
+
+- Real provider implementations with explicit user opt-in.
+- Prompt/response redaction and stronger cache controls.
+- Human approval gates for paper-to-code workflows.
+- Richer benchmark tasks with dataset/environment provenance.
 
 ## Long-term ideas
 

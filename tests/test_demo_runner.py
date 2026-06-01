@@ -50,6 +50,9 @@ def test_api_usage_summary_fields(tmp_path: Path):
     assert summary["total_completion_tokens"] == 0
     assert summary["total_tokens"] == 0
     assert summary["estimated_total_cost_usd"] == 0.0
+    assert summary["cache_hits"] == 0
+    assert summary["cache_misses"] == 1
+    assert summary["cached_events"] == 0
     assert "mock" in summary["providers"]
     assert summary["providers"]["mock"]["calls"] == 0
 

@@ -1,6 +1,6 @@
 """API usage bookkeeping for OpenRepro-Agent.
 
-v0.2.0 does not call real model providers.  This module records mock events with
+v0.3.0 does not call real model providers.  This module records mock events with
 zero tokens and zero cost, and it summarizes only actual non-mocked calls as
 billable API calls.  That distinction prevents the tool from inventing token
 usage while still preserving the accounting schema needed by future releases.
@@ -28,13 +28,14 @@ class APIUsageRecord:
     estimated_cost_usd: float
     cache_hit: bool
     status: str
+    request_hash: str | None = None
 
 
 MOCK_PROVIDER = "mock"
 MOCK_MODEL = "mock-llm"
 
 
-def mock_usage_record(task: str) -> APIUsageRecord:
+def mock_usage_record(task: str, request_hash: str | None = None, cache_hit: bool = False) -> APIUsageRecord:
     """Create a zero-token mock usage record."""
     return APIUsageRecord(
         timestamp=iso_now(),
@@ -45,8 +46,9 @@ def mock_usage_record(task: str) -> APIUsageRecord:
         completion_tokens=0,
         total_tokens=0,
         estimated_cost_usd=0.0,
-        cache_hit=False,
+        cache_hit=cache_hit,
         status="mocked",
+        request_hash=request_hash,
     )
 
 
@@ -79,6 +81,10 @@ def summarize_usage(records: list[dict[str, Any]]) -> dict[str, Any]:
         "total_tokens": 0,
         "estimated_total_cost_usd": 0.0,
         "mock_events": 0,
+        "cached_events": 0,
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "request_hashes": [],
         "providers": {
             MOCK_PROVIDER: {
                 "calls": 0,
@@ -88,12 +94,24 @@ def summarize_usage(records: list[dict[str, Any]]) -> dict[str, Any]:
         },
     }
 
+    seen_hashes: set[str] = set()
     for record in records:
         provider = str(record.get("provider", MOCK_PROVIDER))
         provider_summary = summary["providers"].setdefault(
             provider,
             {"calls": 0, "tokens": 0, "estimated_cost_usd": 0.0},
         )
+        request_hash = record.get("request_hash")
+        if request_hash and request_hash not in seen_hashes:
+            seen_hashes.add(str(request_hash))
+            summary["request_hashes"].append(str(request_hash))
+        if record.get("cache_hit"):
+            summary["cache_hits"] += 1
+        else:
+            summary["cache_misses"] += 1
+        if record.get("status") == "cached":
+            summary["cached_events"] += 1
+            continue
         if record.get("status") == "mocked":
             summary["mock_events"] += 1
             continue

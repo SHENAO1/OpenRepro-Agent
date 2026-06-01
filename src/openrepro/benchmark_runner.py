@@ -1,0 +1,240 @@
+"""Benchmark runner for workflow-compliance evidence."""
+
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+from typing import Any
+
+from . import __version__
+from .analyzer import analyze_project
+from .api_usage import write_mock_usage_files
+from .artifact_manager import latest_run_dir, validate_run_manifest, write_run_manifest
+from .diagnostics import diagnose_error, diagnose_validation_result
+from .demo_runner import run_demo
+from .document_loader import ingest_source
+from .planner import generate_experiment_plan
+from .project_manager import init_project, require_project
+from .provider import ProviderRequest, complete_with_cache, get_provider
+from .utils import iso_now, local_timestamp_for_path, read_json, safe_write_text, slugify, write_json
+
+
+BENCHMARK_SCHEMA_VERSION = "0.3.0"
+REQUIRED_TASK_FIELDS = ["task_id", "paper_title", "source_files", "expected_artifacts", "evaluation_metrics"]
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def load_benchmark_task(task_path: Path) -> dict[str, Any]:
+    """Load and validate a benchmark task."""
+    task_path = Path(task_path)
+    task = read_json(task_path, default=None)
+    if not isinstance(task, dict):
+        raise ValueError(f"Invalid task schema: task file is not JSON object: {task_path}")
+    missing = [field for field in REQUIRED_TASK_FIELDS if field not in task]
+    if missing:
+        raise ValueError(f"Invalid task schema: missing required fields: {', '.join(missing)}")
+    if not isinstance(task.get("source_files"), list) or not task["source_files"]:
+        raise ValueError("Invalid task schema: source_files must be a non-empty array")
+    if not isinstance(task.get("expected_artifacts"), list):
+        raise ValueError("Invalid task schema: expected_artifacts must be an array")
+    if not isinstance(task.get("evaluation_metrics"), list):
+        raise ValueError("Invalid task schema: evaluation_metrics must be an array")
+    task.setdefault("schema_version", BENCHMARK_SCHEMA_VERSION)
+    return task
+
+
+def _resolve_source(task_path: Path, source: str) -> Path:
+    raw = Path(source)
+    candidates = [raw] if raw.is_absolute() else [task_path.parent / raw, Path.cwd() / raw, _repo_root() / raw]
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    raise FileNotFoundError(f"Source file not found for benchmark task: {source}")
+
+
+def _benchmark_root(task_path: Path) -> Path:
+    if task_path.parent.name == "benchmarks":
+        return task_path.parent / "runs"
+    return Path.cwd() / "benchmarks" / "runs"
+
+
+def _benchmark_run_dir(task_path: Path, task_id: str) -> Path:
+    root = _benchmark_root(task_path)
+    root.mkdir(parents=True, exist_ok=True)
+    base = root / f"{local_timestamp_for_path()}_{slugify(task_id)}"
+    candidate = base
+    counter = 1
+    while candidate.exists():
+        candidate = root / f"{base.name}_{counter}"
+        counter += 1
+    candidate.mkdir(parents=True, exist_ok=True)
+    return candidate
+
+
+def _resolve_expected_artifact(project_dir: Path, latest: Path | None, pattern: str) -> Path:
+    normalized = pattern.replace("\\", "/")
+    marker = "outputs/<timestamp>_<project>/"
+    if normalized.startswith(marker) and latest is not None:
+        return latest / normalized[len(marker) :]
+    return project_dir / normalized
+
+
+def _artifact_checks(project_dir: Path, latest: Path | None, expected: list[str]) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    for pattern in expected:
+        path = _resolve_expected_artifact(project_dir, latest, str(pattern))
+        checks.append(
+            {
+                "pattern": pattern,
+                "resolved_path": str(path),
+                "exists": path.exists(),
+            }
+        )
+    return checks
+
+
+def _metric_checks(latest: Path | None, expected_metrics: list[str]) -> list[dict[str, Any]]:
+    metrics: dict[str, Any] = {}
+    if latest is not None:
+        metrics = read_json(latest / "data" / "demo_metrics.json", default={}) or {}
+    return [
+        {
+            "metric": str(metric),
+            "available": str(metric) in metrics,
+            "value": metrics.get(str(metric)),
+        }
+        for metric in expected_metrics
+    ]
+
+
+def _write_benchmark_report(run_dir: Path, result: dict[str, Any]) -> Path:
+    artifact_passed = sum(1 for item in result["artifact_checks"] if item["exists"])
+    metric_passed = sum(1 for item in result["metric_checks"] if item["available"])
+    issues = result.get("diagnosis", [])
+    issue_lines = "\n".join(
+        f"- {item['code']}: {item['message']} | repair: {item['repair_suggestion']}" for item in issues
+    ) or "- No diagnosis issues."
+    report = f"""# Benchmark Report
+
+## Task
+
+- task_id: {result['task_id']}
+- paper_title: {result['paper_title']}
+- status: {result['status']}
+
+## Workflow Evidence
+
+- project_dir: `{result['project_dir']}`
+- latest_run_dir: `{result.get('latest_run_dir')}`
+- manifest_valid: {result['manifest_validation'].get('valid')}
+- expected_artifacts_passed: {artifact_passed}/{len(result['artifact_checks'])}
+- expected_metrics_available: {metric_passed}/{len(result['metric_checks'])}
+
+## Diagnosis
+
+{issue_lines}
+
+## Policy
+
+This benchmark report describes workflow-compliance evidence only. It does not claim paper reproduction success or benchmark scores.
+"""
+    path = run_dir / "benchmark_report.md"
+    safe_write_text(path, report)
+    return path
+
+
+def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str, Any]:
+    """Run a benchmark task and write workflow-compliance evidence."""
+    task_path = Path(task_path)
+    task = load_benchmark_task(task_path)
+    task_id = str(task["task_id"])
+    project = project_name or task_id
+    project_dir = Path(project)
+    if not project_dir.exists():
+        init_project(project)
+    project_dir = require_project(project)
+
+    benchmark_dir = _benchmark_run_dir(task_path, task_id)
+    api_usage_dir = benchmark_dir / "api_usage"
+    provider = get_provider("mock")
+
+    diagnosis: list[dict[str, str]] = []
+    try:
+        for source in task["source_files"]:
+            ingest_source(project_dir, _resolve_source(task_path, str(source)))
+        analyze_project(project_dir)
+        generate_experiment_plan(project_dir)
+        run_demo(project_dir)
+    except Exception as exc:
+        diagnosis.append(diagnose_error(str(exc), source="benchmark_flow"))
+
+    latest = latest_run_dir(project_dir)
+    validation = validate_run_manifest(latest) if latest is not None else {
+        "valid": False,
+        "errors": ["No run directory found after benchmark flow."],
+        "warnings": [],
+        "checked_artifacts": 0,
+    }
+    if not validation.get("valid"):
+        diagnosis.extend(diagnose_validation_result(validation))
+
+    artifact_checks = _artifact_checks(project_dir, latest, [str(item) for item in task["expected_artifacts"]])
+    metric_checks = _metric_checks(latest, [str(item) for item in task["evaluation_metrics"]])
+    for item in artifact_checks:
+        if not item["exists"]:
+            diagnosis.append(diagnose_error(f"Missing required artifact: {item['pattern']}", source="benchmark"))
+    for item in metric_checks:
+        if not item["available"]:
+            diagnosis.append(diagnose_error(f"Missing evaluation metric: {item['metric']}", source="benchmark"))
+
+    summary_request = ProviderRequest(
+        task="benchmark-summary",
+        prompt=f"Summarize benchmark task {task_id} for project {project_dir}.",
+        metadata={"task_id": task_id, "project": str(project_dir)},
+    )
+    provider_response = complete_with_cache(
+        provider,
+        summary_request,
+        cache_dir=project_dir / "workspace" / "provider_cache",
+        api_usage_dir=api_usage_dir,
+    )
+    write_mock_usage_files(api_usage_dir, task="benchmark")
+
+    status = "passed" if validation.get("valid") and all(item["exists"] for item in artifact_checks) and all(
+        item["available"] for item in metric_checks
+    ) else "needs_review"
+    result = {
+        "schema_version": BENCHMARK_SCHEMA_VERSION,
+        "openrepro_version": __version__,
+        "task_id": task_id,
+        "paper_title": task["paper_title"],
+        "project_dir": str(project_dir),
+        "benchmark_dir": str(benchmark_dir),
+        "created_at": iso_now(),
+        "status": status,
+        "latest_run_dir": str(latest) if latest else None,
+        "manifest_validation": validation,
+        "artifact_checks": artifact_checks,
+        "metric_checks": metric_checks,
+        "provider_response": provider_response.to_dict(),
+        "diagnosis": diagnosis,
+        "policy": "Workflow-compliance evidence only; no paper reproduction success or benchmark score is claimed.",
+    }
+    write_json(benchmark_dir / "benchmark_result.json", result)
+    _write_benchmark_report(benchmark_dir, result)
+    if latest is not None and (latest / "manifest.json").exists():
+        shutil.copy2(latest / "manifest.json", benchmark_dir / "source_run_manifest.json")
+    write_run_manifest(
+        benchmark_dir,
+        "benchmark",
+        required_artifacts=[
+            "benchmark_result.json",
+            "benchmark_report.md",
+            "api_usage/api_usage.jsonl",
+            "api_usage/api_usage_summary.json",
+        ],
+    )
+    return result
