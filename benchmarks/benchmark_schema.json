@@ -1,6 +1,6 @@
 {
-  "schema_version": "0.3.1",
-  "description": "Schema for OpenRepro-Agent workflow-compliance benchmark tasks. v0.3.1 records evidence only and does not report scientific benchmark scores.",
+  "schema_version": "0.4.0",
+  "description": "Schema for OpenRepro-Agent workflow-compliance benchmark tasks. v0.4.0 records evidence only and does not report scientific benchmark scores.",
   "required_fields": [
     "task_id",
     "paper_title",

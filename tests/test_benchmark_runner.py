@@ -33,7 +33,7 @@ def _write_legacy_task(tmp_path: Path, source: Path) -> Path:
 def test_benchmark_task_schema_accepts_sample():
     task = load_benchmark_task(Path("benchmarks/sample_task.json"))
 
-    assert task["schema_version"] == "0.3.1"
+    assert task["schema_version"] == "0.4.0"
     assert task["task_id"] == "sample_boc_like_demo"
     assert task["artifacts"]["required"]
     assert task["metrics"]["required"]
@@ -107,7 +107,7 @@ def test_v031_optional_artifacts_and_metrics_do_not_fail(tmp_path: Path, monkeyp
     task = tmp_path / "benchmark_task.json"
     task.write_text(
         f"""{{
-  "schema_version": "0.3.1",
+  "schema_version": "0.4.0",
   "task_id": "optional_task",
   "paper_title": "Optional task",
   "source_files": ["{source.as_posix()}"],

@@ -1,6 +1,6 @@
 # API Usage Policy
 
-OpenRepro-Agent v0.3.1 does not implement real API providers. It uses a deterministic mock provider and cache-aware usage records by default.
+OpenRepro-Agent v0.4.0 uses a deterministic mock provider by default and includes an explicit opt-in OpenAI-compatible provider path. Real calls require `api.enable_real_api: true` and an environment-backed API key.
 
 ## Files
 
@@ -53,12 +53,12 @@ api_usage/api_usage_summary.json
 }
 ```
 
-Mock and cached events are not counted as real API calls.
+Mock and cached events are not counted as real API calls. Real provider events are counted only from provider-returned usage fields. Costs remain zero unless a provider supplies an auditable estimate.
 
 ## Principles
 
-1. v0.3.1 defaults to mock mode only.
-2. Future versions may support real providers with explicit opt-in.
+1. v0.4.0 defaults to mock mode only.
+2. Real providers require explicit opt-in and environment-backed secrets.
 3. Token counts, costs, cache hits, and task types must be tracked when real providers are used.
 4. The project must not invent token usage or cost data.
 5. API records must remain auditable and tied to a specific run directory.

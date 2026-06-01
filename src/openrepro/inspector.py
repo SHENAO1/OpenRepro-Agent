@@ -60,7 +60,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     benchmark_runs = _benchmark_runs_for_project(project_dir)
 
     summary = {
-        "schema_version": "0.3.1",
+        "schema_version": "0.4.0",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),

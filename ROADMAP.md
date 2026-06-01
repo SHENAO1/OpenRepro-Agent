@@ -46,12 +46,24 @@ Released in v0.3.0 with `openrepro benchmark` and `openrepro diagnose`.
 
 Released in v0.3.1 with project observability, benchmark indexing, and schema compatibility hardening.
 
-## v0.4.0 — Opt-in provider and paper-to-code layer
+## v0.4.0 — Opt-in provider and paper-to-code guardrails
 
-- Real provider implementations with explicit user opt-in.
+- [x] OpenAI-compatible provider path with explicit opt-in and environment-backed secrets.
+- [x] Provider configuration command that never stores API key values.
+- [x] Human-gated experiment scaffolds from candidate formulas and parameters.
+- [x] Benchmark suites with suite-level evidence and manifests.
+- [x] Advisory repair plans from diagnosis output.
+- [x] Run comparison artifacts for demo/sweep outputs.
+
+Released in v0.4.0 with opt-in provider readiness, paper-to-code guardrails, benchmark suites, repair planning, and run comparison.
+
+## v0.5.0 — Stronger paper-to-code and repair loop
+
 - Prompt/response redaction and stronger cache controls.
-- Human approval gates for paper-to-code workflows.
+- Human approval gates that can promote verified candidates into runnable experiments.
+- Controlled repair execution with dry-run diffs.
 - Richer benchmark tasks with dataset/environment provenance.
+- Run lineage graphs and cross-run metric dashboards.
 
 ## Long-term ideas
 

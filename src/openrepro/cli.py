@@ -11,15 +11,19 @@ from rich.table import Table
 from . import __version__
 from .analyzer import analyze_project
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
-from .benchmark_runner import generate_benchmark_index, run_benchmark
+from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
+from .config import configure_api_provider, provider_status
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
+from .experiment_scaffold import scaffold_experiment
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
+from .repair import create_repair_plan
 from .report_generator import generate_report
+from .run_compare import compare_runs
 
 app = typer.Typer(
     name="openrepro",
@@ -98,6 +102,42 @@ def plan_cmd(project_name: str = typer.Argument(..., help="Project directory."))
     _success(f"Experiment plan generated: {path}")
 
 
+@app.command("configure-provider")
+def configure_provider_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    provider: str = typer.Option("mock", "--provider", help="Provider name: mock or openai."),
+    model: str | None = typer.Option(None, "--model", help="Provider model name."),
+    enable_real_api: bool = typer.Option(False, "--enable-real-api", help="Explicitly enable real provider calls."),
+    disable_real_api: bool = typer.Option(False, "--disable-real-api", help="Disable real provider calls."),
+    api_key_env: str | None = typer.Option(None, "--api-key-env", help="Environment variable containing the API key."),
+    endpoint: str | None = typer.Option(None, "--endpoint", help="OpenAI-compatible chat completions endpoint."),
+) -> None:
+    """Configure provider settings without storing secrets."""
+    if enable_real_api and disable_real_api:
+        _warn("--enable-real-api and --disable-real-api cannot be combined.")
+        raise typer.Exit(1)
+    project_dir = require_project(project_name)
+    real_api_setting = True if enable_real_api else False if disable_real_api else None
+    config = configure_api_provider(
+        project_dir,
+        provider=provider,
+        model=model,
+        enable_real_api=real_api_setting,
+        api_key_env=api_key_env,
+        endpoint=endpoint,
+    )
+    status = provider_status(project_dir)
+    _success("Provider configuration updated.")
+    table = Table(title=f"Provider: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["default_provider", "default_model", "enable_real_api", "api_key_env", "api_key_present", "ready_for_real_calls"]:
+        table.add_row(key, str(status[key]))
+    console.print(table)
+    if config["default_provider"] != "mock" and not status["ready_for_real_calls"]:
+        _warn("Real provider is configured but not ready; check --enable-real-api and the API key environment variable.")
+
+
 @app.command("run-demo")
 def run_demo_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Run the built-in lightweight BOC-like demo."""
@@ -128,6 +168,24 @@ def run_sweep_cmd(
     _success("Sweep run completed.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Result count: {metadata['result_count']}")
+
+
+@app.command("scaffold-experiment")
+def scaffold_experiment_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str | None = typer.Option(None, "--experiment-id", help="Experiment id. Defaults to a timestamp."),
+    acknowledge_candidates: bool = typer.Option(
+        False,
+        "--acknowledge-candidates",
+        help="Mark that candidate formulas/parameters are acknowledged for scaffold work.",
+    ),
+) -> None:
+    """Create a human-gated experiment scaffold from candidate evidence."""
+    project_dir = require_project(project_name)
+    summary = scaffold_experiment(project_dir, experiment_id=experiment_id, acknowledge_candidates=acknowledge_candidates)
+    _success(f"Experiment scaffold created: {summary['experiment_dir']}")
+    console.print(f"Status: {summary['status']}")
+    console.print(f"Next step: {summary['next_step']}")
 
 
 @app.command("validate")
@@ -257,6 +315,50 @@ def diagnose_cmd(
         console.print(f"    repair: {item['repair_suggestion']}")
 
 
+@app.command("repair-plan")
+def repair_plan_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_dir: Path | None = typer.Option(
+        None,
+        "--run-dir",
+        help="Run directory to plan repairs for. Defaults to the latest project run.",
+    ),
+) -> None:
+    """Write an advisory repair plan from diagnosis output."""
+    project_dir = require_project(project_name)
+    target = run_dir
+    if target is not None and not target.is_absolute() and not target.exists():
+        target = project_dir / target
+    plan = create_repair_plan(project_dir, target)
+    _success(f"Repair plan written with {plan['issue_count']} issues.")
+    console.print(f"JSON: {project_dir / 'workspace' / 'repair_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_PLAN.md'}")
+
+
+@app.command("compare-runs")
+def compare_runs_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    left_run: Path | None = typer.Option(None, "--left-run", help="Older run directory. Defaults to second-latest."),
+    right_run: Path | None = typer.Option(None, "--right-run", help="Newer run directory. Defaults to latest."),
+) -> None:
+    """Compare two project run directories."""
+    project_dir = require_project(project_name)
+    try:
+        comparison = compare_runs(project_dir, left_run=left_run, right_run=right_run)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success("Run comparison written.")
+    table = Table(title=f"Run Comparison: {project_name}")
+    table.add_column("Metric")
+    table.add_column("Left")
+    table.add_column("Right")
+    table.add_column("Delta")
+    for item in comparison["metric_deltas"]:
+        table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["delta"]))
+    console.print(table)
+
+
 @app.command("benchmark")
 def benchmark_cmd(
     task: Path = typer.Option(..., "--task", help="Benchmark task JSON file."),
@@ -278,6 +380,26 @@ def benchmark_cmd(
         _warn(f"Benchmark completed with review needed: {result['benchmark_dir']}")
         for item in result.get("diagnosis", []):
             console.print(f"  - {item['code']}: {item['repair_suggestion']}")
+
+
+@app.command("benchmark-suite")
+def benchmark_suite_cmd(
+    suite: Path = typer.Option(..., "--suite", help="Benchmark suite JSON file."),
+    project_prefix: str | None = typer.Option(None, "--project-prefix", help="Prefix for generated benchmark projects."),
+) -> None:
+    """Run a workflow-compliance benchmark suite."""
+    try:
+        result = run_benchmark_suite(suite, project_prefix=project_prefix)
+    except Exception as exc:
+        diagnosis = diagnose_error(str(exc), source="benchmark_suite")
+        _warn(str(exc))
+        console.print(f"Diagnosis: {diagnosis['code']}")
+        console.print(f"Repair: {diagnosis['repair_suggestion']}")
+        raise typer.Exit(1) from exc
+    if result["status"] == "passed":
+        _success(f"Benchmark suite completed: {result['suite_dir']}")
+    else:
+        _warn(f"Benchmark suite completed with review needed: {result['suite_dir']}")
 
 
 @app.command("benchmark-index")

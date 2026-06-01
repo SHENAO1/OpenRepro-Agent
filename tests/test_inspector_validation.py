@@ -45,7 +45,7 @@ def test_inspect_summary_reports_project_health(tmp_path: Path, monkeypatch):
     assert summary["latest_manifest_status"] == "valid"
     assert summary["latest_manifest_valid"] is True
     assert summary["diagnosis_healthy"] is True
-    assert saved["schema_version"] == "0.3.1"
+    assert saved["schema_version"] == "0.4.0"
 
 
 def test_validate_all_passes_when_all_manifests_are_valid(tmp_path: Path, monkeypatch):

@@ -104,7 +104,7 @@ def _write_demo_report(run_dirs: RunDirectory, project_name: str, metrics: dict[
 
 ## Demo 类型
 
-Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.3.1 的实验闭环，不声称完整复现任何论文或工程级 BOC 捕获/跟踪算法。
+Lightweight BOC-like signal demo。该 Demo 用于验证 OpenRepro-Agent v0.4.0 的实验闭环，不声称完整复现任何论文或工程级 BOC 捕获/跟踪算法。
 
 ## 已完成
 
@@ -172,7 +172,7 @@ def _write_run_handoff(run_dirs: RunDirectory, project_name: str, metrics: dict[
 ## 本次运行状态
 
 - 已完成：lightweight BOC-like Demo 运行完成。
-- 部分完成：产物齐全，但算法仅是 v0.3.1 演示版本。
+- 部分完成：产物齐全，但算法仅是 v0.4.0 演示版本。
 - 未完成：论文级 BOC 捕获/跟踪复现、参数扫描、benchmark 对比。
 - 待确认：真实论文模型和参数。
 
@@ -226,7 +226,7 @@ def run_demo(project_dir: Path) -> dict[str, Any]:
 
     safe_write_text(run_dirs.code / "README.md", """# Code Snapshot Placeholder
 
-v0.3.1 records the demo algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
+v0.4.0 records the demo algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
 """)
 
     project_config_snapshot = project_dir / "project_config.yaml"
@@ -417,7 +417,7 @@ def run_sweep(
     write_json(
         run_dirs.data / "sweep_results.json",
         {
-            "schema_version": "0.3.1",
+            "schema_version": "0.4.0",
             "project_name": project_name,
             "created_at": iso_now(),
             "noise_std_values": [float(value) for value in noise_values],
@@ -431,7 +431,7 @@ def run_sweep(
 
     safe_write_text(run_dirs.code / "README.md", """# Code Snapshot Placeholder
 
-v0.3.1 records the sweep algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
+v0.4.0 records the sweep algorithm in `src/openrepro/demo_runner.py` in the repository. This run directory keeps a lightweight note rather than copying the full source tree.
 """)
     project_config_snapshot = project_dir / "project_config.yaml"
     if project_config_snapshot.exists():

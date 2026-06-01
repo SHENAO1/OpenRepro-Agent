@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -28,20 +29,22 @@ class DemoConfig:
 class APIConfig:
     """API provider configuration.
 
-    v0.3.1 keeps real model calls disabled by default.  The fields are kept so
-    later releases can add providers without changing the project schema.
+    v0.4.0 keeps real model calls disabled by default.  Real providers must be
+    explicitly enabled in project configuration and backed by environment keys.
     """
 
     default_provider: str = "mock"
     default_model: str = "mock-llm"
     enable_real_api: bool = False
+    api_key_env: str = "OPENAI_API_KEY"
+    endpoint: str = "https://api.openai.com/v1/chat/completions"
 
 
 @dataclass
 class AnalysisConfig:
     """Rule/mock analyzer configuration."""
 
-    analyzer_version: str = "v0.3.1-rule"
+    analyzer_version: str = "v0.4.0-rule"
     max_source_preview_chars: int = 4000
 
 
@@ -90,3 +93,55 @@ def get_demo_config(project_dir: Path) -> dict[str, Any]:
     demo = DemoConfig().__dict__.copy()
     demo.update(config.get("demo", {}) or {})
     return demo
+
+
+def get_api_config(project_dir: Path) -> dict[str, Any]:
+    """Return API provider configuration with defaults filled in."""
+    config = load_project_config(project_dir)
+    api = APIConfig().__dict__.copy()
+    api.update(config.get("api", {}) or {})
+    return api
+
+
+def configure_api_provider(
+    project_dir: Path,
+    provider: str,
+    model: str | None = None,
+    enable_real_api: bool | None = None,
+    api_key_env: str | None = None,
+    endpoint: str | None = None,
+) -> dict[str, Any]:
+    """Update project API provider configuration without storing secrets."""
+    config = load_project_config(project_dir)
+    api = get_api_config(project_dir)
+    api["default_provider"] = provider
+    if model is not None:
+        api["default_model"] = model
+    if enable_real_api is not None:
+        api["enable_real_api"] = bool(enable_real_api)
+    if api_key_env is not None:
+        api["api_key_env"] = api_key_env
+    if endpoint is not None:
+        api["endpoint"] = endpoint
+    config["api"] = api
+    save_project_config(project_dir, config)
+    return api
+
+
+def provider_status(project_dir: Path) -> dict[str, Any]:
+    """Return provider status without exposing secret values."""
+    api = get_api_config(project_dir)
+    key_env = str(api.get("api_key_env") or "OPENAI_API_KEY")
+    provider = str(api.get("default_provider") or "mock")
+    real_enabled = bool(api.get("enable_real_api", False))
+    return {
+        "schema_version": "0.4.0",
+        "default_provider": provider,
+        "default_model": str(api.get("default_model") or "mock-llm"),
+        "enable_real_api": real_enabled,
+        "api_key_env": key_env,
+        "api_key_present": bool(os.environ.get(key_env)),
+        "endpoint": str(api.get("endpoint") or ""),
+        "ready_for_real_calls": provider != "mock" and real_enabled and bool(os.environ.get(key_env)),
+        "policy": "Real provider calls require explicit opt-in and environment-backed secrets.",
+    }

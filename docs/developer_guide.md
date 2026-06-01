@@ -50,9 +50,9 @@ marked as candidates until a human verifies them.
 
 Real providers should be opt-in. They must write actual usage records and must not fabricate tokens or costs.
 
-v0.3.1 ships only `MockProvider`. New providers should implement the provider
-interface, require explicit configuration, and preserve request-hash cache
-accounting.
+v0.4.0 ships `MockProvider` plus a minimal OpenAI-compatible provider path.
+Real calls must require explicit configuration, environment-backed secrets, and
+request-hash cache accounting. Do not store API keys in project files.
 
 ## Benchmark runner
 
@@ -60,7 +60,7 @@ Benchmark tasks must report workflow-compliance evidence only. They can check
 sources, artifacts, manifests, and metric availability, but they must not claim
 paper reproduction success or scientific benchmark scores.
 
-v0.3.1 benchmark tasks may use either legacy `expected_artifacts` and
+v0.4.0 benchmark tasks may use either legacy `expected_artifacts` and
 `evaluation_metrics` fields or the newer `artifacts.required`,
 `artifacts.optional`, `metrics.required`, and `metrics.optional` fields.
 Optional checks should be reported without failing the benchmark status.
@@ -70,3 +70,16 @@ Optional checks should be reported without failing the benchmark status.
 `openrepro inspect <project_name>` should print a concise human-facing table and
 write `workspace/inspect_summary.json`. The JSON summary is the stable interface
 for other agents; update tests whenever the summary schema changes.
+
+## Experiment scaffolds
+
+`openrepro scaffold-experiment` creates files under `experiments/<id>/` from
+candidate evidence. Generated scaffolds must stay human-gated: mark candidates
+as unverified, write `APPROVAL_REQUIRED.md`, and avoid runnable scientific claims
+until a human has reviewed formulas, parameters, and assumptions.
+
+## Repair and run comparison
+
+`openrepro repair-plan` is advisory only in v0.4.0 and must not mutate project
+code or artifacts. `openrepro compare-runs` should report observed manifest and
+metric differences without interpreting them as scientific superiority.

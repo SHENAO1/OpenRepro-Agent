@@ -125,7 +125,7 @@ OpenRepro-Agent v{__version__}
 
 {api_block}
 
-说明：v0.3.1 默认不调用真实 API，mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
+说明：v0.4.0 默认使用 mock provider；真实 provider 需要显式 opt-in。mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
 
 ## 10. 当前局限
 
@@ -138,8 +138,9 @@ OpenRepro-Agent v{__version__}
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
+- 使用 scaffold-experiment 生成需人工确认的实验代码起点。
 - 使用 manifest 和 `openrepro validate` 校验运行产物。
-- 使用 v0.3.1 benchmark runner 和 benchmark index 记录 workflow-compliance evidence。
+- 使用 v0.4.0 benchmark runner、benchmark suite 和 benchmark index 记录 workflow-compliance evidence。
 - 在后续版本中加入真实 Provider、缓存统计与更完整的可复现实验 benchmark。
 """
     path = project_dir / "reports" / "report.md"

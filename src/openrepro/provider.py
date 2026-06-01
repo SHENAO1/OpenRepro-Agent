@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -48,6 +51,10 @@ class ProviderResponse:
     cache_hit: bool
     status: str
     created_at: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    estimated_cost_usd: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -87,24 +94,114 @@ class MockProvider(BaseProvider):
         )
 
 
+class OpenAICompatibleProvider(BaseProvider):
+    """Minimal OpenAI-compatible chat completions provider.
+
+    It is available only when real APIs are explicitly enabled. The provider
+    uses environment variables for secrets and does not estimate costs.
+    """
+
+    name = "openai"
+
+    def __init__(
+        self,
+        model: str,
+        api_key_env: str = "OPENAI_API_KEY",
+        endpoint: str = "https://api.openai.com/v1/chat/completions",
+    ) -> None:
+        self.model = model
+        self.api_key_env = api_key_env
+        self.endpoint = endpoint
+
+    def complete(self, request: ProviderRequest) -> ProviderResponse:
+        api_key = os.environ.get(self.api_key_env)
+        if not api_key:
+            raise ProviderDisabledError(
+                f"Provider 'openai' requires environment variable {self.api_key_env}."
+            )
+        request_hash = request.request_hash()
+        payload = {
+            "model": request.model or self.model,
+            "messages": [{"role": "user", "content": request.prompt}],
+            "temperature": 0,
+        }
+        body = json.dumps(payload).encode("utf-8")
+        http_request = urllib.request.Request(
+            self.endpoint,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(http_request, timeout=60) as response:
+                data = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")
+            raise ProviderDisabledError(f"Provider 'openai' request failed: {exc.code} {detail}") from exc
+        except urllib.error.URLError as exc:
+            raise ProviderDisabledError(f"Provider 'openai' request failed: {exc.reason}") from exc
+
+        choices = data.get("choices", [])
+        content = ""
+        if choices:
+            content = str((choices[0].get("message") or {}).get("content") or "")
+        usage = data.get("usage") or {}
+        prompt_tokens = int(usage.get("prompt_tokens", 0) or 0)
+        completion_tokens = int(usage.get("completion_tokens", 0) or 0)
+        total_tokens = int(usage.get("total_tokens", prompt_tokens + completion_tokens) or 0)
+        return ProviderResponse(
+            provider=self.name,
+            model=str(data.get("model") or request.model or self.model),
+            task=request.task,
+            content=content,
+            request_hash=request_hash,
+            cache_hit=False,
+            status="completed",
+            created_at=iso_now(),
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            estimated_cost_usd=0.0,
+        )
+
+
 class ProviderDisabledError(ValueError):
     """Raised when a non-mock provider is requested while real APIs are disabled."""
 
 
-def get_provider(name: str = "mock", enable_real_api: bool = False) -> BaseProvider:
+def get_provider(
+    name: str = "mock",
+    enable_real_api: bool = False,
+    model: str | None = None,
+    api_key_env: str = "OPENAI_API_KEY",
+    endpoint: str | None = None,
+) -> BaseProvider:
     """Return a provider instance.
 
-    v0.3.1 intentionally ships only the mock provider. Non-mock providers are
-    reserved for a future opt-in release.
+    v0.4.0 keeps mock mode as the default. OpenAI-compatible calls are available
+    only when real API use is explicitly enabled and secrets stay in env vars.
     """
     normalized = (name or "mock").lower()
     if normalized == "mock":
         return MockProvider()
+    if normalized in {"openai", "openai-compatible"}:
+        if not enable_real_api:
+            raise ProviderDisabledError(
+                f"Provider '{name}' is disabled. Set enable_real_api=true before making real calls."
+            )
+        return OpenAICompatibleProvider(
+            model=model or "gpt-4.1-mini",
+            api_key_env=api_key_env,
+            endpoint=endpoint or "https://api.openai.com/v1/chat/completions",
+        )
     if not enable_real_api:
         raise ProviderDisabledError(
-            f"Provider '{name}' is disabled. v0.3.1 only enables the mock provider by default."
+            f"Provider '{name}' is disabled. Set enable_real_api=true before making real calls."
         )
-    raise ProviderDisabledError(f"Provider '{name}' is not implemented in v0.3.1.")
+    raise ProviderDisabledError(f"Provider '{name}' is not implemented in v0.4.0.")
 
 
 def complete_with_cache(
@@ -143,10 +240,10 @@ def complete_with_cache(
                 "provider": response.provider,
                 "model": response.model,
                 "task": response.task,
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "total_tokens": 0,
-                "estimated_cost_usd": 0.0,
+                "prompt_tokens": 0 if response.cache_hit else response.prompt_tokens,
+                "completion_tokens": 0 if response.cache_hit else response.completion_tokens,
+                "total_tokens": 0 if response.cache_hit else response.total_tokens,
+                "estimated_cost_usd": 0.0 if response.cache_hit else response.estimated_cost_usd,
                 "cache_hit": response.cache_hit,
                 "status": response.status,
                 "request_hash": response.request_hash,

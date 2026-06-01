@@ -54,7 +54,7 @@ def validate_experiment_plan(project_dir: Path) -> dict[str, Any]:
 
     issues.extend(_validate_demo_config(get_demo_config(project_dir)))
     result = {
-        "schema_version": "0.3.1",
+        "schema_version": "0.4.0",
         "created_at": iso_now(),
         "valid": not issues,
         "issues": issues,
@@ -89,7 +89,7 @@ def generate_experiment_plan(project_dir: Path) -> Path:
 
 - 项目名称：{project_name}
 - 生成时间：{iso_now()}
-- 计划版本：v0.3.1-template
+- 计划版本：v0.4.0-template
 - 分析关键词：{detected}
 - 计划校验状态：{'通过' if validation['valid'] else '存在阻塞项'}
 
@@ -139,12 +139,12 @@ def generate_experiment_plan(project_dir: Path) -> Path:
 
 ## 8. 风险
 
-- v0.3.1 输出候选公式和候选参数，但模型账本仍需要人工核对。
+- v0.4.0 输出候选公式和候选参数，但模型账本仍需要人工核对。
 - Demo 不是完整 BOC 捕获/跟踪算法。
 - PDF 抽取依赖可读文本层，扫描件可能缺失论文关键信息。
 - 没有真实 LLM API 调用，因此不会生成真实 Token 消耗统计。
 
-## 9. v0.3.1 Demo、Sweep、Inspect 与 Benchmark 计划
+## 9. v0.4.0 Demo、Sweep、Inspect 与 Benchmark 计划
 
 1. 生成伪随机码。
 2. 生成简单方波子载波。

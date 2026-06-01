@@ -1,20 +1,20 @@
 # OpenRepro-Agent
 
-OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks, indexes benchmark evidence, classifies failures, tracks cache-aware mock API usage, and produces multi-agent handoff files.
+OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.3.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.4.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.3.1 workflow is:
+The v0.4.0 workflow is:
 
 ```text
-init → ingest → analyze → plan → run-demo → validate --all → inspect → diagnose → run-sweep → benchmark → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → run-sweep → compare-runs → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
-## What v0.3.1 supports
+## What v0.4.0 supports
 
 - Create a standard paper reproduction project directory.
 - Ingest Markdown and text notes into `sources/`.
@@ -22,6 +22,8 @@ init → ingest → analyze → plan → run-demo → validate --all → inspect
 - Generate `paper_summary.md` using rule-based keyword detection and candidate extraction.
 - Generate Markdown and JSON model ledgers with formula and parameter candidates marked `candidate_unverified`.
 - Generate `EXPERIMENT_PLAN.md` and `experiment_plan_validation.json`.
+- Configure mock or OpenAI-compatible providers while keeping real calls disabled by default.
+- Scaffold human-gated experiment folders from candidate formulas and parameters.
 - Run a lightweight BOC-like signal and autocorrelation demo.
 - Run a noise/seed parameter sweep for the built-in demo.
 - Save run artifacts: logs, figures, data, metrics, reports, config snapshots, metadata, manifest, mock API usage, and handoff notes.
@@ -29,20 +31,23 @@ init → ingest → analyze → plan → run-demo → validate --all → inspect
 - Validate every project run at once with `openrepro validate --all`.
 - Inspect project state and write `workspace/inspect_summary.json`.
 - Diagnose common workflow failures and suggest repairs.
+- Generate advisory repair plans with `workspace/repair_plan.json` and `workspace/REPAIR_PLAN.md`.
+- Compare two run directories and write run comparison artifacts.
 - Run workflow-compliance benchmark tasks from `benchmarks/benchmark_schema.json`.
+- Run benchmark suites from `benchmarks/sample_suite.json`.
 - Generate `benchmark_index.json` and `benchmark_index.md` for benchmark runs.
 - Use a deterministic mock provider interface with request-hash cache accounting.
 - Generate a project-level Markdown report.
 - Generate multi-agent handoff files for Claude Code, Codex, GitHub Copilot, or human maintainers.
 - Run pytest tests for the minimum workflow.
 
-## What v0.3.1 does not support
+## What v0.4.0 does not support
 
 - It does not fully read or understand papers.
 - It does not verify mathematical formulas automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
-- It does not implement real LLM providers; v0.3.1 ships the provider interface and mock provider only.
+- It does not enable real LLM providers by default; OpenAI-compatible calls require explicit opt-in and environment-backed secrets.
 - It does not claim benchmark scores, user counts, token usage, or efficiency improvements.
 - The BOC demo is a **lightweight BOC-like demo**, not a complete BOC acquisition/tracking implementation and not a full reproduction of any paper.
 
@@ -84,17 +89,22 @@ python -m pytest -q --basetemp .codex_tmp\pytest-basetemp
 
 ```bash
 openrepro init boc_demo
+openrepro configure-provider boc_demo --provider mock --disable-real-api
 openrepro ingest boc_demo --source examples/boc_notes.md
 openrepro analyze boc_demo
 openrepro plan boc_demo
+openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp
 openrepro run-demo boc_demo
 openrepro validate boc_demo
 openrepro validate boc_demo --all
 openrepro inspect boc_demo
 openrepro diagnose boc_demo
+openrepro repair-plan boc_demo
 openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate boc_demo
+openrepro compare-runs boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
+openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
 openrepro benchmark-index
 openrepro report boc_demo
 openrepro handoff boc_demo
@@ -147,7 +157,7 @@ Copies Markdown/txt/PDF sources into `sources/` and updates:
 workspace/source_index.json
 ```
 
-For PDFs, v0.3.1 records:
+For PDFs, v0.4.0 records:
 
 - `extraction_status`
 - `extracted_text_path`
@@ -183,6 +193,37 @@ workspace/experiment_plan_validation.json
 ```
 
 The validation file checks whether sources exist, PDF extraction needs review, candidate formulas/parameters were detected, and demo configuration values are valid.
+
+### `openrepro configure-provider <project_name>`
+
+Updates provider settings in `project_config.yaml` without storing secrets. Mock mode remains the default:
+
+```bash
+openrepro configure-provider boc_demo --provider mock --disable-real-api
+```
+
+OpenAI-compatible calls require explicit opt-in and an environment variable:
+
+```bash
+openrepro configure-provider boc_demo --provider openai --model gpt-4.1-mini --enable-real-api --api-key-env OPENAI_API_KEY
+```
+
+The command reports whether the configured provider is ready for real calls; it never prints or stores API key values.
+
+### `openrepro scaffold-experiment <project_name>`
+
+Creates a human-gated experiment scaffold under:
+
+```text
+experiments/<experiment_id>/
+  README.md
+  APPROVAL_REQUIRED.md
+  experiment_config.json
+  expected_artifacts.json
+  runner_stub.py
+```
+
+The scaffold is generated from candidate formulas and parameters and is marked `approval_required` unless `--acknowledge-candidates` is provided. It is a coding starting point, not a reproduction claim.
 
 ### `openrepro run-demo <project_name>`
 
@@ -244,6 +285,17 @@ The JSON summary is intended for agents and automation that need the same state 
 
 Classifies project or run failures and suggests repairs. It covers missing artifacts, manifest mismatches, missing source files, PDF extraction failures, invalid demo config, provider-disabled errors, and unknown runtime errors.
 
+### `openrepro repair-plan <project_name> [--run-dir PATH]`
+
+Writes advisory repair artifacts:
+
+```text
+workspace/repair_plan.json
+workspace/REPAIR_PLAN.md
+```
+
+v0.4.0 repair plans do not edit files automatically. They convert diagnosis output into ordered manual repair suggestions.
+
 ### `openrepro run-sweep <project_name> [--noise-std FLOAT]... [--seed INT]...`
 
 Runs the built-in BOC-like demo across a noise/seed grid. Defaults:
@@ -264,6 +316,17 @@ metadata.json
 manifest.json
 ```
 
+### `openrepro compare-runs <project_name> [--left-run PATH] [--right-run PATH]`
+
+Compares two run directories, defaulting to the latest two runs, and writes:
+
+```text
+workspace/run_comparison.json
+workspace/RUN_COMPARISON.md
+```
+
+The comparison reports observed manifest status and metric differences only.
+
 ### `openrepro benchmark --task <task.json> [--project <project_name>]`
 
 Runs a workflow-compliance benchmark task. If `--project` is omitted, the task id becomes the project name. If the project does not exist, it is initialized automatically.
@@ -281,7 +344,7 @@ benchmarks/runs/<timestamp>_<task_id>/
 
 Benchmark results only report observed workflow evidence: source ingestion, generated artifacts, manifest validity, and metric availability. They do not claim paper reproduction success or scientific benchmark scores.
 
-Benchmark task files may use either the v0.3.0 fields (`expected_artifacts`, `evaluation_metrics`) or the v0.3.1 fields:
+Benchmark task files may use either the v0.3.0 fields (`expected_artifacts`, `evaluation_metrics`) or the v0.4.0 fields:
 
 ```json
 {
@@ -304,6 +367,19 @@ Benchmark task files may use either the v0.3.0 fields (`expected_artifacts`, `ev
 ```
 
 Optional artifacts and metrics are reported but do not make the benchmark status fail.
+
+### `openrepro benchmark-suite --suite <suite.json> [--project-prefix PREFIX]`
+
+Runs a collection of benchmark tasks and writes suite-level evidence under:
+
+```text
+benchmarks/runs/<timestamp>_<suite_id>_suite/
+  benchmark_suite_result.json
+  benchmark_suite_report.md
+  manifest.json
+```
+
+Suite output is still workflow-compliance evidence only; it does not aggregate scientific reproduction scores.
 
 ### `openrepro benchmark-index [--runs-dir PATH]`
 
@@ -370,16 +446,22 @@ This lets later agents, humans, and CI checks verify that reports and metrics ar
 
 ## Provider and API Usage design
 
-v0.3.1 does **not** implement real API providers. It ships a provider interface, a deterministic `MockProvider`, request-hash caching, and mock usage files to preserve the accounting schema:
+v0.4.0 keeps `MockProvider` as the default and adds an explicit opt-in OpenAI-compatible provider path. Real calls require:
+
+- `api.enable_real_api: true`
+- a non-mock provider such as `openai`
+- an environment variable such as `OPENAI_API_KEY`
+
+Provider usage is recorded in:
 
 ```text
 api_usage/api_usage.jsonl
 api_usage/api_usage_summary.json
 ```
 
-Mock and cached events use zero prompt tokens, zero completion tokens, zero total tokens, and zero estimated cost. The summary keeps `total_calls` at zero for mocked and cached events so the project does not invent real API usage.
+Mock and cached events use zero prompt tokens, zero completion tokens, zero total tokens, and zero estimated cost. The summary keeps `total_calls` at zero for mocked and cached events so the project does not invent real API usage. Real provider events are counted only from provider-returned usage data, and costs stay zero unless an auditable provider estimate is available.
 
-Future versions can add real providers while tracking:
+Tracked fields include:
 
 - provider and model
 - task type
@@ -397,7 +479,7 @@ Important rule: handoff files must distinguish between confirmed facts, assumpti
 
 ## Benchmark policy
 
-The `benchmarks/` directory contains a task schema, a sample task, generated benchmark run outputs, and a rebuildable benchmark index. v0.3.1 reports workflow-compliance evidence only. It does not report scientific benchmark scores or claim a paper has been reproduced.
+The `benchmarks/` directory contains a task schema, a sample task, a sample suite, generated benchmark run outputs, and a rebuildable benchmark index. v0.4.0 reports workflow-compliance evidence only. It does not report scientific benchmark scores or claim a paper has been reproduced.
 
 ## Roadmap snapshot
 
@@ -405,13 +487,14 @@ The `benchmarks/` directory contains a task schema, a sample task, generated ben
 - v0.2.0: PDF text extraction, artifact manifests, formula/parameter candidates, experiment plan validation, demo parameter sweeps.
 - v0.3.0: provider interface, cache-aware API usage, benchmark runner, failure diagnosis and repair suggestions.
 - v0.3.1: project inspection, `validate --all`, benchmark indexing, and compatible benchmark schema hardening.
-- v0.4.0: opt-in real provider implementations and richer paper-to-code workflows.
+- v0.4.0: opt-in OpenAI-compatible provider path, human-gated experiment scaffolds, benchmark suites, repair plans, and run comparison.
+- v0.5.0: richer paper-to-code workflows, approval gates, and more complete repair loops.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.3.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.4.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

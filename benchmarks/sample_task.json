@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3.1",
+  "schema_version": "0.4.0",
   "task_id": "sample_boc_like_demo",
   "paper_title": "Sample BOC-like notes task",
   "source_files": ["examples/boc_notes.md"],

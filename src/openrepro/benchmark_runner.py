@@ -19,7 +19,7 @@ from .provider import ProviderRequest, complete_with_cache, get_provider
 from .utils import iso_now, local_timestamp_for_path, read_json, safe_write_text, slugify, write_json
 
 
-BENCHMARK_SCHEMA_VERSION = "0.3.1"
+BENCHMARK_SCHEMA_VERSION = "0.4.0"
 REQUIRED_TASK_FIELDS = ["task_id", "paper_title", "source_files"]
 
 
@@ -101,6 +101,19 @@ def _benchmark_run_dir(task_path: Path, task_id: str) -> Path:
     root = _benchmark_root(task_path)
     root.mkdir(parents=True, exist_ok=True)
     base = root / f"{local_timestamp_for_path()}_{slugify(task_id)}"
+    candidate = base
+    counter = 1
+    while candidate.exists():
+        candidate = root / f"{base.name}_{counter}"
+        counter += 1
+    candidate.mkdir(parents=True, exist_ok=True)
+    return candidate
+
+
+def _benchmark_suite_dir(suite_path: Path, suite_id: str) -> Path:
+    root = _benchmark_root(suite_path)
+    root.mkdir(parents=True, exist_ok=True)
+    base = root / f"{local_timestamp_for_path()}_{slugify(suite_id)}_suite"
     candidate = base
     counter = 1
     while candidate.exists():
@@ -358,3 +371,125 @@ def generate_benchmark_index(runs_dir: Path | None = None) -> dict[str, Any]:
         )
     safe_write_text(target / "benchmark_index.md", "\n".join(lines) + "\n")
     return index
+
+
+def _resolve_task_path(suite_path: Path, task: str) -> Path:
+    raw = Path(task)
+    candidates = [raw] if raw.is_absolute() else [suite_path.parent / raw, Path.cwd() / raw, _repo_root() / raw]
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    raise FileNotFoundError(f"Benchmark task file not found for suite: {task}")
+
+
+def load_benchmark_suite(suite_path: Path) -> dict[str, Any]:
+    """Load and validate a benchmark suite file."""
+    suite_path = Path(suite_path)
+    suite = read_json(suite_path, default=None)
+    if not isinstance(suite, dict):
+        raise ValueError(f"Invalid benchmark suite: suite file is not a JSON object: {suite_path}")
+    missing = [field for field in ["suite_id", "tasks"] if field not in suite]
+    if missing:
+        raise ValueError(f"Invalid benchmark suite: missing required fields: {', '.join(missing)}")
+    if not isinstance(suite.get("tasks"), list) or not suite["tasks"]:
+        raise ValueError("Invalid benchmark suite: tasks must be a non-empty array")
+    normalized_tasks = []
+    for item in suite["tasks"]:
+        if isinstance(item, str):
+            normalized_tasks.append({"task": item, "project": None})
+        elif isinstance(item, dict) and isinstance(item.get("task"), str):
+            normalized_tasks.append({"task": item["task"], "project": item.get("project")})
+        else:
+            raise ValueError("Invalid benchmark suite: each task must be a path string or object with task")
+    suite["tasks"] = normalized_tasks
+    suite.setdefault("schema_version", BENCHMARK_SCHEMA_VERSION)
+    suite.setdefault("policy", "Workflow-compliance evidence only; no paper reproduction score is claimed.")
+    return suite
+
+
+def _write_suite_report(suite_dir: Path, result: dict[str, Any]) -> Path:
+    passed = sum(1 for item in result["task_results"] if item.get("status") == "passed")
+    lines = [
+        "# Benchmark Suite Report",
+        "",
+        f"- suite_id: {result['suite_id']}",
+        f"- status: {result['status']}",
+        f"- tasks_passed: {passed}/{len(result['task_results'])}",
+        "",
+        "## Tasks",
+        "",
+        "| Task | Status | Benchmark Dir | Project Dir |",
+        "| --- | --- | --- | --- |",
+    ]
+    for item in result["task_results"]:
+        lines.append(
+            f"| {item.get('task_id')} | {item.get('status')} | `{item.get('benchmark_dir')}` | `{item.get('project_dir')}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Policy",
+            "",
+            "This suite reports workflow-compliance evidence only. It does not claim paper reproduction success or benchmark scores.",
+        ]
+    )
+    path = suite_dir / "benchmark_suite_report.md"
+    safe_write_text(path, "\n".join(lines) + "\n")
+    return path
+
+
+def run_benchmark_suite(suite_path: Path, project_prefix: str | None = None) -> dict[str, Any]:
+    """Run a collection of benchmark tasks and write suite-level evidence."""
+    suite_path = Path(suite_path)
+    suite = load_benchmark_suite(suite_path)
+    suite_id = str(suite["suite_id"])
+    suite_dir = _benchmark_suite_dir(suite_path, suite_id)
+    task_results = []
+    diagnosis: list[dict[str, str]] = []
+
+    for index, task_entry in enumerate(suite["tasks"], start=1):
+        task_path = _resolve_task_path(suite_path, str(task_entry["task"]))
+        project = task_entry.get("project")
+        if project_prefix:
+            task_id = load_benchmark_task(task_path)["task_id"]
+            project = f"{project_prefix}_{slugify(str(task_id))}_{index}"
+        try:
+            result = run_benchmark(task_path, project_name=project)
+            task_results.append(
+                {
+                    "task_id": result.get("task_id"),
+                    "status": result.get("status"),
+                    "benchmark_dir": result.get("benchmark_dir"),
+                    "project_dir": result.get("project_dir"),
+                    "diagnosis_count": len(result.get("diagnosis", [])),
+                }
+            )
+        except Exception as exc:
+            diagnosis.append(diagnose_error(str(exc), source="benchmark_suite"))
+            task_results.append(
+                {
+                    "task_id": str(task_entry.get("task")),
+                    "status": "failed_to_run",
+                    "benchmark_dir": None,
+                    "project_dir": project,
+                    "diagnosis_count": 1,
+                }
+            )
+
+    status = "passed" if task_results and all(item.get("status") == "passed" for item in task_results) else "needs_review"
+    result = {
+        "schema_version": BENCHMARK_SCHEMA_VERSION,
+        "openrepro_version": __version__,
+        "suite_id": suite_id,
+        "created_at": iso_now(),
+        "suite_dir": str(suite_dir),
+        "status": status,
+        "task_results": task_results,
+        "diagnosis": diagnosis,
+        "policy": suite["policy"],
+    }
+    write_json(suite_dir / "benchmark_suite_result.json", result)
+    _write_suite_report(suite_dir, result)
+    write_run_manifest(suite_dir, "benchmark-suite")
+    generate_benchmark_index(_benchmark_root(suite_path))
+    return result
