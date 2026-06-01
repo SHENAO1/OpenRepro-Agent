@@ -1,5 +1,5 @@
 project_name: openrepro_project
-version: 0.3.0
+version: 0.3.1
 description: Default OpenRepro-Agent configuration template.
 demo:
   seed: 42
@@ -13,5 +13,5 @@ api:
   default_model: mock-llm
   enable_real_api: false
 analysis:
-  analyzer_version: v0.3.0-rule
+  analyzer_version: v0.3.1-rule
   max_source_preview_chars: 4000

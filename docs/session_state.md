@@ -4,17 +4,18 @@ Updated: 2026-06-01
 
 ## Current Goal
 
-Release OpenRepro-Agent v0.3.0 with provider/cache scaffolding, benchmark runner, diagnostics, and release documentation.
+Release OpenRepro-Agent v0.3.1 with project inspection, all-run validation, benchmark indexing, schema hardening, and release documentation.
 
 ## Current State
 
-- The repository has the v0.3.0 Python CLI workflow in place.
+- The repository has the v0.3.1 Python CLI workflow in place.
 - The local working directory started without a Git repository.
 - No project-specific `AGENTS.md` or prior baton files were present.
-- v0.3.0 keeps real APIs disabled and uses deterministic mock provider/cache accounting by design.
+- v0.3.1 keeps real APIs disabled and uses deterministic mock provider/cache accounting by design.
 - PDF ingestion extracts text and page provenance with `pdfplumber`.
-- Demo, sweep, and benchmark runs write `manifest.json`; demo/sweep outputs can be checked with `openrepro validate`.
-- Benchmark runs record workflow-compliance evidence only.
+- Demo, sweep, and benchmark runs write `manifest.json`; demo/sweep outputs can be checked with `openrepro validate` or `openrepro validate --all`.
+- Benchmark runs record workflow-compliance evidence only and update `benchmarks/runs/benchmark_index.*`.
+- Project inspection writes `workspace/inspect_summary.json`.
 
 ## Latest Evidence
 
@@ -35,12 +36,11 @@ python -m pytest -q --basetemp E:\Code\OpenRepro-Agent\.codex_tmp\pytest-basetem
 
 ## Exact Next Step
 
-Run full v0.3.0 verification, then commit, tag, push, update GitHub About, and create the v0.3.0 release.
+Run full v0.3.1 verification, then commit, tag, push, update GitHub About, and create the v0.3.1 release.
 
-## Completed v0.3.0 Work
+## Completed v0.3.1 Work
 
-- Provider interface with deterministic mock provider.
-- Cache-aware API usage accounting.
-- Workflow-compliance benchmark runner.
-- Failure classification and repair suggestions.
-- Regression tests for generated artifacts.
+- Project inspection summary and CLI table.
+- All-run validation with diagnosis suggestions.
+- Benchmark index generation and rebuild command.
+- Backward-compatible benchmark schema hardening.

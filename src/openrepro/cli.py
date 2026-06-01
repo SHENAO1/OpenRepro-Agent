@@ -10,12 +10,13 @@ from rich.table import Table
 
 from . import __version__
 from .analyzer import analyze_project
-from .artifact_manager import latest_run_dir, validate_run_manifest
-from .benchmark_runner import run_benchmark
+from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
+from .benchmark_runner import generate_benchmark_index, run_benchmark
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .handoff_generator import generate_handoff
+from .inspector import inspect_project
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
 from .report_generator import generate_report
@@ -137,9 +138,44 @@ def validate_cmd(
         "--run-dir",
         help="Run directory to validate. Defaults to the latest project run.",
     ),
+    all_runs: bool = typer.Option(False, "--all", help="Validate every run under project outputs."),
 ) -> None:
     """Validate a run manifest and required artifacts."""
     project_dir = require_project(project_name)
+    if all_runs:
+        if run_dir is not None:
+            _warn("--all cannot be combined with --run-dir.")
+            raise typer.Exit(1)
+        results = validate_all_run_manifests(project_dir)
+        if not results:
+            _warn("No run directories found to validate.")
+            raise typer.Exit(1)
+        table = Table(title=f"OpenRepro Validation: {project_name}")
+        table.add_column("Run")
+        table.add_column("Command")
+        table.add_column("Valid")
+        table.add_column("Checked")
+        table.add_column("Errors")
+        for result in results:
+            table.add_row(
+                str(Path(result["run_dir"]).name),
+                str(result.get("command") or "unknown"),
+                str(result.get("valid")),
+                str(result.get("checked_artifacts", 0)),
+                str(len(result.get("errors", []))),
+            )
+        console.print(table)
+        failed = [result for result in results if not result.get("valid")]
+        if failed:
+            console.print("\nDiagnosis:")
+            for result in failed:
+                console.print(f"  {result['run_dir']}")
+                for item in diagnose_validation_result(result):
+                    console.print(f"    - {item['code']}: {item['repair_suggestion']}")
+            raise typer.Exit(1)
+        _success(f"Validated {len(results)} run directories.")
+        return
+
     target = run_dir
     if target is None:
         target = latest_run_dir(project_dir)
@@ -168,6 +204,33 @@ def validate_cmd(
         for item in diagnosis:
             console.print(f"  - {item['code']}: {item['repair_suggestion']}")
     raise typer.Exit(1)
+
+
+@app.command("inspect")
+def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Inspect project sources, candidates, runs, benchmarks, and diagnosis health."""
+    project_dir = require_project(project_name)
+    summary = inspect_project(project_dir)
+    table = Table(title=f"OpenRepro Inspect: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    rows = {
+        "Sources": summary["source_count"],
+        "PDF sources": summary["pdf_source_count"],
+        "PDF extraction": summary["pdf_extraction_statuses"],
+        "Formula candidates": summary["formula_candidate_count"],
+        "Parameter candidates": summary["parameter_candidate_count"],
+        "Runs": summary["run_count"],
+        "Latest manifest status": summary["latest_manifest_status"],
+        "Benchmark runs": summary["benchmark_run_count"],
+        "Diagnosis healthy": summary["diagnosis_healthy"],
+        "Diagnosis issues": summary["diagnosis_issue_count"],
+        "Next step": summary["next_step"],
+    }
+    for key, value in rows.items():
+        table.add_row(key, str(value))
+    console.print(table)
+    _success(f"Inspect summary written: {project_dir / 'workspace' / 'inspect_summary.json'}")
 
 
 @app.command("diagnose")
@@ -215,6 +278,21 @@ def benchmark_cmd(
         _warn(f"Benchmark completed with review needed: {result['benchmark_dir']}")
         for item in result.get("diagnosis", []):
             console.print(f"  - {item['code']}: {item['repair_suggestion']}")
+
+
+@app.command("benchmark-index")
+def benchmark_index_cmd(
+    runs_dir: Path | None = typer.Option(
+        None,
+        "--runs-dir",
+        help="Benchmark runs directory. Defaults to benchmarks/runs under the current directory.",
+    ),
+) -> None:
+    """Rebuild benchmark_index.json and benchmark_index.md."""
+    index = generate_benchmark_index(runs_dir)
+    _success(f"Benchmark index rebuilt with {index['run_count']} runs.")
+    console.print(f"JSON: {Path(index['runs_dir']) / 'benchmark_index.json'}")
+    console.print(f"Markdown: {Path(index['runs_dir']) / 'benchmark_index.md'}")
 
 
 @app.command("report")

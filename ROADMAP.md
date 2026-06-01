@@ -36,6 +36,16 @@ Released in v0.2.0 with `openrepro validate` and `openrepro run-sweep`.
 
 Released in v0.3.0 with `openrepro benchmark` and `openrepro diagnose`.
 
+## v0.3.1 — Stability and observability layer
+
+- [x] Project inspection with `openrepro inspect` and `workspace/inspect_summary.json`.
+- [x] All-run manifest validation with `openrepro validate --all`.
+- [x] Benchmark index generation after each benchmark run.
+- [x] Rebuildable benchmark indexes with `openrepro benchmark-index`.
+- [x] Backward-compatible benchmark schema hardening for required/optional artifacts and metrics.
+
+Released in v0.3.1 with project observability, benchmark indexing, and schema compatibility hardening.
+
 ## v0.4.0 — Opt-in provider and paper-to-code layer
 
 - Real provider implementations with explicit user opt-in.

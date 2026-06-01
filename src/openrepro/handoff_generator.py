@@ -67,7 +67,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.3.0 命令入口。
+- `cli.py`：已完成 v0.3.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -127,7 +127,7 @@ def _error_notes(project_dir: Path) -> str:
 ## 状态
 
 - 已完成：错误记录模板创建。
-- 部分完成：仅记录 v0.3.0 常见问题。
+- 部分完成：仅记录 v0.3.1 常见问题。
 - 待确认：后续真实实验中的错误类型。
 """
 
@@ -140,7 +140,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.3.0 闭环检查
+## v0.3.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}

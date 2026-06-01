@@ -1,21 +1,38 @@
 {
-  "schema_version": "0.3.0",
+  "schema_version": "0.3.1",
   "task_id": "sample_boc_like_demo",
   "paper_title": "Sample BOC-like notes task",
   "source_files": ["examples/boc_notes.md"],
-  "expected_artifacts": [
-    "workspace/paper_summary.md",
-    "workspace/MODEL_LEDGER.md",
-    "workspace/EXPERIMENT_PLAN.md",
-    "outputs/<timestamp>_<project>/figures/correlation.png",
-    "outputs/<timestamp>_<project>/data/demo_metrics.json",
-    "outputs/<timestamp>_<project>/manifest.json"
-  ],
-  "evaluation_metrics": [
-    "signal_length",
-    "correlation_peak",
-    "correlation_peak_index",
-    "run_time_seconds"
-  ],
+  "artifacts": {
+    "required": [
+      "workspace/paper_summary.md",
+      "workspace/MODEL_LEDGER.md",
+      "workspace/EXPERIMENT_PLAN.md",
+      "outputs/<timestamp>_<project>/figures/correlation.png",
+      "outputs/<timestamp>_<project>/data/demo_metrics.json",
+      "outputs/<timestamp>_<project>/manifest.json"
+    ],
+    "optional": [
+      "outputs/<timestamp>_<project>/reports/demo_report.md"
+    ]
+  },
+  "metrics": {
+    "required": [
+      "signal_length",
+      "correlation_peak",
+      "correlation_peak_index",
+      "run_time_seconds"
+    ],
+    "optional": [
+      "side_lobe_level"
+    ]
+  },
+  "workflow": {
+    "run_demo": true,
+    "run_sweep": false
+  },
+  "pass_criteria": {
+    "require_manifest_valid": true
+  },
   "notes": "This task checks workflow evidence only. It is not a benchmark score or a paper reproduction claim."
 }

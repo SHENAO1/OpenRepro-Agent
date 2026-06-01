@@ -50,7 +50,7 @@ marked as candidates until a human verifies them.
 
 Real providers should be opt-in. They must write actual usage records and must not fabricate tokens or costs.
 
-v0.3.0 ships only `MockProvider`. New providers should implement the provider
+v0.3.1 ships only `MockProvider`. New providers should implement the provider
 interface, require explicit configuration, and preserve request-hash cache
 accounting.
 
@@ -59,3 +59,14 @@ accounting.
 Benchmark tasks must report workflow-compliance evidence only. They can check
 sources, artifacts, manifests, and metric availability, but they must not claim
 paper reproduction success or scientific benchmark scores.
+
+v0.3.1 benchmark tasks may use either legacy `expected_artifacts` and
+`evaluation_metrics` fields or the newer `artifacts.required`,
+`artifacts.optional`, `metrics.required`, and `metrics.optional` fields.
+Optional checks should be reported without failing the benchmark status.
+
+## Project inspection
+
+`openrepro inspect <project_name>` should print a concise human-facing table and
+write `workspace/inspect_summary.json`. The JSON summary is the stable interface
+for other agents; update tests whenever the summary schema changes.

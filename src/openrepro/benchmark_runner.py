@@ -11,7 +11,7 @@ from .analyzer import analyze_project
 from .api_usage import write_mock_usage_files
 from .artifact_manager import latest_run_dir, validate_run_manifest, write_run_manifest
 from .diagnostics import diagnose_error, diagnose_validation_result
-from .demo_runner import run_demo
+from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .planner import generate_experiment_plan
 from .project_manager import init_project, require_project
@@ -19,8 +19,8 @@ from .provider import ProviderRequest, complete_with_cache, get_provider
 from .utils import iso_now, local_timestamp_for_path, read_json, safe_write_text, slugify, write_json
 
 
-BENCHMARK_SCHEMA_VERSION = "0.3.0"
-REQUIRED_TASK_FIELDS = ["task_id", "paper_title", "source_files", "expected_artifacts", "evaluation_metrics"]
+BENCHMARK_SCHEMA_VERSION = "0.3.1"
+REQUIRED_TASK_FIELDS = ["task_id", "paper_title", "source_files"]
 
 
 def _repo_root() -> Path:
@@ -38,10 +38,46 @@ def load_benchmark_task(task_path: Path) -> dict[str, Any]:
         raise ValueError(f"Invalid task schema: missing required fields: {', '.join(missing)}")
     if not isinstance(task.get("source_files"), list) or not task["source_files"]:
         raise ValueError("Invalid task schema: source_files must be a non-empty array")
-    if not isinstance(task.get("expected_artifacts"), list):
+    artifacts = task.get("artifacts") or {}
+    metrics = task.get("metrics") or {}
+    workflow_raw = task.get("workflow") or {}
+    pass_criteria_raw = task.get("pass_criteria") or {}
+    if "expected_artifacts" in task and not isinstance(task.get("expected_artifacts"), list):
         raise ValueError("Invalid task schema: expected_artifacts must be an array")
-    if not isinstance(task.get("evaluation_metrics"), list):
+    if "evaluation_metrics" in task and not isinstance(task.get("evaluation_metrics"), list):
         raise ValueError("Invalid task schema: evaluation_metrics must be an array")
+    if not isinstance(artifacts, dict):
+        raise ValueError("Invalid task schema: artifacts must be an object")
+    if not isinstance(metrics, dict):
+        raise ValueError("Invalid task schema: metrics must be an object")
+    if not isinstance(workflow_raw, dict):
+        raise ValueError("Invalid task schema: workflow must be an object")
+    if not isinstance(pass_criteria_raw, dict):
+        raise ValueError("Invalid task schema: pass_criteria must be an object")
+    for section_name, section in [("artifacts", artifacts), ("metrics", metrics)]:
+        for field_name in ["required", "optional"]:
+            if field_name in section and not isinstance(section.get(field_name), list):
+                raise ValueError(f"Invalid task schema: {section_name}.{field_name} must be an array")
+    workflow = {"run_demo": True, "run_sweep": False}
+    workflow.update(workflow_raw)
+    pass_criteria = {"require_manifest_valid": True}
+    pass_criteria.update(pass_criteria_raw)
+
+    task["artifacts"] = {
+        "required": list(artifacts.get("required", task.get("expected_artifacts", []))),
+        "optional": list(artifacts.get("optional", [])),
+    }
+    task["metrics"] = {
+        "required": list(metrics.get("required", task.get("evaluation_metrics", []))),
+        "optional": list(metrics.get("optional", [])),
+    }
+    task["workflow"] = {
+        "run_demo": bool(workflow.get("run_demo", True)),
+        "run_sweep": bool(workflow.get("run_sweep", False)),
+    }
+    task["pass_criteria"] = {
+        "require_manifest_valid": bool(pass_criteria.get("require_manifest_valid", True)),
+    }
     task.setdefault("schema_version", BENCHMARK_SCHEMA_VERSION)
     return task
 
@@ -82,7 +118,7 @@ def _resolve_expected_artifact(project_dir: Path, latest: Path | None, pattern: 
     return project_dir / normalized
 
 
-def _artifact_checks(project_dir: Path, latest: Path | None, expected: list[str]) -> list[dict[str, Any]]:
+def _artifact_checks(project_dir: Path, latest: Path | None, expected: list[str], required: bool) -> list[dict[str, Any]]:
     checks: list[dict[str, Any]] = []
     for pattern in expected:
         path = _resolve_expected_artifact(project_dir, latest, str(pattern))
@@ -91,12 +127,13 @@ def _artifact_checks(project_dir: Path, latest: Path | None, expected: list[str]
                 "pattern": pattern,
                 "resolved_path": str(path),
                 "exists": path.exists(),
+                "required": required,
             }
         )
     return checks
 
 
-def _metric_checks(latest: Path | None, expected_metrics: list[str]) -> list[dict[str, Any]]:
+def _metric_checks(latest: Path | None, expected_metrics: list[str], required: bool) -> list[dict[str, Any]]:
     metrics: dict[str, Any] = {}
     if latest is not None:
         metrics = read_json(latest / "data" / "demo_metrics.json", default={}) or {}
@@ -105,6 +142,7 @@ def _metric_checks(latest: Path | None, expected_metrics: list[str]) -> list[dic
             "metric": str(metric),
             "available": str(metric) in metrics,
             "value": metrics.get(str(metric)),
+            "required": required,
         }
         for metric in expected_metrics
     ]
@@ -167,7 +205,10 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
             ingest_source(project_dir, _resolve_source(task_path, str(source)))
         analyze_project(project_dir)
         generate_experiment_plan(project_dir)
-        run_demo(project_dir)
+        if task["workflow"]["run_demo"]:
+            run_demo(project_dir)
+        if task["workflow"]["run_sweep"]:
+            run_sweep(project_dir)
     except Exception as exc:
         diagnosis.append(diagnose_error(str(exc), source="benchmark_flow"))
 
@@ -178,16 +219,20 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
         "warnings": [],
         "checked_artifacts": 0,
     }
-    if not validation.get("valid"):
+    if task["pass_criteria"]["require_manifest_valid"] and not validation.get("valid"):
         diagnosis.extend(diagnose_validation_result(validation))
 
-    artifact_checks = _artifact_checks(project_dir, latest, [str(item) for item in task["expected_artifacts"]])
-    metric_checks = _metric_checks(latest, [str(item) for item in task["evaluation_metrics"]])
+    artifact_checks = _artifact_checks(project_dir, latest, [str(item) for item in task["artifacts"]["required"]], True)
+    artifact_checks.extend(
+        _artifact_checks(project_dir, latest, [str(item) for item in task["artifacts"]["optional"]], False)
+    )
+    metric_checks = _metric_checks(latest, [str(item) for item in task["metrics"]["required"]], True)
+    metric_checks.extend(_metric_checks(latest, [str(item) for item in task["metrics"]["optional"]], False))
     for item in artifact_checks:
-        if not item["exists"]:
+        if item["required"] and not item["exists"]:
             diagnosis.append(diagnose_error(f"Missing required artifact: {item['pattern']}", source="benchmark"))
     for item in metric_checks:
-        if not item["available"]:
+        if item["required"] and not item["available"]:
             diagnosis.append(diagnose_error(f"Missing evaluation metric: {item['metric']}", source="benchmark"))
 
     summary_request = ProviderRequest(
@@ -203,8 +248,11 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
     )
     write_mock_usage_files(api_usage_dir, task="benchmark")
 
-    status = "passed" if validation.get("valid") and all(item["exists"] for item in artifact_checks) and all(
-        item["available"] for item in metric_checks
+    manifest_passed = validation.get("valid") or not task["pass_criteria"]["require_manifest_valid"]
+    status = "passed" if manifest_passed and all(
+        item["exists"] for item in artifact_checks if item["required"]
+    ) and all(
+        item["available"] for item in metric_checks if item["required"]
     ) else "needs_review"
     result = {
         "schema_version": BENCHMARK_SCHEMA_VERSION,
@@ -219,6 +267,8 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
         "manifest_validation": validation,
         "artifact_checks": artifact_checks,
         "metric_checks": metric_checks,
+        "workflow": task["workflow"],
+        "pass_criteria": task["pass_criteria"],
         "provider_response": provider_response.to_dict(),
         "diagnosis": diagnosis,
         "policy": "Workflow-compliance evidence only; no paper reproduction success or benchmark score is claimed.",
@@ -237,4 +287,74 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
             "api_usage/api_usage_summary.json",
         ],
     )
+    generate_benchmark_index(_benchmark_root(task_path))
     return result
+
+
+def _artifact_pass_count(result: dict[str, Any]) -> str:
+    checks = result.get("artifact_checks", [])
+    return f"{sum(1 for item in checks if item.get('exists'))}/{len(checks)}"
+
+
+def _metric_pass_count(result: dict[str, Any]) -> str:
+    checks = result.get("metric_checks", [])
+    return f"{sum(1 for item in checks if item.get('available'))}/{len(checks)}"
+
+
+def collect_benchmark_results(runs_dir: Path) -> list[dict[str, Any]]:
+    """Collect benchmark result files from a runs directory."""
+    runs_dir = Path(runs_dir)
+    if not runs_dir.exists():
+        return []
+    results: list[dict[str, Any]] = []
+    for result_path in sorted(runs_dir.glob("*/benchmark_result.json"), reverse=True):
+        result = read_json(result_path, default=None)
+        if isinstance(result, dict):
+            result["_result_path"] = str(result_path)
+            results.append(result)
+    return results
+
+
+def generate_benchmark_index(runs_dir: Path | None = None) -> dict[str, Any]:
+    """Generate benchmark_index.json and benchmark_index.md for benchmark runs."""
+    target = Path.cwd() / "benchmarks" / "runs" if runs_dir is None else Path(runs_dir)
+    target.mkdir(parents=True, exist_ok=True)
+    results = collect_benchmark_results(target)
+    entries = []
+    for result in results:
+        entries.append(
+            {
+                "task_id": result.get("task_id"),
+                "status": result.get("status"),
+                "created_at": result.get("created_at"),
+                "benchmark_dir": result.get("benchmark_dir"),
+                "project_dir": result.get("project_dir"),
+                "latest_run_dir": result.get("latest_run_dir"),
+                "artifact_pass_count": _artifact_pass_count(result),
+                "metric_pass_count": _metric_pass_count(result),
+                "manifest_valid": (result.get("manifest_validation") or {}).get("valid"),
+                "diagnosis_count": len(result.get("diagnosis", [])),
+            }
+        )
+    index = {
+        "schema_version": BENCHMARK_SCHEMA_VERSION,
+        "created_at": iso_now(),
+        "runs_dir": str(target),
+        "run_count": len(entries),
+        "entries": entries,
+    }
+    write_json(target / "benchmark_index.json", index)
+    lines = [
+        "# Benchmark Index",
+        "",
+        "| Task | Status | Created | Artifacts | Metrics | Manifest | Diagnosis | Directory |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for entry in entries:
+        lines.append(
+            "| {task_id} | {status} | {created_at} | {artifact_pass_count} | {metric_pass_count} | {manifest_valid} | {diagnosis_count} | `{benchmark_dir}` |".format(
+                **entry
+            )
+        )
+    safe_write_text(target / "benchmark_index.md", "\n".join(lines) + "\n")
+    return index

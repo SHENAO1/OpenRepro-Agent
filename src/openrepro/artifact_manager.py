@@ -22,7 +22,7 @@ RUN_SUBDIRS = [
     "handoff",
 ]
 
-MANIFEST_SCHEMA_VERSION = "0.3.0"
+MANIFEST_SCHEMA_VERSION = "0.3.1"
 
 REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
     "run-demo": [
@@ -111,7 +111,7 @@ def latest_run_dir(project_dir: Path) -> Path | None:
 
 
 def required_handoff_files() -> list[str]:
-    """Return all project-level handoff files required by v0.3.0."""
+    """Return all project-level handoff files required by v0.3.1."""
     return [
         "PROJECT_CONTEXT.md",
         "PAPER_SUMMARY.md",
@@ -259,3 +259,8 @@ def validate_run_manifest(run_dir: Path, required_artifacts: list[str] | None = 
         "warnings": warnings,
         "checked_artifacts": checked,
     }
+
+
+def validate_all_run_manifests(project_dir: Path) -> list[dict[str, Any]]:
+    """Validate every run directory under project/outputs."""
+    return [validate_run_manifest(run_dir) for run_dir in list_run_dirs(Path(project_dir))]

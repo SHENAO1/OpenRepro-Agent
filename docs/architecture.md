@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v0.3.0 uses a small modular CLI architecture.
+OpenRepro-Agent v0.3.1 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -14,6 +14,7 @@ OpenRepro-Agent v0.3.0 uses a small modular CLI architecture.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, and request-hash cache.
 - `benchmark_runner.py`: workflow-compliance benchmark execution.
+- `inspector.py`: project observability summary for humans and agents.
 - `diagnostics.py`: failure classification and repair suggestions.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
@@ -30,7 +31,9 @@ sources/ + project_config.yaml
   → workspace/EXPERIMENT_PLAN.md + experiment_plan_validation.json
   → outputs/<timestamp>_<project>/...
   → outputs/<timestamp>_<project>/manifest.json
+  → workspace/inspect_summary.json
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
+  → benchmarks/runs/benchmark_index.json + benchmark_index.md
   → reports/report.md
   → handoff/*.md
 ```
@@ -38,7 +41,7 @@ sources/ + project_config.yaml
 ## Design constraints
 
 - No real LLM calls by default.
-- v0.3.0 exposes a provider interface, but ships only the deterministic mock provider.
+- v0.3.1 exposes a provider interface, but ships only the deterministic mock provider.
 - No heavy web framework.
 - Timestamped run directories prevent overwrites.
 - All generated scientific claims must be marked as candidate/placeholder unless verified.

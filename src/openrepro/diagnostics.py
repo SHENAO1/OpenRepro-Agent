@@ -112,7 +112,7 @@ def diagnose_project(project_dir: Path, run_dir: Path | None = None) -> dict[str
             issues.extend(diagnose_validation_result(validation))
 
     return {
-        "schema_version": "0.3.0",
+        "schema_version": "0.3.1",
         "created_at": iso_now(),
         "project_dir": str(project_dir),
         "run_dir": str(target) if target else None,

@@ -1,17 +1,42 @@
 {
-  "schema_version": "0.3.0",
-  "description": "Schema for OpenRepro-Agent workflow-compliance benchmark tasks. v0.3.0 records evidence only and does not report scientific benchmark scores.",
+  "schema_version": "0.3.1",
+  "description": "Schema for OpenRepro-Agent workflow-compliance benchmark tasks. v0.3.1 records evidence only and does not report scientific benchmark scores.",
   "required_fields": [
     "task_id",
     "paper_title",
-    "source_files",
-    "expected_artifacts",
-    "evaluation_metrics"
+    "source_files"
   ],
   "properties": {
     "task_id": {"type": "string"},
     "paper_title": {"type": "string"},
     "source_files": {"type": "array", "items": {"type": "string"}},
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "required": {"type": "array", "items": {"type": "string"}},
+        "optional": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "required": {"type": "array", "items": {"type": "string"}},
+        "optional": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "properties": {
+        "run_demo": {"type": "boolean"},
+        "run_sweep": {"type": "boolean"}
+      }
+    },
+    "pass_criteria": {
+      "type": "object",
+      "properties": {
+        "require_manifest_valid": {"type": "boolean"}
+      }
+    },
     "expected_artifacts": {"type": "array", "items": {"type": "string"}},
     "evaluation_metrics": {"type": "array", "items": {"type": "string"}},
     "notes": {"type": "string"}

@@ -94,7 +94,7 @@ class ProviderDisabledError(ValueError):
 def get_provider(name: str = "mock", enable_real_api: bool = False) -> BaseProvider:
     """Return a provider instance.
 
-    v0.3.0 intentionally ships only the mock provider. Non-mock providers are
+    v0.3.1 intentionally ships only the mock provider. Non-mock providers are
     reserved for a future opt-in release.
     """
     normalized = (name or "mock").lower()
@@ -102,9 +102,9 @@ def get_provider(name: str = "mock", enable_real_api: bool = False) -> BaseProvi
         return MockProvider()
     if not enable_real_api:
         raise ProviderDisabledError(
-            f"Provider '{name}' is disabled. v0.3.0 only enables the mock provider by default."
+            f"Provider '{name}' is disabled. v0.3.1 only enables the mock provider by default."
         )
-    raise ProviderDisabledError(f"Provider '{name}' is not implemented in v0.3.0.")
+    raise ProviderDisabledError(f"Provider '{name}' is not implemented in v0.3.1.")
 
 
 def complete_with_cache(

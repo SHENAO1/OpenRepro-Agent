@@ -1,6 +1,6 @@
 """API usage bookkeeping for OpenRepro-Agent.
 
-v0.3.0 does not call real model providers.  This module records mock events with
+v0.3.1 does not call real model providers.  This module records mock events with
 zero tokens and zero cost, and it summarizes only actual non-mocked calls as
 billable API calls.  That distinction prevents the tool from inventing token
 usage while still preserving the accounting schema needed by future releases.

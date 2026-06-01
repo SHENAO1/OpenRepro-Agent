@@ -1,20 +1,20 @@
 # OpenRepro-Agent
 
-OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, runs lightweight demos and parameter sweeps, validates generated artifacts, runs workflow-compliance benchmarks, classifies failures, tracks cache-aware mock API usage, and produces multi-agent handoff files.
+OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks, indexes benchmark evidence, classifies failures, tracks cache-aware mock API usage, and produces multi-agent handoff files.
 
-Current version: **v0.3.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.3.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.3.0 workflow is:
+The v0.3.1 workflow is:
 
 ```text
-init → ingest → analyze → plan → run-demo → validate → diagnose → run-sweep → benchmark → report → handoff → status
+init → ingest → analyze → plan → run-demo → validate --all → inspect → diagnose → run-sweep → benchmark → benchmark-index → report → handoff → status
 ```
 
-## What v0.3.0 supports
+## What v0.3.1 supports
 
 - Create a standard paper reproduction project directory.
 - Ingest Markdown and text notes into `sources/`.
@@ -26,20 +26,23 @@ init → ingest → analyze → plan → run-demo → validate → diagnose → 
 - Run a noise/seed parameter sweep for the built-in demo.
 - Save run artifacts: logs, figures, data, metrics, reports, config snapshots, metadata, manifest, mock API usage, and handoff notes.
 - Validate run manifests, required artifacts, file sizes, and SHA-256 hashes.
+- Validate every project run at once with `openrepro validate --all`.
+- Inspect project state and write `workspace/inspect_summary.json`.
 - Diagnose common workflow failures and suggest repairs.
 - Run workflow-compliance benchmark tasks from `benchmarks/benchmark_schema.json`.
+- Generate `benchmark_index.json` and `benchmark_index.md` for benchmark runs.
 - Use a deterministic mock provider interface with request-hash cache accounting.
 - Generate a project-level Markdown report.
 - Generate multi-agent handoff files for Claude Code, Codex, GitHub Copilot, or human maintainers.
 - Run pytest tests for the minimum workflow.
 
-## What v0.3.0 does not support
+## What v0.3.1 does not support
 
 - It does not fully read or understand papers.
 - It does not verify mathematical formulas automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
-- It does not implement real LLM providers; v0.3.0 ships the provider interface and mock provider only.
+- It does not implement real LLM providers; v0.3.1 ships the provider interface and mock provider only.
 - It does not claim benchmark scores, user counts, token usage, or efficiency improvements.
 - The BOC demo is a **lightweight BOC-like demo**, not a complete BOC acquisition/tracking implementation and not a full reproduction of any paper.
 
@@ -86,10 +89,13 @@ openrepro analyze boc_demo
 openrepro plan boc_demo
 openrepro run-demo boc_demo
 openrepro validate boc_demo
+openrepro validate boc_demo --all
+openrepro inspect boc_demo
 openrepro diagnose boc_demo
 openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
+openrepro benchmark-index
 openrepro report boc_demo
 openrepro handoff boc_demo
 openrepro status boc_demo
@@ -141,7 +147,7 @@ Copies Markdown/txt/PDF sources into `sources/` and updates:
 workspace/source_index.json
 ```
 
-For PDFs, v0.3.0 records:
+For PDFs, v0.3.1 records:
 
 - `extraction_status`
 - `extracted_text_path`
@@ -214,6 +220,26 @@ It checks:
 
 The command exits with code `0` when valid and code `1` when validation fails.
 
+Use `--all` to validate every run under `outputs/` in one pass:
+
+```bash
+openrepro validate boc_demo --all
+```
+
+The all-runs mode prints a table and includes diagnosis suggestions for any failed run.
+
+### `openrepro inspect <project_name>`
+
+Prints a compact project health table covering sources, PDF extraction status, formula and parameter candidate counts, run counts, the latest manifest status, benchmark run count, diagnosis health, and the next suggested command.
+
+It also writes:
+
+```text
+workspace/inspect_summary.json
+```
+
+The JSON summary is intended for agents and automation that need the same state snapshot without parsing terminal output.
+
 ### `openrepro diagnose <project_name> [--run-dir PATH]`
 
 Classifies project or run failures and suggests repairs. It covers missing artifacts, manifest mismatches, missing source files, PDF extraction failures, invalid demo config, provider-disabled errors, and unknown runtime errors.
@@ -254,6 +280,41 @@ benchmarks/runs/<timestamp>_<task_id>/
 ```
 
 Benchmark results only report observed workflow evidence: source ingestion, generated artifacts, manifest validity, and metric availability. They do not claim paper reproduction success or scientific benchmark scores.
+
+Benchmark task files may use either the v0.3.0 fields (`expected_artifacts`, `evaluation_metrics`) or the v0.3.1 fields:
+
+```json
+{
+  "artifacts": {
+    "required": ["workspace/paper_summary.md"],
+    "optional": ["outputs/<timestamp>_<project>/reports/demo_report.md"]
+  },
+  "metrics": {
+    "required": ["signal_length"],
+    "optional": ["side_lobe_level"]
+  },
+  "workflow": {
+    "run_demo": true,
+    "run_sweep": false
+  },
+  "pass_criteria": {
+    "require_manifest_valid": true
+  }
+}
+```
+
+Optional artifacts and metrics are reported but do not make the benchmark status fail.
+
+### `openrepro benchmark-index [--runs-dir PATH]`
+
+Rebuilds benchmark indexes for existing benchmark runs:
+
+```text
+benchmarks/runs/benchmark_index.json
+benchmarks/runs/benchmark_index.md
+```
+
+The index includes task id, status, creation time, benchmark directory, project directory, latest run directory, artifact pass count, metric pass count, manifest validity, and diagnosis count. It is regenerated automatically after every benchmark run.
 
 ### `openrepro report <project_name>`
 
@@ -309,7 +370,7 @@ This lets later agents, humans, and CI checks verify that reports and metrics ar
 
 ## Provider and API Usage design
 
-v0.3.0 does **not** implement real API providers. It ships a provider interface, a deterministic `MockProvider`, request-hash caching, and mock usage files to preserve the accounting schema:
+v0.3.1 does **not** implement real API providers. It ships a provider interface, a deterministic `MockProvider`, request-hash caching, and mock usage files to preserve the accounting schema:
 
 ```text
 api_usage/api_usage.jsonl
@@ -336,20 +397,21 @@ Important rule: handoff files must distinguish between confirmed facts, assumpti
 
 ## Benchmark policy
 
-The `benchmarks/` directory contains a task schema, a sample task, and generated benchmark run outputs. v0.3.0 reports workflow-compliance evidence only. It does not report scientific benchmark scores or claim a paper has been reproduced.
+The `benchmarks/` directory contains a task schema, a sample task, generated benchmark run outputs, and a rebuildable benchmark index. v0.3.1 reports workflow-compliance evidence only. It does not report scientific benchmark scores or claim a paper has been reproduced.
 
 ## Roadmap snapshot
 
 - v0.1.0: runnable CLI workflow and lightweight BOC-like demo.
 - v0.2.0: PDF text extraction, artifact manifests, formula/parameter candidates, experiment plan validation, demo parameter sweeps.
 - v0.3.0: provider interface, cache-aware API usage, benchmark runner, failure diagnosis and repair suggestions.
+- v0.3.1: project inspection, `validate --all`, benchmark indexing, and compatible benchmark schema hardening.
 - v0.4.0: opt-in real provider implementations and richer paper-to-code workflows.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.3.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.3.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

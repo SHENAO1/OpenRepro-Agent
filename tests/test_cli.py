@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v0.3.0" in result.output
+    assert "OpenRepro-Agent v0.3.1" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -45,10 +45,14 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["plan", "boc_demo"],
         ["run-demo", "boc_demo"],
         ["validate", "boc_demo"],
+        ["validate", "boc_demo", "--all"],
+        ["inspect", "boc_demo"],
         ["run-sweep", "boc_demo", "--noise-std", "0.0", "--noise-std", "0.1", "--seed", "1"],
         ["validate", "boc_demo"],
+        ["validate", "boc_demo", "--all"],
         ["diagnose", "boc_demo"],
         ["benchmark", "--task", str(task), "--project", "boc_benchmark"],
+        ["benchmark-index"],
         ["report", "boc_demo"],
         ["handoff", "boc_demo"],
         ["status", "boc_demo"],
@@ -62,6 +66,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "paper_summary.md").exists()
     assert (project / "workspace" / "MODEL_LEDGER.md").exists()
     assert (project / "workspace" / "EXPERIMENT_PLAN.md").exists()
+    assert (project / "workspace" / "inspect_summary.json").exists()
     assert (project / "reports" / "report.md").exists()
     run_dirs = list((project / "outputs").iterdir())
     assert len(run_dirs) == 2
@@ -69,4 +74,5 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert any((run_dir / "data" / "demo_metrics.json").exists() for run_dir in run_dirs)
     assert any((run_dir / "data" / "sweep_results.json").exists() for run_dir in run_dirs)
     assert all((run_dir / "manifest.json").exists() for run_dir in run_dirs)
-    assert (tmp_path / "benchmarks" / "runs").exists()
+    assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.json").exists()
+    assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.md").exists()

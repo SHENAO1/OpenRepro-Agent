@@ -1,4 +1,4 @@
-"""Rule-based analyzer for OpenRepro-Agent v0.3.0.
+"""Rule-based analyzer for OpenRepro-Agent v0.3.1.
 
 The analyzer deliberately avoids real LLM calls. It scans imported text and
 PDF-extracted sources for keyword evidence, formula candidates, and parameter
@@ -191,7 +191,7 @@ def _build_structured_model_ledger(
             }
         )
     return {
-        "schema_version": "0.3.0",
+        "schema_version": "0.3.1",
         "project_name": project_name,
         "created_at": iso_now(),
         "status": "candidate_unverified",
@@ -215,7 +215,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
     config = load_project_config(project_dir)
     project_name = config.get("project_name", project_dir.name)
-    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v0.3.0-rule")
+    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v0.3.1-rule")
     source_index = load_source_index(project_dir)
     documents = read_text_sources(project_dir)
 
@@ -290,7 +290,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
 {chr(10).join(f'- {p}' for p in candidate_paragraphs) if candidate_paragraphs else '- 暂无可用证据片段。'}
 
-## v0.3.0 局限说明
+## v0.3.1 局限说明
 
 - 本分析使用规则匹配与 Mock LLM 占位，不调用真实大模型 API。
 - PDF 文本和表格由 pdfplumber 抽取，扫描件或复杂排版可能无法完整读取。
@@ -324,7 +324,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
 ## 说明
 
-该账本由 OpenRepro-Agent v0.3.0 的规则分析器生成，用于保存论文复现中的模型候选、公式候选、参数候选和人工复核状态。所有候选默认标记为 `candidate_unverified`。
+该账本由 OpenRepro-Agent v0.3.1 的规则分析器生成，用于保存论文复现中的模型候选、公式候选、参数候选和人工复核状态。所有候选默认标记为 `candidate_unverified`。
 
 {chr(10).join(ledger_rows)}
 
@@ -350,7 +350,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
     write_json(
         workspace / "formula_candidates.json",
         {
-            "schema_version": "0.3.0",
+            "schema_version": "0.3.1",
             "created_at": iso_now(),
             "status": "candidate_unverified",
             "candidates": formula_candidates,
@@ -359,7 +359,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
     write_json(
         workspace / "parameter_candidates.json",
         {
-            "schema_version": "0.3.0",
+            "schema_version": "0.3.1",
             "created_at": iso_now(),
             "status": "candidate_unverified",
             "candidates": parameter_candidates,
