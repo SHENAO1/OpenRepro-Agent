@@ -60,10 +60,13 @@ Released in v0.4.0 with opt-in provider readiness, paper-to-code guardrails, ben
 ## v0.5.0 — Stronger paper-to-code and repair loop
 
 - Prompt/response redaction and stronger cache controls.
-- Human approval gates that can promote verified candidates into runnable experiments.
-- Controlled repair execution with dry-run diffs.
+- [x] Human approval gates that can promote verified candidates into implementation-ready experiment scaffolds.
+- [x] Controlled repair dry-run previews with manifest regeneration diffs.
 - Richer benchmark tasks with dataset/environment provenance.
 - Run lineage graphs and cross-run metric dashboards.
+
+Implemented in v0.5.0 with `openrepro approve-candidates`, `workspace/verified_candidates.json`,
+verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 
 ## Long-term ideas
 

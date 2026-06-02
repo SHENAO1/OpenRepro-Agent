@@ -10,6 +10,7 @@ from rich.table import Table
 
 from . import __version__
 from .analyzer import analyze_project
+from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .config import configure_api_provider, provider_status
@@ -21,7 +22,7 @@ from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
-from .repair import create_repair_plan
+from .repair import create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .run_compare import compare_runs
 
@@ -188,6 +189,45 @@ def scaffold_experiment_cmd(
     console.print(f"Next step: {summary['next_step']}")
 
 
+@app.command("approve-candidates")
+def approve_candidates_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    formula_id: list[str] | None = typer.Option(
+        None,
+        "--formula-id",
+        help="Formula candidate id to approve. Repeat to approve multiple formulas.",
+    ),
+    parameter_id: list[str] | None = typer.Option(
+        None,
+        "--parameter-id",
+        help="Parameter candidate id to approve. Repeat to approve multiple parameters.",
+    ),
+    approve_all: bool = typer.Option(False, "--all", help="Approve all currently detected candidates."),
+    reviewer: str = typer.Option("human", "--reviewer", help="Reviewer label recorded in the approval artifact."),
+    note: str = typer.Option("", "--note", help="Verification note recorded in the approval artifact."),
+) -> None:
+    """Promote human-reviewed candidates into verified input artifacts."""
+    project_dir = require_project(project_name)
+    try:
+        result = approve_candidates(
+            project_dir,
+            formula_ids=formula_id,
+            parameter_ids=parameter_id,
+            approve_all=approve_all,
+            reviewer=reviewer,
+            verification_note=note,
+        )
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success("Verified candidate artifacts written.")
+    console.print(f"Status: {result['status']}")
+    console.print(f"Formulas: {result['formula_candidate_count']}")
+    console.print(f"Parameters: {result['parameter_candidate_count']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'verified_candidates.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'VERIFIED_CANDIDATES.md'}")
+
+
 @app.command("validate")
 def validate_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -333,6 +373,30 @@ def repair_plan_cmd(
     _success(f"Repair plan written with {plan['issue_count']} issues.")
     console.print(f"JSON: {project_dir / 'workspace' / 'repair_plan.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_PLAN.md'}")
+
+
+@app.command("repair")
+def repair_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_dir: Path | None = typer.Option(
+        None,
+        "--run-dir",
+        help="Run directory to preview repairs for. Defaults to the latest project run.",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview controlled repair actions without changing files."),
+) -> None:
+    """Preview controlled repair actions. Only dry-run mode is supported."""
+    if not dry_run:
+        _warn("Controlled repair execution currently requires --dry-run.")
+        raise typer.Exit(1)
+    project_dir = require_project(project_name)
+    target = run_dir
+    if target is not None and not target.is_absolute() and not target.exists():
+        target = project_dir / target
+    preview = preview_repair_actions(project_dir, target)
+    _success(f"Repair dry-run written with {preview['action_count']} actions.")
+    console.print(f"JSON: {project_dir / 'workspace' / 'repair_dry_run.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_DRY_RUN.md'}")
 
 
 @app.command("compare-runs")

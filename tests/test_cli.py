@@ -11,13 +11,17 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v0.4.0" in result.output
+    assert "OpenRepro-Agent v0.5.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     source = tmp_path / "notes.md"
-    source.write_text("# BOC CLI Notes\n\nBOC pseudo-random code and autocorrelation metrics.", encoding="utf-8")
+    source.write_text(
+        "# BOC CLI Notes\n\nBOC pseudo-random code and autocorrelation metrics.\n\n"
+        "Formula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 128",
+        encoding="utf-8",
+    )
     task = tmp_path / "task.json"
     task.write_text(
         f"""{{
@@ -54,6 +58,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["ingest", "boc_demo", "--source", str(source)],
         ["analyze", "boc_demo"],
         ["plan", "boc_demo"],
+        ["approve-candidates", "boc_demo", "--all", "--reviewer", "cli-test"],
         ["scaffold-experiment", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-demo", "boc_demo"],
         ["validate", "boc_demo"],
@@ -65,6 +70,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["compare-runs", "boc_demo"],
         ["diagnose", "boc_demo"],
         ["repair-plan", "boc_demo"],
+        ["repair", "boc_demo", "--dry-run"],
         ["benchmark", "--task", str(task), "--project", "boc_benchmark"],
         ["benchmark-suite", "--suite", str(suite)],
         ["benchmark-index"],
@@ -83,10 +89,13 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "EXPERIMENT_PLAN.md").exists()
     assert (project / "workspace" / "inspect_summary.json").exists()
     assert (project / "workspace" / "experiment_scaffold_summary.json").exists()
+    assert (project / "workspace" / "verified_candidates.json").exists()
+    assert (project / "workspace" / "repair_dry_run.json").exists()
     assert (project / "workspace" / "repair_plan.json").exists()
     assert (project / "workspace" / "run_comparison.json").exists()
     assert (project / "reports" / "report.md").exists()
     assert (project / "experiments" / "cli_exp" / "APPROVAL_REQUIRED.md").exists()
+    assert (project / "experiments" / "cli_exp" / "experiment_config.json").exists()
     run_dirs = list((project / "outputs").iterdir())
     assert len(run_dirs) == 2
     assert any((run_dir / "figures" / "correlation.png").exists() for run_dir in run_dirs)

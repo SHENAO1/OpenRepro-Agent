@@ -162,13 +162,13 @@ def _artifact_record(run_dir: Path, relative_path: str) -> dict[str, Any]:
     }
 
 
-def write_run_manifest(
+def build_run_manifest(
     run_dir: Path,
     command: str,
     required_artifacts: list[str] | None = None,
     extra_metadata: dict[str, Any] | None = None,
-) -> Path:
-    """Write manifest.json for a completed run directory."""
+) -> dict[str, Any]:
+    """Build a manifest dictionary for a completed run directory."""
     run_dir = Path(run_dir)
     required = required_artifacts or REQUIRED_RUN_ARTIFACTS.get(command, [])
     discovered = sorted(
@@ -188,6 +188,23 @@ def write_run_manifest(
     }
     if extra_metadata:
         manifest["metadata"] = extra_metadata
+    return manifest
+
+
+def write_run_manifest(
+    run_dir: Path,
+    command: str,
+    required_artifacts: list[str] | None = None,
+    extra_metadata: dict[str, Any] | None = None,
+) -> Path:
+    """Write manifest.json for a completed run directory."""
+    run_dir = Path(run_dir)
+    manifest = build_run_manifest(
+        run_dir,
+        command,
+        required_artifacts=required_artifacts,
+        extra_metadata=extra_metadata,
+    )
     write_json(run_dir / "manifest.json", manifest)
     return run_dir / "manifest.json"
 

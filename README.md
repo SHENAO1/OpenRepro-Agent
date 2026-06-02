@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.4.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.5.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.4.0 workflow is:
+The v0.5.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → run-sweep → compare-runs → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -41,12 +41,22 @@ init → configure-provider → ingest → analyze → plan → scaffold-experim
 - Generate multi-agent handoff files for Claude Code, Codex, GitHub Copilot, or human maintainers.
 - Run pytest tests for the minimum workflow.
 
+## What v0.5.0 adds
+
+- Promote human-reviewed formula and parameter candidates into `workspace/verified_candidates.json`.
+- Generate `workspace/VERIFIED_CANDIDATES.md` for auditable approval notes.
+- Let experiment scaffolds detect verified candidates and mark the scaffold as `verified_inputs_ready`.
+- Preview controlled repair actions with `openrepro repair --dry-run`.
+- Generate repair previews in `workspace/repair_dry_run.json` and `workspace/REPAIR_DRY_RUN.md`.
+- Include manifest regeneration diffs in dry-run previews for manifest mismatch or missing-manifest cases.
+
 ## What v0.4.0 does not support
 
 - It does not fully read or understand papers.
 - It does not verify mathematical formulas automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
+- It does not apply repair previews automatically; v0.5.0 dry-run output is for review.
 - It does not enable real LLM providers by default; OpenAI-compatible calls require explicit opt-in and environment-backed secrets.
 - It does not claim benchmark scores, user counts, token usage, or efficiency improvements.
 - The BOC demo is a **lightweight BOC-like demo**, not a complete BOC acquisition/tracking implementation and not a full reproduction of any paper.
@@ -93,6 +103,7 @@ openrepro configure-provider boc_demo --provider mock --disable-real-api
 openrepro ingest boc_demo --source examples/boc_notes.md
 openrepro analyze boc_demo
 openrepro plan boc_demo
+openrepro approve-candidates boc_demo --all --reviewer human
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp
 openrepro run-demo boc_demo
 openrepro validate boc_demo
@@ -100,6 +111,7 @@ openrepro validate boc_demo --all
 openrepro inspect boc_demo
 openrepro diagnose boc_demo
 openrepro repair-plan boc_demo
+openrepro repair boc_demo --dry-run
 openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
@@ -223,7 +235,30 @@ experiments/<experiment_id>/
   runner_stub.py
 ```
 
-The scaffold is generated from candidate formulas and parameters and is marked `approval_required` unless `--acknowledge-candidates` is provided. It is a coding starting point, not a reproduction claim.
+The scaffold is generated from candidate formulas and parameters and is marked `approval_required` unless verified candidates exist or `--acknowledge-candidates` is provided. It is a coding starting point, not a reproduction claim.
+
+### `openrepro approve-candidates <project_name>`
+
+Writes human approval artifacts for selected candidate formulas and parameters:
+
+```text
+workspace/verified_candidates.json
+workspace/VERIFIED_CANDIDATES.md
+```
+
+Approve all currently detected candidates:
+
+```bash
+openrepro approve-candidates boc_demo --all --reviewer human --note "Checked against paper notes."
+```
+
+Or approve specific candidate IDs:
+
+```bash
+openrepro approve-candidates boc_demo --formula-id F001 --parameter-id P001
+```
+
+Verified candidates are implementation inputs only. They do not prove that the paper has been reproduced.
 
 ### `openrepro run-demo <project_name>`
 
@@ -295,6 +330,17 @@ workspace/REPAIR_PLAN.md
 ```
 
 v0.4.0 repair plans do not edit files automatically. They convert diagnosis output into ordered manual repair suggestions.
+
+### `openrepro repair <project_name> --dry-run [--run-dir PATH]`
+
+Writes a controlled repair preview without mutating project or run files:
+
+```text
+workspace/repair_dry_run.json
+workspace/REPAIR_DRY_RUN.md
+```
+
+For manifest mismatch and missing-manifest issues, the dry-run preview includes a unified diff showing how `manifest.json` would change if regenerated from files currently present on disk. Missing scientific artifacts are never fabricated.
 
 ### `openrepro run-sweep <project_name> [--noise-std FLOAT]... [--seed INT]...`
 
@@ -488,13 +534,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.3.0: provider interface, cache-aware API usage, benchmark runner, failure diagnosis and repair suggestions.
 - v0.3.1: project inspection, `validate --all`, benchmark indexing, and compatible benchmark schema hardening.
 - v0.4.0: opt-in OpenAI-compatible provider path, human-gated experiment scaffolds, benchmark suites, repair plans, and run comparison.
-- v0.5.0: richer paper-to-code workflows, approval gates, and more complete repair loops.
+- v0.5.0: candidate approval artifacts, verified-input scaffolds, and controlled repair dry-run previews.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.4.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.5.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

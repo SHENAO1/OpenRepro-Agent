@@ -78,8 +78,20 @@ candidate evidence. Generated scaffolds must stay human-gated: mark candidates
 as unverified, write `APPROVAL_REQUIRED.md`, and avoid runnable scientific claims
 until a human has reviewed formulas, parameters, and assumptions.
 
+v0.5.0 adds `openrepro approve-candidates`, which writes
+`workspace/verified_candidates.json` and `workspace/VERIFIED_CANDIDATES.md`.
+Experiment scaffolds may use that artifact to mark inputs as
+`verified_inputs_ready`, but this still does not claim paper reproduction
+success.
+
 ## Repair and run comparison
 
 `openrepro repair-plan` is advisory only in v0.4.0 and must not mutate project
 code or artifacts. `openrepro compare-runs` should report observed manifest and
 metric differences without interpreting them as scientific superiority.
+
+v0.5.0 adds `openrepro repair --dry-run`, which writes
+`workspace/repair_dry_run.json` and `workspace/REPAIR_DRY_RUN.md` without
+mutating run artifacts. Manifest repair previews should be generated as diffs
+against the current on-disk files; missing scientific artifacts must never be
+fabricated.

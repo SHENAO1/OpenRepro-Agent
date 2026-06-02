@@ -9,6 +9,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `document_loader.py`: source ingestion, PDF extraction, and source index management.
 - `analyzer.py`: rule-based candidate analysis.
 - `planner.py`: experiment plan generation and validation.
+- `approval.py`: human approval artifacts for formula and parameter candidates.
 - `demo_runner.py`: lightweight BOC-like signal demo and parameter sweep.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `api_usage.py`: mock/cached usage record and summary schema.
@@ -32,11 +33,13 @@ sources/ + project_config.yaml
   → workspace/paper_summary.md + MODEL_LEDGER.md + analysis_result.json
   → workspace/formula_candidates.json + parameter_candidates.json + model_ledger.json
   → workspace/EXPERIMENT_PLAN.md + experiment_plan_validation.json
+  → workspace/verified_candidates.json + VERIFIED_CANDIDATES.md
   → experiments/<experiment_id>/...
   → outputs/<timestamp>_<project>/...
   → outputs/<timestamp>_<project>/manifest.json
   → workspace/inspect_summary.json
   → workspace/repair_plan.json + run_comparison.json
+  → workspace/repair_dry_run.json + REPAIR_DRY_RUN.md
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md
