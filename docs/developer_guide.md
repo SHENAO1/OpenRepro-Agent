@@ -113,6 +113,15 @@ execution evidence under a normal output run directory, and write a manifest.
 It must not reinterpret a successful runner exit as scientific reproduction
 success.
 
+v0.8.1 adds experiment templates. `scaffold-experiment --template basic` keeps
+the guarded placeholder behavior, while `--template boc-like` and
+`--template numeric-sweep` generate starter runners for verified scaffolds.
+Template runners must write outputs under `OPENREPRO_RUN_DIR`, and
+`run-experiment` must include `expected_artifacts.json` required paths in the
+run manifest. If a completed runner omits a required template artifact,
+`run-experiment` should fail instead of leaving the issue for a later
+validation step.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

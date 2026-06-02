@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.8.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.8.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.8.0 workflow is:
+The v0.8.1 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
@@ -114,6 +114,13 @@ init → configure-provider → ingest → analyze → plan → list-candidates 
 - Add numeric values, normalized units, context window, and evidence quality to parameter candidates.
 - Preserve table/page provenance for PDF table-derived parameter candidates.
 
+## What v0.8.1 adds
+
+- Add `--template basic|boc-like|numeric-sweep` to `openrepro scaffold-experiment`.
+- Generate template runners for BOC-like traces and numeric sweeps when verified inputs are available.
+- Align `expected_artifacts.json` with the current `run-experiment` output layout.
+- Have `run-experiment` pass `OPENREPRO_RUN_DIR` to runners and include template-required artifacts in the run manifest.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -170,7 +177,7 @@ openrepro plan boc_demo
 openrepro list-candidates boc_demo
 openrepro review-candidates boc_demo --candidate-id F001 --status needs_more_evidence --reviewer human
 openrepro approve-candidates boc_demo --all --reviewer human
-openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp
+openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
 openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro run-demo boc_demo
 openrepro validate boc_demo
@@ -307,10 +314,13 @@ experiments/<experiment_id>/
   APPROVAL_REQUIRED.md
   experiment_config.json
   expected_artifacts.json
+  runner.py
   runner_stub.py
 ```
 
 The scaffold is generated from candidate formulas and parameters and is marked `approval_required` unless verified candidates exist or `--acknowledge-candidates` is provided. It is a coding starting point, not a reproduction claim.
+
+Use `--template basic`, `--template boc-like`, or `--template numeric-sweep` to choose the starter runner. Template runners are created only for runnable scaffolds, and they write declared outputs under `OPENREPRO_RUN_DIR` during `run-experiment`.
 
 ### `openrepro approve-candidates <project_name>`
 
@@ -384,6 +394,12 @@ manifest.json
 
 The command executes the scaffold runner and records evidence only. It does not
 claim paper reproduction success.
+
+For v0.8.1 scaffolds, `run-experiment` reads
+`experiments/<id>/expected_artifacts.json` and includes those required paths in
+the run manifest, so template-specific outputs are validated with the rest of
+the run evidence. If a runner exits successfully but omits required template
+artifacts, the command fails with an artifact-validation error.
 
 ### `openrepro run-demo <project_name>`
 
@@ -703,12 +719,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.7.1: candidate listing and review lifecycle.
 - v0.7.2: status/inspect stabilization, smoke coverage, and release tag cleanup.
 - v0.8.0: paper metadata, DOI candidates, and candidate evidence provenance.
+- v0.8.1: experiment templates and template-specific run artifact validation.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.8.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.8.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

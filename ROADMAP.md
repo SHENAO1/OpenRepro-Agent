@@ -133,6 +133,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Add numeric values, normalized units, context window, and evidence quality to parameter candidates.
 - [x] Preserve table/page provenance for PDF table-derived parameter candidates.
 
+## v0.8.1 — Experiment templates and artifact expectations
+
+- [x] Add `basic`, `boc-like`, and `numeric-sweep` templates for `openrepro scaffold-experiment`.
+- [x] Generate runnable template starter code when verified inputs are available.
+- [x] Align scaffold `expected_artifacts.json` with current `run-experiment` outputs.
+- [x] Include template-required artifacts in `run-experiment` manifests.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

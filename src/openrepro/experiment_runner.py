@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-from .artifact_manager import RunDirectory, write_run_manifest
+from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run_manifest, write_run_manifest
 from .config import load_project_config
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EXPERIMENT_RUN_SCHEMA_VERSION = "0.7.0"
+EXPERIMENT_RUN_SCHEMA_VERSION = "0.8.1"
 
 
 def _experiment_dir(project_dir: Path, experiment_id: str) -> Path:
@@ -26,6 +27,37 @@ def _select_runner(exp_dir: Path) -> Path:
     return exp_dir / "runner_stub.py"
 
 
+def _normalize_artifact_paths(paths: Any) -> list[str]:
+    if not isinstance(paths, list):
+        return []
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for path in paths:
+        item = str(path).strip().replace("\\", "/")
+        if not item or item == "manifest.json" or item in seen:
+            continue
+        seen.add(item)
+        normalized.append(item)
+    return normalized
+
+
+def _load_expected_artifacts(exp_dir: Path) -> dict[str, Any]:
+    expected = read_json(exp_dir / "expected_artifacts.json", default={}) or {}
+    return expected if isinstance(expected, dict) else {}
+
+
+def _required_artifacts_for_run(expected_artifacts: dict[str, Any]) -> list[str]:
+    base = REQUIRED_RUN_ARTIFACTS.get("run-experiment", [])
+    is_template_schema = expected_artifacts.get("schema_version") == EXPERIMENT_RUN_SCHEMA_VERSION
+    is_template_scaffold = bool(expected_artifacts.get("template"))
+    declared = (
+        _normalize_artifact_paths(expected_artifacts.get("required"))
+        if is_template_schema or is_template_scaffold
+        else []
+    )
+    return _normalize_artifact_paths(list(base) + declared)
+
+
 def run_experiment(
     project_dir: Path,
     experiment_id: str,
@@ -33,7 +65,7 @@ def run_experiment(
     timeout_seconds: int = 300,
 ) -> dict[str, Any]:
     """Run a verified experiment scaffold and write execution evidence."""
-    project_dir = Path(project_dir)
+    project_dir = Path(project_dir).resolve()
     if not confirm:
         raise ValueError("run-experiment requires --confirm.")
     exp_dir = _experiment_dir(project_dir, experiment_id)
@@ -50,10 +82,18 @@ def run_experiment(
     if not runner.exists():
         raise FileNotFoundError(f"Experiment runner not found: {runner}")
 
+    expected_artifacts = _load_expected_artifacts(exp_dir)
+    required_artifacts = _required_artifacts_for_run(expected_artifacts)
+    template = str(config.get("template") or expected_artifacts.get("template") or "basic")
+
     project_config = load_project_config(project_dir)
     project_name = str(project_config.get("project_name", project_dir.name))
     run_dirs = RunDirectory.create(project_dir, f"{project_name}_{experiment_id}")
     started_at = iso_now()
+    env = os.environ.copy()
+    env["OPENREPRO_RUN_DIR"] = str(run_dirs.root)
+    env["OPENREPRO_EXPERIMENT_ID"] = experiment_id
+    env["OPENREPRO_EXPERIMENT_TEMPLATE"] = template
     completed = subprocess.run(
         [sys.executable, str(runner.name)],
         cwd=exp_dir,
@@ -61,6 +101,7 @@ def run_experiment(
         capture_output=True,
         timeout=timeout_seconds,
         check=False,
+        env=env,
     )
     completed_at = iso_now()
     status = "completed" if completed.returncode == 0 else "failed"
@@ -70,6 +111,7 @@ def run_experiment(
 started_at: {started_at}
 completed_at: {completed_at}
 experiment_id: {experiment_id}
+template: {template}
 runner: {runner}
 exit_code: {completed.returncode}
 status: {status}
@@ -86,6 +128,7 @@ status: {status}
     execution_result = {
         "schema_version": EXPERIMENT_RUN_SCHEMA_VERSION,
         "experiment_id": experiment_id,
+        "template": template,
         "runner": str(runner),
         "exit_code": completed.returncode,
         "status": status,
@@ -93,6 +136,11 @@ status: {status}
         "completed_at": completed_at,
         "stdout": completed.stdout,
         "stderr": completed.stderr,
+        "expected_artifacts": {
+            "path": str(exp_dir / "expected_artifacts.json") if expected_artifacts else None,
+            "required": required_artifacts,
+            "optional": _normalize_artifact_paths(expected_artifacts.get("optional")),
+        },
         "policy": "Controlled experiment execution records evidence only; it does not claim paper reproduction success.",
     }
     write_json(run_dirs.data / "execution_result.json", execution_result)
@@ -103,8 +151,10 @@ status: {status}
 - experiment_id: {experiment_id}
 - status: {status}
 - exit_code: {completed.returncode}
+- template: {template}
 - runner: `{runner}`
 - verified_candidates_path: `{config.get('verified_candidates_path')}`
+- required_artifacts: {len(required_artifacts)}
 
 ## Policy
 
@@ -116,6 +166,7 @@ This report records controlled execution evidence only. It does not claim paper 
         "project_dir": str(project_dir),
         "experiment_id": experiment_id,
         "experiment_dir": str(exp_dir),
+        "template": template,
         "run_dir": str(run_dirs.root),
         "status": status,
         "exit_code": completed.returncode,
@@ -125,6 +176,11 @@ This report records controlled execution evidence only. It does not claim paper 
             "execution_result": relpath(run_dirs.data / "execution_result.json", run_dirs.root),
             "report": relpath(run_dirs.reports / "experiment_report.md", run_dirs.root),
         },
+        "expected_artifacts": {
+            "path": str(exp_dir / "expected_artifacts.json") if expected_artifacts else None,
+            "required": required_artifacts,
+            "optional": _normalize_artifact_paths(expected_artifacts.get("optional")),
+        },
         "policy": "Run artifacts are execution evidence, not scientific reproduction claims.",
     }
     metadata["manifest"] = relpath(run_dirs.root / "manifest.json", run_dirs.root)
@@ -132,6 +188,22 @@ This report records controlled execution evidence only. It does not claim paper 
     write_run_manifest(
         run_dirs.root,
         "run-experiment",
-        extra_metadata={"experiment_id": experiment_id, "status": status, "exit_code": completed.returncode},
+        required_artifacts=required_artifacts,
+        extra_metadata={
+            "experiment_id": experiment_id,
+            "template": template,
+            "status": status,
+            "exit_code": completed.returncode,
+            "expected_artifact_count": len(required_artifacts),
+        },
     )
+    artifact_validation = validate_run_manifest(run_dirs.root, required_artifacts=required_artifacts)
+    metadata["artifact_validation"] = {
+        "valid": artifact_validation["valid"],
+        "checked_artifacts": artifact_validation["checked_artifacts"],
+        "errors": artifact_validation["errors"],
+    }
+    if status == "completed" and not artifact_validation["valid"]:
+        errors = "; ".join(artifact_validation["errors"])
+        raise ValueError(f"Experiment artifact validation failed: {errors}")
     return metadata

@@ -232,6 +232,11 @@ def run_experiment_cmd(
 def scaffold_experiment_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
     experiment_id: str | None = typer.Option(None, "--experiment-id", help="Experiment id. Defaults to a timestamp."),
+    template: str = typer.Option(
+        "basic",
+        "--template",
+        help="Experiment template: basic, boc-like, or numeric-sweep.",
+    ),
     acknowledge_candidates: bool = typer.Option(
         False,
         "--acknowledge-candidates",
@@ -240,9 +245,19 @@ def scaffold_experiment_cmd(
 ) -> None:
     """Create a human-gated experiment scaffold from candidate evidence."""
     project_dir = require_project(project_name)
-    summary = scaffold_experiment(project_dir, experiment_id=experiment_id, acknowledge_candidates=acknowledge_candidates)
+    try:
+        summary = scaffold_experiment(
+            project_dir,
+            experiment_id=experiment_id,
+            acknowledge_candidates=acknowledge_candidates,
+            template=template,
+        )
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
     _success(f"Experiment scaffold created: {summary['experiment_dir']}")
     console.print(f"Status: {summary['status']}")
+    console.print(f"Template: {summary['template']}")
     console.print(f"Next step: {summary['next_step']}")
 
 
