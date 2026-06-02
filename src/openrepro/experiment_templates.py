@@ -8,13 +8,14 @@ from typing import Any
 
 from .utils import read_json
 
-TEMPLATE_SCHEMA_VERSION = "0.9.0"
+TEMPLATE_SCHEMA_VERSION = "0.9.1"
 BASE_RUN_REQUIRED_ARTIFACTS = [
     "logs/run.log",
     "data/execution_result.json",
     "reports/experiment_report.md",
     "configs/experiment_config_snapshot.json",
     "configs/experiment_inputs_snapshot.json",
+    "configs/environment_snapshot.json",
     "code/runner.py",
     "metadata.json",
 ]

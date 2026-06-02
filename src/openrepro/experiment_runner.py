@@ -11,10 +11,11 @@ from typing import Any
 
 from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run_manifest, write_run_manifest
 from .config import load_project_config
+from .environment_snapshot import build_environment_snapshot
 from .experiment_templates import normalize_artifact_paths
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.0"
+EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.1"
 
 
 def _experiment_dir(project_dir: Path, experiment_id: str) -> Path:
@@ -152,6 +153,8 @@ status: {status}
             "input_completeness": {"status": "missing"},
         },
     )
+    environment_snapshot = build_environment_snapshot(project_dir, exp_dir, run_dirs.root, runner, experiment_id, template)
+    write_json(run_dirs.configs / "environment_snapshot.json", environment_snapshot)
     shutil.copy2(runner, run_dirs.code / "runner.py")
     report = f"""# Experiment Run Report
 
@@ -164,6 +167,9 @@ status: {status}
 - experiment_inputs_path: `{experiment_inputs_path if experiment_inputs else None}`
 - input_completeness: {input_completeness.get('status', 'missing')}
 - missing_required_inputs: {input_completeness.get('missing', [])}
+- environment_snapshot: `configs/environment_snapshot.json`
+- random_seed: {environment_snapshot.get('random_seed')}
+- repeatability_check: {environment_snapshot.get('repeatability_check', {}).get('status')}
 - required_artifacts: {len(required_artifacts)}
 
 ## Policy
@@ -196,6 +202,12 @@ This report records controlled execution evidence only. It does not claim paper 
             "snapshot": relpath(run_dirs.configs / "experiment_inputs_snapshot.json", run_dirs.root),
             "input_completeness": input_completeness or {"status": "missing"},
         },
+        "environment_snapshot": {
+            "snapshot": relpath(run_dirs.configs / "environment_snapshot.json", run_dirs.root),
+            "random_seed": environment_snapshot.get("random_seed"),
+            "runner_sha256": (environment_snapshot.get("runner") or {}).get("sha256"),
+            "repeatability_check": environment_snapshot.get("repeatability_check"),
+        },
         "policy": "Run artifacts are execution evidence, not scientific reproduction claims.",
     }
     metadata["manifest"] = relpath(run_dirs.root / "manifest.json", run_dirs.root)
@@ -211,6 +223,7 @@ This report records controlled execution evidence only. It does not claim paper 
             "exit_code": completed.returncode,
             "expected_artifact_count": len(required_artifacts),
             "input_completeness": input_completeness.get("status", "missing"),
+            "repeatability_check": environment_snapshot.get("repeatability_check", {}).get("status"),
         },
     )
     artifact_validation = validate_run_manifest(run_dirs.root, required_artifacts=required_artifacts)

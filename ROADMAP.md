@@ -155,6 +155,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Have template runners read `OPENREPRO_EXPERIMENT_INPUTS`.
 - [x] Snapshot experiment inputs in run outputs and surface them in reports and handoff files.
 
+## v0.9.1 — Environment snapshot and repeatability evidence
+
+- [x] Write `configs/environment_snapshot.json` for experiment runs.
+- [x] Record Python version, platform, dependency versions, random seed, and runner hash.
+- [x] Include environment snapshots in run-experiment manifests.
+- [x] Add same-seed repeatability checks against prior experiment runs.
+- [x] Extend lineage with experiment config, inputs, environment, and runner hashes.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

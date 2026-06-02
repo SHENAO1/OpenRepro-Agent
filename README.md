@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.9.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.9.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.9.0 workflow is:
+The v0.9.1 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
@@ -135,6 +135,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Add input completeness checks for template-required inputs such as `code_length` and `noise_std`.
 - Have template runners read `OPENREPRO_EXPERIMENT_INPUTS` instead of relying only on hard-coded defaults.
 - Snapshot experiment inputs into run outputs and surface the mapping in run reports and handoff files.
+
+## What v0.9.1 adds
+
+- Write `configs/environment_snapshot.json` for `run-experiment`.
+- Record Python, platform, dependency versions, random seed, runner hash, and repeatability status.
+- Add environment snapshots to required run-experiment artifacts.
+- Extend lineage with experiment config, input, environment, and runner hashes.
+- Add a lightweight same-seed repeatability check against prior experiment runs.
 
 ## Current limitations
 
@@ -416,6 +424,7 @@ data/execution_result.json
 reports/experiment_report.md
 configs/experiment_config_snapshot.json
 configs/experiment_inputs_snapshot.json
+configs/environment_snapshot.json
 code/runner.py
 metadata.json
 manifest.json
@@ -751,12 +760,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.8.1: experiment templates and template-specific run artifact validation.
 - v0.8.2: template registry, `list-templates`, and scaffold expected-artifact diagnostics.
 - v0.9.0: verified candidate to experiment input mapping, input snapshots, and input-aware template runners.
+- v0.9.1: environment snapshots, runner/input/environment lineage hashes, and same-seed repeatability checks.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.9.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.9.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

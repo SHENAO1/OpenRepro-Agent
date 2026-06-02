@@ -134,6 +134,12 @@ candidate-derived `parameter_values` when present, and fall back to documented
 defaults when completeness warnings remain. `run-experiment` should snapshot
 the input file under `configs/experiment_inputs_snapshot.json`.
 
+v0.9.1 adds `environment_snapshot.py`. Experiment runs should record Python,
+platform, dependency versions, random seed, runner hash, and a lightweight
+same-seed repeatability check under `configs/environment_snapshot.json`.
+Lineage entries for `run-experiment` should include hashes for experiment
+config, experiment inputs, environment snapshot, and runner code.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

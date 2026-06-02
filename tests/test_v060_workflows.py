@@ -38,10 +38,11 @@ def test_generate_run_lineage_records_hashes(tmp_path: Path):
     saved = read_json(project / "workspace" / "run_lineage.json")
     run = lineage["runs"][0]
 
-    assert lineage["schema_version"] == "0.6.0"
+    assert lineage["schema_version"] == "0.9.1"
     assert lineage["run_count"] == 1
     assert run["parent_command"] == "run-demo"
     assert run["provenance_complete"] is True
+    assert run["experiment_provenance_complete"] is None
     assert run["verified_candidates_present"] is True
     assert run["hashes"]["manifest_sha256"]
     assert run["hashes"]["config_sha256"]

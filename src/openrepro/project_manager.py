@@ -299,7 +299,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.9.0 workflow is complete. Review experiment inputs, templates, candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v0.9.1 workflow is complete. Review environment snapshots, experiment inputs, templates, candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,

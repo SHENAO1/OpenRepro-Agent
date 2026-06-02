@@ -53,7 +53,7 @@ def test_inspect_and_status_surface_template_scaffolds(tmp_path: Path):
     status = get_status(project)
     scaffold_summary = inspect_experiment_scaffolds(project)
 
-    assert summary["schema_version"] == "0.9.0"
+    assert summary["schema_version"] == "0.9.1"
     assert summary["experiment_scaffold_count"] == 1
     assert summary["experiment_template_counts"] == {"boc-like": 1}
     assert summary["experiment_expected_artifacts_attention_count"] == 0

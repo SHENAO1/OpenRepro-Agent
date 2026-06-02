@@ -131,7 +131,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
-        "schema_version": "0.9.0",
+        "schema_version": "0.9.1",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),

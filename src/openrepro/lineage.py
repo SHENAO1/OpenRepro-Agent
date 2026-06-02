@@ -8,7 +8,7 @@ from typing import Any
 from .artifact_manager import list_run_dirs, sha256_file
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-LINEAGE_SCHEMA_VERSION = "0.6.0"
+LINEAGE_SCHEMA_VERSION = "0.9.1"
 
 
 def _hash_file(path: Path) -> str | None:
@@ -27,11 +27,19 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
     source_index = project_dir / "workspace" / "source_index.json"
     verified_candidates = project_dir / "workspace" / "verified_candidates.json"
     config_path = _run_config_path(project_dir, run_dir)
+    experiment_config = run_dir / "configs" / "experiment_config_snapshot.json"
+    experiment_inputs = run_dir / "configs" / "experiment_inputs_snapshot.json"
+    environment_snapshot = run_dir / "configs" / "environment_snapshot.json"
+    runner = run_dir / "code" / "runner.py"
     hashes = {
         "manifest_sha256": _hash_file(manifest_path),
         "config_sha256": _hash_file(config_path),
         "source_index_sha256": _hash_file(source_index),
         "verified_candidates_sha256": _hash_file(verified_candidates),
+        "experiment_config_sha256": _hash_file(experiment_config),
+        "experiment_inputs_sha256": _hash_file(experiment_inputs),
+        "environment_snapshot_sha256": _hash_file(environment_snapshot),
+        "runner_sha256": _hash_file(runner),
     }
     return {
         "run_id": run_dir.name,
@@ -42,12 +50,27 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "config_path": str(config_path) if config_path.exists() else None,
         "source_index_path": str(source_index) if source_index.exists() else None,
         "verified_candidates_path": str(verified_candidates) if verified_candidates.exists() else None,
+        "experiment_config_path": str(experiment_config) if experiment_config.exists() else None,
+        "experiment_inputs_path": str(experiment_inputs) if experiment_inputs.exists() else None,
+        "environment_snapshot_path": str(environment_snapshot) if environment_snapshot.exists() else None,
+        "runner_path": str(runner) if runner.exists() else None,
         "hashes": hashes,
         "provenance_complete": all(
             value is not None
             for key, value in hashes.items()
-            if key != "verified_candidates_sha256"
+            if key not in {"verified_candidates_sha256", "experiment_config_sha256", "experiment_inputs_sha256", "environment_snapshot_sha256", "runner_sha256"}
         ),
+        "experiment_provenance_complete": all(
+            hashes[key] is not None
+            for key in [
+                "experiment_config_sha256",
+                "experiment_inputs_sha256",
+                "environment_snapshot_sha256",
+                "runner_sha256",
+            ]
+        )
+        if command == "run-experiment"
+        else None,
         "verified_candidates_present": hashes["verified_candidates_sha256"] is not None,
     }
 
@@ -85,20 +108,23 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
         f"- run_count: {lineage['run_count']}",
         f"- project_dir: `{lineage['project_dir']}`",
         "",
-        "| Run | Command | Manifest | Config | Source Index | Verified Candidates | Complete |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Run | Command | Manifest | Config | Inputs | Environment | Runner | Complete |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for run in lineage["runs"]:
         hashes = run["hashes"]
         lines.append(
-            "| {run_id} | {parent_command} | {manifest} | {config} | {source} | {verified} | {complete} |".format(
+            "| {run_id} | {parent_command} | {manifest} | {config} | {inputs} | {environment} | {runner} | {complete} |".format(
                 run_id=run["run_id"],
                 parent_command=run["parent_command"],
                 manifest=_short_hash(hashes.get("manifest_sha256")),
                 config=_short_hash(hashes.get("config_sha256")),
-                source=_short_hash(hashes.get("source_index_sha256")),
-                verified=_short_hash(hashes.get("verified_candidates_sha256")),
-                complete=run["provenance_complete"],
+                inputs=_short_hash(hashes.get("experiment_inputs_sha256")),
+                environment=_short_hash(hashes.get("environment_snapshot_sha256")),
+                runner=_short_hash(hashes.get("runner_sha256")),
+                complete=run.get("experiment_provenance_complete")
+                if run.get("experiment_provenance_complete") is not None
+                else run["provenance_complete"],
             )
         )
     lines.extend(["", "## Policy", "", lineage["policy"], ""])
