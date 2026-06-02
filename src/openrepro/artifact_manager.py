@@ -56,6 +56,7 @@ REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
         "data/execution_result.json",
         "reports/experiment_report.md",
         "configs/experiment_config_snapshot.json",
+        "configs/experiment_inputs_snapshot.json",
         "code/runner.py",
         "metadata.json",
     ],

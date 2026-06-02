@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.8.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.9.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.8.2 workflow is:
+The v0.9.0 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
@@ -127,6 +127,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Move template metadata into a shared template registry.
 - Surface scaffold template counts and expected-artifact attention counts in `inspect` and `status`.
 - Diagnose legacy, missing, mismatched, or tampered `expected_artifacts.json` files for experiment scaffolds.
+
+## What v0.9.0 adds
+
+- Write `experiments/<id>/experiment_inputs.json` from human-verified formula and parameter candidates.
+- Map parameter candidates into `parameter_values` for template runners.
+- Add input completeness checks for template-required inputs such as `code_length` and `noise_std`.
+- Have template runners read `OPENREPRO_EXPERIMENT_INPUTS` instead of relying only on hard-coded defaults.
+- Snapshot experiment inputs into run outputs and surface the mapping in run reports and handoff files.
 
 ## Current limitations
 
@@ -322,6 +330,7 @@ experiments/<experiment_id>/
   APPROVAL_REQUIRED.md
   experiment_config.json
   expected_artifacts.json
+  experiment_inputs.json
   runner.py
   runner_stub.py
 ```
@@ -329,6 +338,11 @@ experiments/<experiment_id>/
 The scaffold is generated from candidate formulas and parameters and is marked `approval_required` unless verified candidates exist or `--acknowledge-candidates` is provided. It is a coding starting point, not a reproduction claim.
 
 Use `--template basic`, `--template boc-like`, or `--template numeric-sweep` to choose the starter runner. Template runners are created only for runnable scaffolds, and they write declared outputs under `OPENREPRO_RUN_DIR` during `run-experiment`.
+
+Verified candidates are also mapped into `experiment_inputs.json`. The file
+contains formula evidence, parameter records, `parameter_values`, and input
+completeness status. Template runners read it through
+`OPENREPRO_EXPERIMENT_INPUTS`.
 
 ### `openrepro list-templates`
 
@@ -401,6 +415,7 @@ logs/run.log
 data/execution_result.json
 reports/experiment_report.md
 configs/experiment_config_snapshot.json
+configs/experiment_inputs_snapshot.json
 code/runner.py
 metadata.json
 manifest.json
@@ -735,12 +750,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.8.0: paper metadata, DOI candidates, and candidate evidence provenance.
 - v0.8.1: experiment templates and template-specific run artifact validation.
 - v0.8.2: template registry, `list-templates`, and scaffold expected-artifact diagnostics.
+- v0.9.0: verified candidate to experiment input mapping, input snapshots, and input-aware template runners.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.8.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.9.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

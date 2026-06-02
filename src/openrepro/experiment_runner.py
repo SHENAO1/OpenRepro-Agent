@@ -14,7 +14,7 @@ from .config import load_project_config
 from .experiment_templates import normalize_artifact_paths
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EXPERIMENT_RUN_SCHEMA_VERSION = "0.8.2"
+EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.0"
 
 
 def _experiment_dir(project_dir: Path, experiment_id: str) -> Path:
@@ -72,6 +72,10 @@ def run_experiment(
     expected_artifacts = _load_expected_artifacts(exp_dir)
     required_artifacts = _required_artifacts_for_run(expected_artifacts)
     template = str(config.get("template") or expected_artifacts.get("template") or "basic")
+    experiment_inputs_path = exp_dir / "experiment_inputs.json"
+    experiment_inputs = read_json(experiment_inputs_path, default={}) or {}
+    experiment_inputs = experiment_inputs if isinstance(experiment_inputs, dict) else {}
+    input_completeness = experiment_inputs.get("input_completeness", {}) if experiment_inputs else {}
 
     project_config = load_project_config(project_dir)
     project_name = str(project_config.get("project_name", project_dir.name))
@@ -81,6 +85,7 @@ def run_experiment(
     env["OPENREPRO_RUN_DIR"] = str(run_dirs.root)
     env["OPENREPRO_EXPERIMENT_ID"] = experiment_id
     env["OPENREPRO_EXPERIMENT_TEMPLATE"] = template
+    env["OPENREPRO_EXPERIMENT_INPUTS"] = str(experiment_inputs_path)
     completed = subprocess.run(
         [sys.executable, str(runner.name)],
         cwd=exp_dir,
@@ -99,6 +104,7 @@ started_at: {started_at}
 completed_at: {completed_at}
 experiment_id: {experiment_id}
 template: {template}
+input_completeness: {input_completeness.get("status", "missing")}
 runner: {runner}
 exit_code: {completed.returncode}
 status: {status}
@@ -128,10 +134,24 @@ status: {status}
             "required": required_artifacts,
             "optional": normalize_artifact_paths(expected_artifacts.get("optional")),
         },
+        "experiment_inputs": {
+            "path": str(experiment_inputs_path) if experiment_inputs else None,
+            "input_completeness": input_completeness or {"status": "missing"},
+        },
         "policy": "Controlled experiment execution records evidence only; it does not claim paper reproduction success.",
     }
     write_json(run_dirs.data / "execution_result.json", execution_result)
     write_json(run_dirs.configs / "experiment_config_snapshot.json", config)
+    write_json(
+        run_dirs.configs / "experiment_inputs_snapshot.json",
+        experiment_inputs
+        or {
+            "schema_version": EXPERIMENT_RUN_SCHEMA_VERSION,
+            "experiment_id": experiment_id,
+            "template": template,
+            "input_completeness": {"status": "missing"},
+        },
+    )
     shutil.copy2(runner, run_dirs.code / "runner.py")
     report = f"""# Experiment Run Report
 
@@ -141,6 +161,9 @@ status: {status}
 - template: {template}
 - runner: `{runner}`
 - verified_candidates_path: `{config.get('verified_candidates_path')}`
+- experiment_inputs_path: `{experiment_inputs_path if experiment_inputs else None}`
+- input_completeness: {input_completeness.get('status', 'missing')}
+- missing_required_inputs: {input_completeness.get('missing', [])}
 - required_artifacts: {len(required_artifacts)}
 
 ## Policy
@@ -168,6 +191,11 @@ This report records controlled execution evidence only. It does not claim paper 
             "required": required_artifacts,
             "optional": normalize_artifact_paths(expected_artifacts.get("optional")),
         },
+        "experiment_inputs": {
+            "path": str(experiment_inputs_path) if experiment_inputs else None,
+            "snapshot": relpath(run_dirs.configs / "experiment_inputs_snapshot.json", run_dirs.root),
+            "input_completeness": input_completeness or {"status": "missing"},
+        },
         "policy": "Run artifacts are execution evidence, not scientific reproduction claims.",
     }
     metadata["manifest"] = relpath(run_dirs.root / "manifest.json", run_dirs.root)
@@ -182,6 +210,7 @@ This report records controlled execution evidence only. It does not claim paper 
             "status": status,
             "exit_code": completed.returncode,
             "expected_artifact_count": len(required_artifacts),
+            "input_completeness": input_completeness.get("status", "missing"),
         },
     )
     artifact_validation = validate_run_manifest(run_dirs.root, required_artifacts=required_artifacts)

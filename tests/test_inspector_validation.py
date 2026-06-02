@@ -45,7 +45,7 @@ def test_inspect_summary_reports_project_health(tmp_path: Path, monkeypatch):
     assert summary["latest_manifest_status"] == "valid"
     assert summary["latest_manifest_valid"] is True
     assert summary["diagnosis_healthy"] is True
-    assert saved["schema_version"] == "0.8.2"
+    assert saved["schema_version"] == "0.9.0"
     assert saved["verified_formula_candidate_count"] == 0
     assert saved["verified_parameter_candidate_count"] == 0
     assert saved["verified_candidates_status"] == "missing"

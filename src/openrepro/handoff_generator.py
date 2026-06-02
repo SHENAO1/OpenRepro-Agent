@@ -34,6 +34,28 @@ def _has_run_command(project_dir: Path, command: str) -> bool:
     return False
 
 
+def _experiment_inputs_summary(project_dir: Path) -> list[dict[str, Any]]:
+    experiments = project_dir / "experiments"
+    if not experiments.exists():
+        return []
+    summaries: list[dict[str, Any]] = []
+    for exp_dir in sorted(path for path in experiments.iterdir() if path.is_dir()):
+        inputs = read_json(exp_dir / "experiment_inputs.json", default={}) or {}
+        if not isinstance(inputs, dict):
+            inputs = {}
+        completeness = inputs.get("input_completeness", {}) if inputs else {}
+        summaries.append(
+            {
+                "experiment_id": exp_dir.name,
+                "template": inputs.get("template"),
+                "input_completeness": completeness.get("status", "missing"),
+                "missing_required_inputs": completeness.get("missing", []),
+                "parameter_values": inputs.get("parameter_values", {}),
+            }
+        )
+    return summaries
+
+
 def _copy_or_placeholder(source: Path, title: str, placeholder: str) -> str:
     if source.exists():
         return source.read_text(encoding="utf-8")
@@ -78,11 +100,12 @@ def _code_status(project_dir: Path) -> str:
     reviews = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
+    experiment_inputs = _experiment_inputs_summary(project_dir)
     return f"""# Code Status
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.8.2 命令入口。
+- `cli.py`：已完成 v0.9.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -128,6 +151,12 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {lineage}
+```
+
+## Experiment Inputs 状态
+
+```json
+{experiment_inputs}
 ```
 
 ## 已完成
@@ -186,7 +215,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.8.2 闭环检查
+## v0.9.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -258,6 +287,7 @@ def _agent_handoff(project_dir: Path) -> str:
     reviews = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
+    experiment_inputs = _experiment_inputs_summary(project_dir)
     return f"""# Agent Handoff
 
 ## 给 Claude Code / Codex / GitHub Copilot 的接续说明
@@ -296,6 +326,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {lineage}
+```
+
+## Experiment Inputs 摘要
+
+```json
+{experiment_inputs}
 ```
 
 ## 接续开发重点

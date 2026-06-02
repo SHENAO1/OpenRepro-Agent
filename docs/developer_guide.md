@@ -127,6 +127,13 @@ New templates should be added there first, then exercised through
 `openrepro list-templates`, scaffold generation, inspect/status summaries, and
 expected-artifact diagnostics.
 
+v0.9.0 adds `experiment_inputs.py`. Scaffold generation should map
+human-verified candidates into `experiments/<id>/experiment_inputs.json`.
+Template runners should read the file from `OPENREPRO_EXPERIMENT_INPUTS`, use
+candidate-derived `parameter_values` when present, and fall back to documented
+defaults when completeness warnings remain. `run-experiment` should snapshot
+the input file under `configs/experiment_inputs_snapshot.json`.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

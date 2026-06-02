@@ -8,12 +8,13 @@ from typing import Any
 
 from .utils import read_json
 
-TEMPLATE_SCHEMA_VERSION = "0.8.2"
+TEMPLATE_SCHEMA_VERSION = "0.9.0"
 BASE_RUN_REQUIRED_ARTIFACTS = [
     "logs/run.log",
     "data/execution_result.json",
     "reports/experiment_report.md",
     "configs/experiment_config_snapshot.json",
+    "configs/experiment_inputs_snapshot.json",
     "code/runner.py",
     "metadata.json",
 ]
@@ -26,6 +27,8 @@ EXPERIMENT_TEMPLATES: dict[str, dict[str, Any]] = {
         "required": [],
         "optional": ["data/metrics.json", "figures/result.png"],
         "input_hints": [],
+        "required_inputs": [],
+        "optional_inputs": [],
     },
     "boc-like": {
         "name": "boc-like",
@@ -34,6 +37,8 @@ EXPERIMENT_TEMPLATES: dict[str, dict[str, Any]] = {
         "required": ["data/metrics.json", "data/boc_trace.csv"],
         "optional": ["figures/result.png"],
         "input_hints": ["code_length", "noise_std", "seed"],
+        "required_inputs": ["code_length", "noise_std"],
+        "optional_inputs": ["seed"],
     },
     "numeric-sweep": {
         "name": "numeric-sweep",
@@ -42,6 +47,8 @@ EXPERIMENT_TEMPLATES: dict[str, dict[str, Any]] = {
         "required": ["data/metrics.json", "data/sweep.csv"],
         "optional": ["figures/result.png"],
         "input_hints": ["noise_std_values", "seed"],
+        "required_inputs": [],
+        "optional_inputs": ["noise_std", "noise_std_values", "seed"],
     },
 }
 
@@ -85,6 +92,16 @@ def template_expected_artifacts(template: str) -> dict[str, list[str]]:
     }
 
 
+def template_input_requirements(template: str) -> dict[str, list[str]]:
+    """Return required and optional input names for a template."""
+    template_name = normalize_template(template)
+    metadata = EXPERIMENT_TEMPLATES[template_name]
+    return {
+        "required": list(metadata["required_inputs"]),
+        "optional": list(metadata["optional_inputs"]),
+    }
+
+
 def list_experiment_templates() -> list[dict[str, Any]]:
     """Return human-facing metadata for all supported experiment templates."""
     templates: list[dict[str, Any]] = []
@@ -100,6 +117,8 @@ def list_experiment_templates() -> list[dict[str, Any]]:
                 "required": artifacts["required"],
                 "optional": artifacts["optional"],
                 "input_hints": list(metadata["input_hints"]),
+                "required_inputs": list(metadata["required_inputs"]),
+                "optional_inputs": list(metadata["optional_inputs"]),
             }
         )
     return templates
@@ -166,6 +185,9 @@ def inspect_experiment_scaffolds(project_dir: Path) -> dict[str, Any]:
         for exp_dir in sorted(path for path in experiments_dir.iterdir() if path.is_dir()):
             config = read_json(exp_dir / "experiment_config.json", default={}) or {}
             config = config if isinstance(config, dict) else {}
+            inputs = read_json(exp_dir / "experiment_inputs.json", default={}) or {}
+            inputs = inputs if isinstance(inputs, dict) else {}
+            completeness = inputs.get("input_completeness", {}) if inputs else {}
             template = str(config.get("template") or "basic")
             expected_status = _scaffold_expected_status(exp_dir, config)
             issues = []
@@ -185,17 +207,22 @@ def inspect_experiment_scaffolds(project_dir: Path) -> dict[str, Any]:
                     "expected_artifacts_status": expected_status["status"],
                     "expected_required_count": expected_status["required_count"],
                     "expected_optional_count": expected_status["optional_count"],
+                    "experiment_inputs_status": "present" if inputs else "missing",
+                    "input_completeness_status": completeness.get("status", "missing"),
+                    "missing_required_inputs": completeness.get("missing", []),
                     "issues": sorted(set(issues)),
                 }
             )
 
     template_counts = Counter(item["template"] for item in scaffolds)
     issue_counts = Counter(issue for item in scaffolds for issue in item["issues"])
+    completeness_counts = Counter(item["input_completeness_status"] for item in scaffolds)
     valid_expected_count = sum(1 for item in scaffolds if item["expected_artifacts_status"] == "valid")
     return {
         "schema_version": TEMPLATE_SCHEMA_VERSION,
         "scaffold_count": len(scaffolds),
         "template_counts": dict(template_counts),
+        "input_completeness_counts": dict(completeness_counts),
         "expected_artifacts_valid_count": valid_expected_count,
         "expected_artifacts_attention_count": len(scaffolds) - valid_expected_count,
         "issue_counts": dict(issue_counts),

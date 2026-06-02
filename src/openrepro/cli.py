@@ -475,6 +475,7 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Review status counts": summary["candidate_review_status_counts"],
         "Experiment scaffolds": summary["experiment_scaffold_count"],
         "Experiment templates": summary["experiment_template_counts"],
+        "Input completeness": summary["experiment_input_completeness_counts"],
         "Expected artifacts attention": summary["experiment_expected_artifacts_attention_count"],
         "Experiment runs": summary["experiment_run_count"],
         "Runs": summary["run_count"],

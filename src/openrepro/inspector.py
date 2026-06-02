@@ -131,7 +131,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
-        "schema_version": "0.8.2",
+        "schema_version": "0.9.0",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),
@@ -148,6 +148,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "candidate_review_status_counts": reviews["status_counts"],
         "experiment_scaffold_count": scaffolds["scaffold_count"],
         "experiment_template_counts": scaffolds["template_counts"],
+        "experiment_input_completeness_counts": scaffolds["input_completeness_counts"],
         "experiment_expected_artifacts_valid_count": scaffolds["expected_artifacts_valid_count"],
         "experiment_expected_artifacts_attention_count": scaffolds["expected_artifacts_attention_count"],
         "experiment_scaffold_issue_counts": scaffolds["issue_counts"],

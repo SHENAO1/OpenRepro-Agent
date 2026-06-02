@@ -147,6 +147,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Surface scaffold template counts and expected-artifact attention counts in `inspect` and `status`.
 - [x] Diagnose legacy, missing, mismatched, or tampered `expected_artifacts.json` files.
 
+## v0.9.0 — Verified candidates to experiment inputs
+
+- [x] Generate `experiments/<id>/experiment_inputs.json`.
+- [x] Map verified parameter candidates into template-readable `parameter_values`.
+- [x] Add template input completeness checks.
+- [x] Have template runners read `OPENREPRO_EXPERIMENT_INPUTS`.
+- [x] Snapshot experiment inputs in run outputs and surface them in reports and handoff files.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
