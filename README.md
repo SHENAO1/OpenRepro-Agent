@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.9.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.9.3**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.9.2 workflow is:
+The v0.9.3 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -152,6 +152,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Surface missing required input counts in `inspect` and `status`.
 - Record input validation details and warnings in experiment run evidence.
 
+## What v0.9.3 adds
+
+- Add `openrepro rerun-experiment` for repeat execution of an existing verified scaffold.
+- Add `openrepro compare-experiments` for same-experiment metric and hash comparison.
+- Write `workspace/experiment_comparison.json` and `workspace/EXPERIMENT_COMPARISON.md`.
+- Add normalized input hashing so timestamp refreshes do not hide equivalent inputs.
+- Extend lineage with experiment repeat groups and repeat run indexes.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -214,6 +222,8 @@ openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std 
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
 openrepro validate-inputs boc_demo --experiment-id boc_candidate_exp
 openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
+openrepro rerun-experiment boc_demo --experiment-id boc_candidate_exp --confirm
+openrepro compare-experiments boc_demo --experiment-id boc_candidate_exp
 openrepro run-demo boc_demo
 openrepro validate boc_demo
 openrepro validate boc_demo --all
@@ -465,6 +475,27 @@ the run manifest, so template-specific outputs are validated with the rest of
 the run evidence. If a runner exits successfully but omits required template
 artifacts, the command fails with an artifact-validation error.
 
+### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
+
+Runs the same verified experiment scaffold again and records another normal
+`run-experiment` output directory. It uses the same guardrails as
+`run-experiment`: the scaffold must be runnable, inputs are refreshed, and the
+command needs explicit `--confirm`.
+
+### `openrepro compare-experiments <project_name> --experiment-id ID [--left-run PATH] [--right-run PATH]`
+
+Compares two `run-experiment` outputs for the same experiment, defaulting to
+the latest two runs for that experiment id, and writes:
+
+```text
+workspace/experiment_comparison.json
+workspace/EXPERIMENT_COMPARISON.md
+```
+
+The comparison reports metric equality, metric deltas, runner hashes, raw input
+hashes, normalized input hashes, and environment hashes. It is repeatability
+evidence only; it does not claim paper reproduction success.
+
 ### `openrepro run-demo <project_name>`
 
 Creates a timestamped output directory, for example:
@@ -598,8 +629,9 @@ workspace/RUN_LINEAGE.md
 
 Each run entry records the parent command and SHA-256 hashes for the run
 manifest, config snapshot, project source index, and verified candidates when
-available. The lineage report is provenance evidence only; it does not claim
-scientific reproduction success.
+available. Experiment runs also include repeat group ids and repeat indexes so
+same-experiment reruns can be audited. The lineage report is provenance
+evidence only; it does not claim scientific reproduction success.
 
 ### `openrepro doctor <project_name>`
 
@@ -788,12 +820,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.9.0: verified candidate to experiment input mapping, input snapshots, and input-aware template runners.
 - v0.9.1: environment snapshots, runner/input/environment lineage hashes, and same-seed repeatability checks.
 - v0.9.2: input validation, manual input overrides, and missing-input visibility.
+- v0.9.3: repeat experiment execution, same-experiment comparison artifacts, and lineage repeat indexes.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.9.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.9.3 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

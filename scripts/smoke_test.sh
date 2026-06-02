@@ -19,6 +19,8 @@ python -m openrepro.cli set-input "$PROJECT" --experiment-id smoke_exp --name no
 python -m openrepro.cli set-input "$PROJECT" --experiment-id smoke_exp --name code_length --value 128 --note smoke
 python -m openrepro.cli validate-inputs "$PROJECT" --experiment-id smoke_exp
 python -m openrepro.cli run-experiment "$PROJECT" --experiment-id smoke_exp --confirm
+python -m openrepro.cli rerun-experiment "$PROJECT" --experiment-id smoke_exp --confirm
+python -m openrepro.cli compare-experiments "$PROJECT" --experiment-id smoke_exp
 python -m openrepro.cli run-demo "$PROJECT"
 python -m openrepro.cli validate "$PROJECT"
 python -m openrepro.cli validate "$PROJECT" --all

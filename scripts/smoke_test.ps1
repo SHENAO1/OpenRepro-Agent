@@ -26,6 +26,8 @@ python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name nois
 python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name code_length --value 128 --note smoke
 python -m openrepro.cli validate-inputs $Project --experiment-id smoke_exp
 python -m openrepro.cli run-experiment $Project --experiment-id smoke_exp --confirm
+python -m openrepro.cli rerun-experiment $Project --experiment-id smoke_exp --confirm
+python -m openrepro.cli compare-experiments $Project --experiment-id smoke_exp
 python -m openrepro.cli run-demo $Project
 python -m openrepro.cli validate $Project
 python -m openrepro.cli validate $Project --all

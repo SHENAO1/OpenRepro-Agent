@@ -19,6 +19,7 @@ from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_r
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
+from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
 from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
@@ -228,6 +229,58 @@ def run_experiment_cmd(
         _warn("Experiment run completed with runner failure.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Exit code: {metadata['exit_code']}")
+
+
+@app.command("rerun-experiment")
+def rerun_experiment_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+    confirm: bool = typer.Option(False, "--confirm", help="Required to execute the experiment runner again."),
+    timeout_seconds: int = typer.Option(300, "--timeout-seconds", help="Runner timeout in seconds."),
+) -> None:
+    """Run an existing verified experiment scaffold again."""
+    project_dir = require_project(project_name)
+    try:
+        metadata = rerun_experiment(
+            project_dir,
+            experiment_id=experiment_id,
+            confirm=confirm,
+            timeout_seconds=timeout_seconds,
+        )
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success("Experiment rerun completed.")
+    console.print(f"Run directory: {metadata['run_dir']}")
+    console.print(f"Exit code: {metadata['exit_code']}")
+
+
+@app.command("compare-experiments")
+def compare_experiments_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id to compare."),
+    left_run: Path | None = typer.Option(None, "--left-run", help="Older run directory. Defaults to second-latest experiment run."),
+    right_run: Path | None = typer.Option(None, "--right-run", help="Newer run directory. Defaults to latest experiment run."),
+) -> None:
+    """Compare two run-experiment outputs for one experiment."""
+    project_dir = require_project(project_name)
+    try:
+        comparison = compare_experiments(project_dir, experiment_id=experiment_id, left_run=left_run, right_run=right_run)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success("Experiment comparison written.")
+    table = Table(title=f"Experiment Comparison: {experiment_id}")
+    table.add_column("Metric")
+    table.add_column("Left")
+    table.add_column("Right")
+    table.add_column("Equal")
+    for item in comparison["metric_deltas"]:
+        table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["equal"]))
+    console.print(table)
+    console.print(f"All metrics equal: {comparison['all_metrics_equal']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_comparison.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_COMPARISON.md'}")
 
 
 @app.command("list-templates")

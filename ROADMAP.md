@@ -171,6 +171,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Surface missing required input counts in `inspect` and `status`.
 - [x] Record input validation details and warnings in run evidence.
 
+## v0.9.3 — Repeat experiment comparison
+
+- [x] Add `openrepro rerun-experiment`.
+- [x] Add `openrepro compare-experiments`.
+- [x] Write same-experiment comparison JSON and Markdown artifacts.
+- [x] Compare metric deltas, runner hashes, raw input hashes, normalized input hashes, and environment hashes.
+- [x] Extend lineage with experiment repeat groups and repeat run indexes.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

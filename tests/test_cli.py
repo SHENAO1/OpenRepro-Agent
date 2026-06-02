@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v0.9.2" in result.output
+    assert "OpenRepro-Agent v0.9.3" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -65,6 +65,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["scaffold-experiment", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-inputs", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-experiment", "boc_demo", "--experiment-id", "cli_exp", "--confirm"],
+        ["rerun-experiment", "boc_demo", "--experiment-id", "cli_exp", "--confirm"],
+        ["compare-experiments", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-demo", "boc_demo"],
         ["validate", "boc_demo"],
         ["validate", "boc_demo", "--all"],
@@ -100,6 +102,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "candidate_reviews.json").exists()
     assert (project / "workspace" / "repair_dry_run.json").exists()
     assert (project / "workspace" / "repair_plan.json").exists()
+    assert (project / "workspace" / "experiment_comparison.json").exists()
+    assert (project / "workspace" / "EXPERIMENT_COMPARISON.md").exists()
     assert (project / "workspace" / "run_comparison.json").exists()
     assert (project / "workspace" / "run_lineage.json").exists()
     assert (project / "workspace" / "doctor.json").exists()
@@ -107,7 +111,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "experiments" / "cli_exp" / "APPROVAL_REQUIRED.md").exists()
     assert (project / "experiments" / "cli_exp" / "experiment_config.json").exists()
     run_dirs = list((project / "outputs").iterdir())
-    assert len(run_dirs) == 3
+    assert len(run_dirs) == 4
     assert any((run_dir / "figures" / "correlation.png").exists() for run_dir in run_dirs)
     assert any((run_dir / "data" / "demo_metrics.json").exists() for run_dir in run_dirs)
     assert any((run_dir / "data" / "sweep_results.json").exists() for run_dir in run_dirs)

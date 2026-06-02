@@ -38,7 +38,7 @@ def test_generate_run_lineage_records_hashes(tmp_path: Path):
     saved = read_json(project / "workspace" / "run_lineage.json")
     run = lineage["runs"][0]
 
-    assert lineage["schema_version"] == "0.9.1"
+    assert lineage["schema_version"] == "0.9.3"
     assert lineage["run_count"] == 1
     assert run["parent_command"] == "run-demo"
     assert run["provenance_complete"] is True

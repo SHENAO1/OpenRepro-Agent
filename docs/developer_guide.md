@@ -145,11 +145,19 @@ refresh completeness and write workspace validation artifacts. `set-input`
 should record input sources, preserve manual overrides, and keep generated
 runner behavior tied to `experiment_inputs.json`.
 
+v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
+execution guardrails as `run-experiment`, while `compare-experiments` should
+compare only runs that belong to the requested experiment id. Comparison reports
+must stay evidence-oriented: metric deltas, runner hashes, raw input hashes,
+normalized input hashes, and environment hashes are acceptable; scientific
+reproduction claims are not.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and
 `workspace/RUN_LINEAGE.md`. Entries should include parent command, manifest
 hash, config hash, source index hash, and verified candidate hash when present.
+Experiment reruns should be grouped with repeat ids and repeat run indexes.
 Lineage artifacts are provenance evidence only.
 
 `openrepro inspect`, `openrepro status`, and handoff files should surface whether

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from .artifact_manager import list_run_dirs, sha256_file
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-LINEAGE_SCHEMA_VERSION = "0.9.1"
+LINEAGE_SCHEMA_VERSION = "0.9.3"
 
 
 def _hash_file(path: Path) -> str | None:
@@ -24,6 +25,10 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
     manifest_path = run_dir / "manifest.json"
     manifest = read_json(manifest_path, default={}) or {}
     command = str(manifest.get("command") or "unknown") if isinstance(manifest, dict) else "unknown"
+    metadata = manifest.get("metadata", {}) if isinstance(manifest, dict) else {}
+    metadata = metadata if isinstance(metadata, dict) else {}
+    experiment_id = metadata.get("experiment_id")
+    repeat_group_id = f"experiment:{experiment_id}" if command == "run-experiment" and experiment_id else None
     source_index = project_dir / "workspace" / "source_index.json"
     verified_candidates = project_dir / "workspace" / "verified_candidates.json"
     config_path = _run_config_path(project_dir, run_dir)
@@ -46,6 +51,11 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "run_dir": str(run_dir),
         "parent_command": command,
         "created_at": manifest.get("created_at") if isinstance(manifest, dict) else None,
+        "experiment_id": experiment_id,
+        "template": metadata.get("template"),
+        "repeat_group_id": repeat_group_id,
+        "repeat_run_index": None,
+        "repeat_run_count": None,
         "manifest_path": str(manifest_path) if manifest_path.exists() else None,
         "config_path": str(config_path) if config_path.exists() else None,
         "source_index_path": str(source_index) if source_index.exists() else None,
@@ -82,6 +92,15 @@ def generate_run_lineage(project_dir: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
     entries = [_lineage_entry(project_dir, run_dir) for run_dir in reversed(list_run_dirs(project_dir))]
+    repeat_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for entry in entries:
+        group_id = entry.get("repeat_group_id")
+        if group_id:
+            repeat_groups[str(group_id)].append(entry)
+    for group_entries in repeat_groups.values():
+        for index, entry in enumerate(group_entries, start=1):
+            entry["repeat_run_index"] = index
+            entry["repeat_run_count"] = len(group_entries)
     lineage = {
         "schema_version": LINEAGE_SCHEMA_VERSION,
         "created_at": iso_now(),
@@ -108,15 +127,21 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
         f"- run_count: {lineage['run_count']}",
         f"- project_dir: `{lineage['project_dir']}`",
         "",
-        "| Run | Command | Manifest | Config | Inputs | Environment | Runner | Complete |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Run | Command | Repeat | Manifest | Config | Inputs | Environment | Runner | Complete |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for run in lineage["runs"]:
         hashes = run["hashes"]
+        repeat = (
+            f"{run['repeat_run_index']}/{run['repeat_run_count']}"
+            if run.get("repeat_run_index") and run.get("repeat_run_count")
+            else ""
+        )
         lines.append(
-            "| {run_id} | {parent_command} | {manifest} | {config} | {inputs} | {environment} | {runner} | {complete} |".format(
+            "| {run_id} | {parent_command} | {repeat} | {manifest} | {config} | {inputs} | {environment} | {runner} | {complete} |".format(
                 run_id=run["run_id"],
                 parent_command=run["parent_command"],
+                repeat=repeat,
                 manifest=_short_hash(hashes.get("manifest_sha256")),
                 config=_short_hash(hashes.get("config_sha256")),
                 inputs=_short_hash(hashes.get("experiment_inputs_sha256")),
