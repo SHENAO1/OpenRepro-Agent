@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.5.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.5.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -57,6 +57,14 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Include verified candidate and repair dry-run summaries in project reports.
 - Include verified candidate and repair dry-run handoff files.
 - Suggest `approve-candidates` from `openrepro status` when analysis and planning are complete but candidates are not approved.
+
+## What v0.5.2 adds
+
+- Redact likely secrets, tokens, API keys, and email addresses from provider usage previews.
+- Store provider cache entries under provider/model/task namespaces.
+- Add provider cache policy fields: `cache_enabled`, `cache_ttl_seconds`, and `redact_prompts`.
+- Allow `configure-provider` to update cache and redaction policy without storing secrets.
+- Include redacted prompt/response previews and cache namespace metadata in usage records.
 
 ## What v0.4.0 does not support
 
@@ -229,6 +237,12 @@ openrepro configure-provider boc_demo --provider openai --model gpt-4.1-mini --e
 ```
 
 The command reports whether the configured provider is ready for real calls; it never prints or stores API key values.
+
+Provider cache and redaction policy can also be configured:
+
+```bash
+openrepro configure-provider boc_demo --provider mock --cache-enabled --cache-ttl-seconds 86400 --redact-prompts
+```
 
 ### `openrepro scaffold-experiment <project_name>`
 
@@ -544,12 +558,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.4.0: opt-in OpenAI-compatible provider path, human-gated experiment scaffolds, benchmark suites, repair plans, and run comparison.
 - v0.5.0: candidate approval artifacts, verified-input scaffolds, and controlled repair dry-run previews.
 - v0.5.1: verified candidate and repair dry-run status surfaced through inspect, report, handoff, and status.
+- v0.5.2: provider prompt/response preview redaction, cache namespace, and cache policy controls.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.5.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.5.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

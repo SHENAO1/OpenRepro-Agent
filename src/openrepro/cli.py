@@ -112,13 +112,26 @@ def configure_provider_cmd(
     disable_real_api: bool = typer.Option(False, "--disable-real-api", help="Disable real provider calls."),
     api_key_env: str | None = typer.Option(None, "--api-key-env", help="Environment variable containing the API key."),
     endpoint: str | None = typer.Option(None, "--endpoint", help="OpenAI-compatible chat completions endpoint."),
+    cache_enabled: bool = typer.Option(False, "--cache-enabled", help="Enable provider response cache."),
+    cache_disabled: bool = typer.Option(False, "--cache-disabled", help="Disable provider response cache."),
+    cache_ttl_seconds: int | None = typer.Option(None, "--cache-ttl-seconds", help="Provider cache TTL in seconds."),
+    redact_prompts: bool = typer.Option(False, "--redact-prompts", help="Redact prompt/response previews in usage records."),
+    no_redact_prompts: bool = typer.Option(False, "--no-redact-prompts", help="Disable prompt/response preview redaction."),
 ) -> None:
     """Configure provider settings without storing secrets."""
     if enable_real_api and disable_real_api:
         _warn("--enable-real-api and --disable-real-api cannot be combined.")
         raise typer.Exit(1)
+    if cache_enabled and cache_disabled:
+        _warn("--cache-enabled and --cache-disabled cannot be combined.")
+        raise typer.Exit(1)
+    if redact_prompts and no_redact_prompts:
+        _warn("--redact-prompts and --no-redact-prompts cannot be combined.")
+        raise typer.Exit(1)
     project_dir = require_project(project_name)
     real_api_setting = True if enable_real_api else False if disable_real_api else None
+    cache_setting = True if cache_enabled else False if cache_disabled else None
+    redaction_setting = True if redact_prompts else False if no_redact_prompts else None
     config = configure_api_provider(
         project_dir,
         provider=provider,
@@ -126,13 +139,26 @@ def configure_provider_cmd(
         enable_real_api=real_api_setting,
         api_key_env=api_key_env,
         endpoint=endpoint,
+        cache_enabled=cache_setting,
+        cache_ttl_seconds=cache_ttl_seconds,
+        redact_prompts=redaction_setting,
     )
     status = provider_status(project_dir)
     _success("Provider configuration updated.")
     table = Table(title=f"Provider: {project_name}")
     table.add_column("Item", style="bold")
     table.add_column("Value")
-    for key in ["default_provider", "default_model", "enable_real_api", "api_key_env", "api_key_present", "ready_for_real_calls"]:
+    for key in [
+        "default_provider",
+        "default_model",
+        "enable_real_api",
+        "api_key_env",
+        "api_key_present",
+        "cache_enabled",
+        "cache_ttl_seconds",
+        "redact_prompts",
+        "ready_for_real_calls",
+    ]:
         table.add_row(key, str(status[key]))
     console.print(table)
     if config["default_provider"] != "mock" and not status["ready_for_real_calls"]:

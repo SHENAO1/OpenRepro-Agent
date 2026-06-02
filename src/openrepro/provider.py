@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+import time
 import urllib.error
 import urllib.request
 from dataclasses import asdict, dataclass, field
@@ -12,7 +14,22 @@ from pathlib import Path
 from typing import Any
 
 from .api_usage import append_usage_record, summarize_usage, read_usage_records
-from .utils import iso_now, read_json, write_json
+from .utils import iso_now, read_json, slugify, truncate, write_json
+
+SECRET_PATTERNS = [
+    re.compile(r"sk-[A-Za-z0-9_-]{16,}"),
+    re.compile(r"(?i)(api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+"),
+    re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
+    re.compile(r"\b[A-Za-z0-9_-]{32,}\b"),
+]
+
+
+def redact_text(text: str, max_chars: int = 500) -> str:
+    """Return a compact preview with likely secrets redacted."""
+    redacted = text
+    for pattern in SECRET_PATTERNS:
+        redacted = pattern.sub("[REDACTED_SECRET]", redacted)
+    return truncate(redacted, max_chars)
 
 
 @dataclass
@@ -209,12 +226,27 @@ def complete_with_cache(
     request: ProviderRequest,
     cache_dir: Path,
     api_usage_dir: Path | None = None,
+    cache_enabled: bool = True,
+    cache_ttl_seconds: int | None = None,
+    redact_prompts: bool = True,
 ) -> ProviderResponse:
     """Complete a request using a JSON cache and optionally write usage files."""
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_namespace = "/".join(
+        [
+            slugify(provider.name),
+            slugify(request.model or provider.model),
+            slugify(request.task),
+        ]
+    )
+    namespaced_cache_dir = cache_dir / cache_namespace
+    namespaced_cache_dir.mkdir(parents=True, exist_ok=True)
     request_hash = request.request_hash()
-    cache_path = cache_dir / f"{request_hash}.json"
-    if cache_path.exists():
+    cache_path = namespaced_cache_dir / f"{request_hash}.json"
+    cache_is_fresh = cache_path.exists()
+    if cache_is_fresh and cache_ttl_seconds is not None:
+        cache_age_seconds = max(0.0, time.time() - cache_path.stat().st_mtime)
+        cache_is_fresh = cache_age_seconds <= cache_ttl_seconds
+    if cache_enabled and cache_is_fresh:
         cached = read_json(cache_path, default={}) or {}
         response = ProviderResponse(
             provider=str(cached.get("provider", provider.name)),
@@ -228,11 +260,14 @@ def complete_with_cache(
         )
     else:
         response = provider.complete(request)
-        write_json(cache_path, response.to_dict())
+        if cache_enabled:
+            write_json(cache_path, response.to_dict())
 
     if api_usage_dir is not None:
         api_usage_dir.mkdir(parents=True, exist_ok=True)
         jsonl_path = api_usage_dir / "api_usage.jsonl"
+        prompt_preview = redact_text(request.prompt) if redact_prompts else truncate(request.prompt, 500)
+        response_preview = redact_text(response.content) if redact_prompts else truncate(response.content, 500)
         append_usage_record(
             jsonl_path,
             {
@@ -247,6 +282,11 @@ def complete_with_cache(
                 "cache_hit": response.cache_hit,
                 "status": response.status,
                 "request_hash": response.request_hash,
+                "prompt_preview": prompt_preview,
+                "response_preview": response_preview,
+                "redaction_enabled": redact_prompts,
+                "cache_enabled": cache_enabled,
+                "cache_namespace": cache_namespace,
             },
         )
         write_json(api_usage_dir / "api_usage_summary.json", summarize_usage(read_usage_records(jsonl_path)))

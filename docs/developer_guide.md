@@ -54,6 +54,11 @@ v0.4.0 ships `MockProvider` plus a minimal OpenAI-compatible provider path.
 Real calls must require explicit configuration, environment-backed secrets, and
 request-hash cache accounting. Do not store API keys in project files.
 
+v0.5.2 adds provider cache policy and preview redaction. New provider code should
+write redacted `prompt_preview` and `response_preview` fields to usage records,
+store cache files under provider/model/task namespaces, and respect
+`cache_enabled`, `cache_ttl_seconds`, and `redact_prompts`.
+
 ## Benchmark runner
 
 Benchmark tasks must report workflow-compliance evidence only. They can check

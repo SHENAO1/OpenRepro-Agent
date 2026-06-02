@@ -59,7 +59,7 @@ Released in v0.4.0 with opt-in provider readiness, paper-to-code guardrails, ben
 
 ## v0.5.0 — Stronger paper-to-code and repair loop
 
-- Prompt/response redaction and stronger cache controls.
+- [x] Prompt/response redaction and stronger cache controls.
 - [x] Human approval gates that can promote verified candidates into implementation-ready experiment scaffolds.
 - [x] Controlled repair dry-run previews with manifest regeneration diffs.
 - Richer benchmark tasks with dataset/environment provenance.
@@ -75,6 +75,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Include verified candidate and repair dry-run summaries in reports.
 - [x] Include verified candidate and repair dry-run handoff files.
 - [x] Suggest `approve-candidates` from project status after analysis/planning when candidates remain unapproved.
+
+## v0.5.2 — Provider safety and cache policy
+
+- [x] Redact likely secrets from provider prompt/response previews in usage records.
+- [x] Store provider cache entries under provider/model/task namespaces.
+- [x] Add cache policy fields: `cache_enabled`, `cache_ttl_seconds`, and `redact_prompts`.
+- [x] Allow `configure-provider` to update cache and redaction policy.
 
 ## Long-term ideas
 

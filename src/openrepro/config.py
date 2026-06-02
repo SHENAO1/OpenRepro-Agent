@@ -38,13 +38,16 @@ class APIConfig:
     enable_real_api: bool = False
     api_key_env: str = "OPENAI_API_KEY"
     endpoint: str = "https://api.openai.com/v1/chat/completions"
+    cache_enabled: bool = True
+    cache_ttl_seconds: int | None = None
+    redact_prompts: bool = True
 
 
 @dataclass
 class AnalysisConfig:
     """Rule/mock analyzer configuration."""
 
-    analyzer_version: str = "v0.5.1-rule"
+    analyzer_version: str = "v0.5.2-rule"
     max_source_preview_chars: int = 4000
 
 
@@ -110,6 +113,9 @@ def configure_api_provider(
     enable_real_api: bool | None = None,
     api_key_env: str | None = None,
     endpoint: str | None = None,
+    cache_enabled: bool | None = None,
+    cache_ttl_seconds: int | None = None,
+    redact_prompts: bool | None = None,
 ) -> dict[str, Any]:
     """Update project API provider configuration without storing secrets."""
     config = load_project_config(project_dir)
@@ -123,6 +129,12 @@ def configure_api_provider(
         api["api_key_env"] = api_key_env
     if endpoint is not None:
         api["endpoint"] = endpoint
+    if cache_enabled is not None:
+        api["cache_enabled"] = bool(cache_enabled)
+    if cache_ttl_seconds is not None:
+        api["cache_ttl_seconds"] = int(cache_ttl_seconds)
+    if redact_prompts is not None:
+        api["redact_prompts"] = bool(redact_prompts)
     config["api"] = api
     save_project_config(project_dir, config)
     return api
@@ -142,6 +154,9 @@ def provider_status(project_dir: Path) -> dict[str, Any]:
         "api_key_env": key_env,
         "api_key_present": bool(os.environ.get(key_env)),
         "endpoint": str(api.get("endpoint") or ""),
+        "cache_enabled": bool(api.get("cache_enabled", True)),
+        "cache_ttl_seconds": api.get("cache_ttl_seconds"),
+        "redact_prompts": bool(api.get("redact_prompts", True)),
         "ready_for_real_calls": provider != "mock" and real_enabled and bool(os.environ.get(key_env)),
         "policy": "Real provider calls require explicit opt-in and environment-backed secrets.",
     }

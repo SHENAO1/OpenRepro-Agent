@@ -1,5 +1,5 @@
 project_name: openrepro_project
-version: 0.5.1
+version: 0.5.2
 description: Default OpenRepro-Agent configuration template.
 demo:
   seed: 42
@@ -14,6 +14,9 @@ api:
   enable_real_api: false
   api_key_env: OPENAI_API_KEY
   endpoint: https://api.openai.com/v1/chat/completions
+  cache_enabled: true
+  cache_ttl_seconds:
+  redact_prompts: true
 analysis:
-  analyzer_version: v0.5.1-rule
+  analyzer_version: v0.5.2-rule
   max_source_preview_chars: 4000

@@ -161,7 +161,7 @@ OpenRepro-Agent v{__version__}
 
 {api_block}
 
-说明：v0.5.1 默认使用 mock provider；真实 provider 需要显式 opt-in。mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
+说明：当前版本默认使用 mock provider；真实 provider 需要显式 opt-in。mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
 
 ## 10. Verified Candidate 审批摘要
 
