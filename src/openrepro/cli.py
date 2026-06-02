@@ -32,7 +32,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
-from .quality_gate import evaluate_run_quality
+from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .run_compare import compare_runs
@@ -241,9 +241,38 @@ def run_experiment_cmd(
 def quality_gate_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
     run_dir: Path | None = typer.Option(None, "--run-dir", help="Run directory. Defaults to the latest project run."),
+    all_runs: bool = typer.Option(False, "--all", help="Evaluate quality gates for all project run directories."),
 ) -> None:
     """Evaluate quality gates for a run directory."""
     project_dir = require_project(project_name)
+    if all_runs:
+        try:
+            summary = evaluate_all_quality_gates(project_dir)
+        except Exception as exc:
+            _warn(str(exc))
+            raise typer.Exit(1) from exc
+        table = Table(title=f"Quality Gate Summary: {project_name}")
+        table.add_column("Run")
+        table.add_column("Command")
+        table.add_column("Status")
+        table.add_column("Failed Checks")
+        for item in summary["runs"]:
+            table.add_row(
+                str(item["run_id"]),
+                str(item["command"]),
+                str(item["status"]),
+                ", ".join(item["failed_check_names"]),
+            )
+        console.print(table)
+        console.print(f"Runs: {summary['run_count']}")
+        console.print(f"Failed: {summary['failed_count']}")
+        console.print(f"Failed checks: {summary['failed_gate_check_names']}")
+        console.print(f"JSON: {project_dir / 'workspace' / 'quality_gate_summary.json'}")
+        console.print(f"Markdown: {project_dir / 'workspace' / 'QUALITY_GATE_SUMMARY.md'}")
+        if summary["failed_count"]:
+            raise typer.Exit(1)
+        _success("All run quality gates passed.")
+        return
     try:
         result = evaluate_run_quality(project_dir, run_dir)
     except Exception as exc:
@@ -706,6 +735,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Experiment runs": summary["experiment_run_count"],
         "Latest quality gate": summary["quality_gate_status"],
         "Quality gate failed checks": summary["quality_gate_failed_check_count"],
+        "Latest experiment gate": summary["experiment_quality_gate_status"],
+        "Experiment gate failed checks": summary["experiment_quality_gate_failed_check_count"],
+        "Failed gate check names": summary["failed_quality_gate_check_names"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -985,6 +1017,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Experiment runs": status.experiment_run_count,
         "Latest quality gate": status.latest_quality_gate_status,
         "Quality gate failed checks": status.latest_quality_gate_failed_check_count,
+        "Latest experiment gate": status.latest_experiment_quality_gate_status,
+        "Experiment gate failed checks": status.latest_experiment_quality_gate_failed_check_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

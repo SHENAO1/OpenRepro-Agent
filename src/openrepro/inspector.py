@@ -14,7 +14,7 @@ from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .project_manager import get_status
-from .quality_gate import latest_quality_gate_summary, quality_gate_summaries
+from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .utils import iso_now, read_json, write_json
 
 
@@ -155,6 +155,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     data_summary = data_index_summary(project_dir)
     quality_gates = quality_gate_summaries(project_dir)
     latest_quality_gate = latest_quality_gate_summary(project_dir)
+    latest_experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -202,6 +203,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "experiment_run_count": run_command_counts.get("run-experiment", 0),
         "quality_gate_status": latest_quality_gate["status"],
         "quality_gate_failed_check_count": latest_quality_gate["failed_check_count"],
+        "experiment_quality_gate_status": latest_experiment_quality_gate["status"],
+        "experiment_quality_gate_failed_check_count": latest_experiment_quality_gate["failed_check_count"],
+        "failed_quality_gate_check_names": sorted({name for gate in quality_gates for name in gate.get("failed_check_names", [])}),
         "quality_gate_passed_count": sum(1 for gate in quality_gates if gate.get("status") == "passed"),
         "quality_gate_failed_count": sum(1 for gate in quality_gates if gate.get("status") == "failed"),
         "quality_gates": quality_gates,

@@ -8,6 +8,7 @@ from typing import Any
 from .artifact_manager import latest_run_dir, validate_run_manifest
 from .config import get_demo_config
 from .document_loader import load_source_index
+from .quality_gate import quality_gate_summaries
 from .utils import iso_now
 
 
@@ -20,6 +21,8 @@ REPAIR_SUGGESTIONS: dict[str, str] = {
     "pdf_extraction_failed": "Use a text-layer PDF, OCR the document, or add Markdown/txt notes for analysis.",
     "invalid_demo_config": "Fix project_config.yaml demo values, then rerun plan and demo commands.",
     "provider_disabled": "Use the default mock provider or explicitly enable a future real provider implementation.",
+    "quality_gate_missing": "Run `openrepro quality-gate` for the target run.",
+    "quality_gate_failed": "Inspect the failed quality gate checks, then rerun the producing command or restore the missing evidence.",
     "unknown_error": "Inspect logs and rerun the failing command with the smallest reproducible input.",
 }
 
@@ -71,6 +74,23 @@ def diagnose_error(message: str, source: str = "runtime") -> dict[str, str]:
     return issue(classify_message(message), message, source=source)
 
 
+def _quality_gate_issues(project_dir: Path, target: Path | None) -> list[dict[str, str]]:
+    if target is None:
+        return []
+    issues: list[dict[str, str]] = []
+    target_text = str(target)
+    gate = None
+    for summary in quality_gate_summaries(project_dir):
+        if str(summary.get("run_dir")) == target_text:
+            gate = summary
+            break
+    if gate is not None and gate.get("status") == "failed":
+        names = gate.get("failed_check_names", [])
+        detail = ", ".join(names) if names else "unknown checks"
+        issues.append(issue("quality_gate_failed", f"Quality gate failed for run: {target}; failed checks: {detail}", source="quality_gate"))
+    return issues
+
+
 def _demo_config_issues(project_dir: Path) -> list[dict[str, str]]:
     config = get_demo_config(project_dir)
     checks = [
@@ -110,6 +130,7 @@ def diagnose_project(project_dir: Path, run_dir: Path | None = None) -> dict[str
         validation = validate_run_manifest(target)
         if not validation.get("valid"):
             issues.extend(diagnose_validation_result(validation))
+        issues.extend(_quality_gate_issues(project_dir, target))
 
     return {
         "schema_version": "0.4.0",

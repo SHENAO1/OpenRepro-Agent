@@ -40,7 +40,7 @@ def test_run_experiment_writes_quality_gate(tmp_path: Path):
     gate = read_json(run_dir / "reports" / "quality_gate.json")
     lineage = generate_run_lineage(project)
 
-    assert gate["schema_version"] == "1.4.0"
+    assert gate["schema_version"] == "1.4.1"
     assert gate["status"] == "passed"
     assert gate["valid"] is True
     assert metadata["quality_gate"]["status"] == "passed"

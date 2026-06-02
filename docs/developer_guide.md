@@ -176,6 +176,12 @@ evidence completeness: manifest validity, runner completion, required metrics,
 spec snapshots, data index snapshots, and environment snapshots. They must not
 be presented as scientific reproduction success.
 
+v1.4.1 extends quality gates into project-level summaries and diagnostics.
+`quality-gate --all` should evaluate every run and write
+`workspace/quality_gate_summary.json` plus `workspace/QUALITY_GATE_SUMMARY.md`.
+Diagnostic issues should include failed gate check names so repair planning can
+suggest the producing command or artifact class without fabricating evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

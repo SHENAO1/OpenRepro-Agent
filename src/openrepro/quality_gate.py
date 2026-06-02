@@ -8,7 +8,7 @@ from typing import Any
 from .artifact_manager import latest_run_dir, list_run_dirs, sha256_file, validate_run_manifest
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-QUALITY_GATE_SCHEMA_VERSION = "1.4.0"
+QUALITY_GATE_SCHEMA_VERSION = "1.4.1"
 
 
 def _check(name: str, passed: bool, message: str, details: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -86,6 +86,7 @@ def evaluate_run_quality(project_dir: Path, run_dir: Path | None = None) -> dict
         "valid": not failed_checks,
         "check_count": len(checks),
         "failed_check_count": len(failed_checks),
+        "failed_check_names": [str(check["name"]) for check in failed_checks],
         "checks": checks,
         "policy": "Quality gates check execution evidence completeness only; they do not claim scientific reproduction success.",
     }
@@ -145,6 +146,8 @@ def quality_gate_summaries(project_dir: Path) -> list[dict[str, Any]]:
     """Return quality gate summaries for all run directories, newest last."""
     summaries: list[dict[str, Any]] = []
     for run_dir in reversed(list_run_dirs(Path(project_dir))):
+        manifest = read_json(run_dir / "manifest.json", default={}) or {}
+        manifest = manifest if isinstance(manifest, dict) else {}
         path = run_dir / "reports" / "quality_gate.json"
         gate = read_json(path, default={}) or {}
         gate = gate if isinstance(gate, dict) else {}
@@ -152,15 +155,49 @@ def quality_gate_summaries(project_dir: Path) -> list[dict[str, Any]]:
             {
                 "run_id": run_dir.name,
                 "run_dir": str(run_dir),
+                "command": gate.get("command") if gate else manifest.get("command", "unknown"),
                 "present": path.exists(),
                 "path": str(path) if path.exists() else None,
                 "status": gate.get("status") if gate else "missing",
                 "valid": gate.get("valid") if gate else None,
                 "failed_check_count": int(gate.get("failed_check_count", 0) or 0) if gate else None,
+                "failed_check_names": list(gate.get("failed_check_names", [])) if gate else [],
                 "sha256": sha256_file(path) if path.exists() else None,
             }
         )
     return summaries
+
+
+def evaluate_all_quality_gates(project_dir: Path) -> dict[str, Any]:
+    """Evaluate quality gates for every run and write a project summary."""
+    project_dir = Path(project_dir).resolve()
+    gates = [evaluate_run_quality(project_dir, run_dir) for run_dir in reversed(list_run_dirs(project_dir))]
+    failed = [gate for gate in gates if not gate["valid"]]
+    summary = {
+        "schema_version": QUALITY_GATE_SCHEMA_VERSION,
+        "created_at": iso_now(),
+        "project_dir": str(project_dir),
+        "run_count": len(gates),
+        "passed_count": sum(1 for gate in gates if gate["valid"]),
+        "failed_count": len(failed),
+        "failed_gate_check_names": sorted({name for gate in failed for name in gate.get("failed_check_names", [])}),
+        "runs": [
+            {
+                "run_id": gate["run_id"],
+                "run_dir": gate["run_dir"],
+                "command": gate["command"],
+                "status": gate["status"],
+                "valid": gate["valid"],
+                "failed_check_count": gate["failed_check_count"],
+                "failed_check_names": gate["failed_check_names"],
+            }
+            for gate in gates
+        ],
+        "policy": "Quality gate summaries aggregate execution evidence completeness only; they do not claim scientific reproduction success.",
+    }
+    write_json(project_dir / "workspace" / "quality_gate_summary.json", summary)
+    safe_write_text(project_dir / "workspace" / "QUALITY_GATE_SUMMARY.md", _render_quality_gate_summary_markdown(summary))
+    return summary
 
 
 def latest_quality_gate_summary(project_dir: Path) -> dict[str, Any]:
@@ -178,6 +215,23 @@ def latest_quality_gate_summary(project_dir: Path) -> dict[str, Any]:
     return summaries[-1]
 
 
+def latest_experiment_quality_gate_summary(project_dir: Path) -> dict[str, Any]:
+    """Return the latest run-experiment quality gate summary."""
+    for summary in reversed(quality_gate_summaries(project_dir)):
+        if summary.get("command") == "run-experiment":
+            return summary
+    return {
+        "status": "missing",
+        "present": False,
+        "run_id": None,
+        "run_dir": None,
+        "command": "run-experiment",
+        "failed_check_count": None,
+        "failed_check_names": [],
+        "sha256": None,
+    }
+
+
 def _render_quality_gate_markdown(result: dict[str, Any]) -> str:
     lines = [
         "# Run Quality Gate",
@@ -193,4 +247,30 @@ def _render_quality_gate_markdown(result: dict[str, Any]) -> str:
     for check in result["checks"]:
         lines.append(f"| {check['name']} | {check['status']} | {check['message']} |")
     lines.extend(["", "## Policy", "", result["policy"], ""])
+    return "\n".join(lines)
+
+
+def _render_quality_gate_summary_markdown(summary: dict[str, Any]) -> str:
+    lines = [
+        "# Quality Gate Summary",
+        "",
+        f"- schema_version: {summary['schema_version']}",
+        f"- run_count: {summary['run_count']}",
+        f"- passed_count: {summary['passed_count']}",
+        f"- failed_count: {summary['failed_count']}",
+        f"- failed_gate_check_names: {summary['failed_gate_check_names']}",
+        "",
+        "| Run | Command | Status | Failed Checks |",
+        "| --- | --- | --- | --- |",
+    ]
+    for run in summary["runs"]:
+        lines.append(
+            "| {run_id} | {command} | {status} | {failed} |".format(
+                run_id=run["run_id"],
+                command=run["command"],
+                status=run["status"],
+                failed=", ".join(run["failed_check_names"]),
+            )
+        )
+    lines.extend(["", "## Policy", "", summary["policy"], ""])
     return "\n".join(lines)

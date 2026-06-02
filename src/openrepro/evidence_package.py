@@ -34,6 +34,7 @@ WORKSPACE_ARTIFACTS = [
     "experiment_input_validation.json",
     "data_index.json",
     "data_validation.json",
+    "quality_gate_summary.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -169,6 +170,7 @@ def _run_summaries(project_dir: Path) -> list[dict[str, Any]]:
                 "metric_files": _run_metric_files(run_dir),
                 "quality_gate_status": quality_gate.get("status") if quality_gate else "missing",
                 "quality_gate_failed_check_count": quality_gate.get("failed_check_count") if quality_gate else None,
+                "quality_gate_failed_check_names": quality_gate.get("failed_check_names", []) if quality_gate else [],
                 "manifest_sha256": sha256_file(run_dir / "manifest.json") if (run_dir / "manifest.json").exists() else None,
                 "quality_gate_sha256": sha256_file(run_dir / "reports" / "quality_gate.json")
                 if (run_dir / "reports" / "quality_gate.json").exists()
@@ -345,15 +347,17 @@ def _render_markdown(package: dict[str, Any]) -> str:
         )
 
     run_lines = [
-        "| Run | Command | Valid | Experiment | Metrics |",
-        "| --- | --- | --- | --- | --- |",
+        "| Run | Command | Valid | Gate | Failed Checks | Experiment | Metrics |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for run in package["runs"]:
         run_lines.append(
-            "| {run_id} | {command} | {valid} | {experiment_id} | {metric_files} |".format(
+            "| {run_id} | {command} | {valid} | {gate} | {failed} | {experiment_id} | {metric_files} |".format(
                 run_id=_cell(run["run_id"]),
                 command=_cell(run["command"]),
                 valid=_cell(run["valid"]),
+                gate=_cell(run.get("quality_gate_status")),
+                failed=_cell(run.get("quality_gate_failed_check_names", [])),
                 experiment_id=_cell(run["experiment_id"]),
                 metric_files=_cell(len(run["metric_files"])),
             )
@@ -382,6 +386,7 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - data_status_counts: {package['data_registry']['status_counts']}
 - quality_gate_passed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'passed')}
 - quality_gate_failed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'failed')}
+- failed_quality_gate_check_names: {sorted({name for gate in package['quality_gates'] for name in gate.get('failed_check_names', [])})}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

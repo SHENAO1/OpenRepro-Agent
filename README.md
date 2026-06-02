@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.4.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.4.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.4.0 workflow is:
+The v1.4.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -213,6 +213,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Check manifest validity, runner completion, spec/data/environment snapshots, and required metrics.
 - Surface quality gate status in `inspect`, `status`, lineage, and evidence packages.
 
+## What v1.4.1 adds
+
+- Add `openrepro quality-gate --all` for batch quality gate evaluation.
+- Write `workspace/quality_gate_summary.json` and `workspace/QUALITY_GATE_SUMMARY.md`.
+- Surface failed quality gate check names in inspect and evidence packages.
+- Let `diagnose` report failed quality gates as actionable issues.
+- Split latest-run gate status from latest experiment-run gate status in `status`.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -294,6 +302,7 @@ openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro quality-gate boc_demo
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
+openrepro quality-gate boc_demo --all
 openrepro lineage boc_demo
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
@@ -587,7 +596,7 @@ the run manifest, so template-specific outputs are validated with the rest of
 the run evidence. If a runner exits successfully but omits required template
 artifacts, the command fails with an artifact-validation error.
 
-### `openrepro quality-gate <project_name> [--run-dir RUN_DIR]`
+### `openrepro quality-gate <project_name> [--run-dir RUN_DIR] [--all]`
 
 Evaluates a run directory and writes:
 
@@ -600,6 +609,13 @@ For `run-experiment`, the gate checks manifest validity, runner completion,
 spec/data/environment snapshots, and required template metrics. For other run
 commands, it applies a manifest-level evidence check. The gate is evidence
 completeness only; it is not a scientific reproduction claim.
+
+Use `--all` to evaluate every run directory and write:
+
+```text
+workspace/quality_gate_summary.json
+workspace/QUALITY_GATE_SUMMARY.md
+```
 
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
@@ -971,12 +987,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.2.1: spec source fingerprints, freshness inspection, strict validation, and comparison warnings.
 - v1.3.0: data registry, data validation, run data snapshots, and data provenance in evidence outputs.
 - v1.4.0: run quality gates, quality gate reports, and gate status in evidence outputs.
+- v1.4.1: batch quality gates, failed-check summaries, and quality-gate diagnostics.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.4.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.4.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
