@@ -112,3 +112,9 @@ v0.5.0 adds `openrepro repair --dry-run`, which writes
 mutating run artifacts. Manifest repair previews should be generated as diffs
 against the current on-disk files; missing scientific artifacts must never be
 fabricated.
+
+v0.6.1 adds `openrepro repair --apply --only manifest --confirm`. Apply mode
+must remain manifest-only: regenerate `manifest.json` from files already present
+on disk, write `workspace/repair_apply.json` and `workspace/REPAIR_APPLY.md`,
+and do not generate scientific artifacts, edit experiment code, or infer
+parameters.

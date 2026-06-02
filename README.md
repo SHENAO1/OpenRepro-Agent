@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.6.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.6.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -72,6 +72,12 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Record manifest, config, source index, and verified candidate hashes for every run.
 - Add benchmark provenance fields for dataset, environment, dependencies, paper source, and runtime notes.
 - Surface benchmark provenance completeness in benchmark reports, suites, and indexes.
+
+## What v0.6.1 adds
+
+- Apply explicitly confirmed manifest-only repairs with `openrepro repair --apply --only manifest --confirm`.
+- Write `workspace/repair_apply.json` and `workspace/REPAIR_APPLY.md`.
+- Keep repair application limited to manifest regeneration from files already present on disk.
 
 ## What v0.4.0 does not support
 
@@ -372,6 +378,15 @@ workspace/REPAIR_DRY_RUN.md
 
 For manifest mismatch and missing-manifest issues, the dry-run preview includes a unified diff showing how `manifest.json` would change if regenerated from files currently present on disk. Missing scientific artifacts are never fabricated.
 
+To apply the manifest-only repair after reviewing the dry-run:
+
+```bash
+openrepro repair boc_demo --apply --only manifest --confirm
+```
+
+v0.6.1 apply mode does not generate missing scientific artifacts, edit
+experiment code, change configuration values, or infer parameters.
+
 ### `openrepro run-sweep <project_name> [--noise-std FLOAT]... [--seed INT]...`
 
 Runs the built-in BOC-like demo across a noise/seed grid. Defaults:
@@ -582,12 +597,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.5.1: verified candidate and repair dry-run status surfaced through inspect, report, handoff, and status.
 - v0.5.2: provider prompt/response preview redaction, cache namespace, and cache policy controls.
 - v0.6.0: benchmark provenance fields and project run lineage artifacts.
+- v0.6.1: confirmed manifest-only repair apply.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.6.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.6.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

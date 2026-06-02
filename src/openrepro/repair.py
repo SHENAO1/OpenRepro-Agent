@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .artifact_manager import build_run_manifest
+from .artifact_manager import build_run_manifest, write_run_manifest
 from .diagnostics import diagnose_project
 from .utils import iso_now, read_json, safe_write_text, write_json
 
@@ -181,6 +181,79 @@ def preview_repair_actions(project_dir: Path, run_dir: Path | None = None) -> di
     return preview
 
 
+def apply_repair_actions(
+    project_dir: Path,
+    run_dir: Path | None = None,
+    only: str = "manifest",
+    confirm: bool = False,
+) -> dict[str, Any]:
+    """Apply explicitly confirmed low-risk repair actions."""
+    if only != "manifest":
+        raise ValueError("v0.6.1 repair apply only supports --only manifest.")
+    if not confirm:
+        raise ValueError("Repair apply requires --confirm.")
+
+    project_dir = Path(project_dir)
+    diagnosis = diagnose_project(project_dir, run_dir)
+    target = Path(diagnosis["run_dir"]) if diagnosis.get("run_dir") else None
+    issues = diagnosis.get("issues", [])
+    manifest_issues = [issue for issue in issues if issue.get("code") in {"manifest_mismatch", "missing_manifest"}]
+    actions: list[dict[str, Any]] = []
+
+    if target is not None and target.exists() and manifest_issues:
+        manifest = read_json(target / "manifest.json", default=None)
+        manifest = manifest if isinstance(manifest, dict) else None
+        command = _infer_command(target, manifest)
+        if command is None:
+            actions.append(
+                {
+                    "step": 1,
+                    "code": "manifest_repair_skipped",
+                    "target": str(target),
+                    "modified": False,
+                    "message": "Could not infer run command; manifest was not regenerated.",
+                }
+            )
+        else:
+            path = write_run_manifest(target, command)
+            actions.append(
+                {
+                    "step": 1,
+                    "code": "manifest_regenerated",
+                    "target": str(path),
+                    "command": command,
+                    "modified": True,
+                    "message": "Regenerated manifest.json from files currently present on disk.",
+                }
+            )
+    else:
+        actions.append(
+            {
+                "step": 1,
+                "code": "no_manifest_repair_needed",
+                "target": str(target) if target else None,
+                "modified": False,
+                "message": "No manifest mismatch or missing-manifest issue was found.",
+            }
+        )
+
+    apply_result = {
+        "schema_version": "0.6.1",
+        "created_at": iso_now(),
+        "project_dir": str(project_dir),
+        "run_dir": str(target) if target else None,
+        "only": only,
+        "confirmed": confirm,
+        "modified_file_count": sum(1 for action in actions if action.get("modified")),
+        "actions": actions,
+        "policy": "Applied only explicit manifest repairs; no scientific artifacts, configs, or experiment code were generated or modified.",
+    }
+    workspace = project_dir / "workspace"
+    write_json(workspace / "repair_apply.json", apply_result)
+    safe_write_text(workspace / "REPAIR_APPLY.md", _render_repair_apply(apply_result))
+    return apply_result
+
+
 def _render_repair_preview(preview: dict[str, Any]) -> str:
     lines = [
         "# Repair Dry Run",
@@ -197,4 +270,24 @@ def _render_repair_preview(preview: dict[str, Any]) -> str:
         if action.get("diff"):
             lines.extend(["", "```diff", action["diff"].rstrip(), "```", ""])
     lines.extend(["", "## Policy", "", preview["policy"], ""])
+    return "\n".join(lines)
+
+
+def _render_repair_apply(result: dict[str, Any]) -> str:
+    lines = [
+        "# Repair Apply",
+        "",
+        f"- run_dir: `{result.get('run_dir')}`",
+        f"- only: {result['only']}",
+        f"- confirmed: {result['confirmed']}",
+        f"- modified_file_count: {result['modified_file_count']}",
+        "",
+        "## Actions",
+        "",
+    ]
+    for action in result["actions"]:
+        lines.append(f"{action['step']}. {action['code']}: {action['message']}")
+        if action.get("target"):
+            lines.append(f"   target: `{action['target']}`")
+    lines.extend(["", "## Policy", "", result["policy"], ""])
     return "\n".join(lines)

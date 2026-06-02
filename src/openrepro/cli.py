@@ -23,7 +23,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
-from .repair import create_repair_plan, preview_repair_actions
+from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .run_compare import compare_runs
 
@@ -416,19 +416,35 @@ def repair_cmd(
         help="Run directory to preview repairs for. Defaults to the latest project run.",
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview controlled repair actions without changing files."),
+    apply: bool = typer.Option(False, "--apply", help="Apply explicitly confirmed low-risk repairs."),
+    only: str = typer.Option("manifest", "--only", help="Repair scope. v0.6.1 supports only 'manifest'."),
+    confirm: bool = typer.Option(False, "--confirm", help="Required when applying repairs."),
 ) -> None:
-    """Preview controlled repair actions. Only dry-run mode is supported."""
-    if not dry_run:
-        _warn("Controlled repair execution currently requires --dry-run.")
+    """Preview or apply controlled repair actions."""
+    if dry_run and apply:
+        _warn("--dry-run and --apply cannot be combined.")
+        raise typer.Exit(1)
+    if not dry_run and not apply:
+        _warn("Use --dry-run to preview or --apply --only manifest --confirm to apply.")
         raise typer.Exit(1)
     project_dir = require_project(project_name)
     target = run_dir
     if target is not None and not target.is_absolute() and not target.exists():
         target = project_dir / target
-    preview = preview_repair_actions(project_dir, target)
-    _success(f"Repair dry-run written with {preview['action_count']} actions.")
-    console.print(f"JSON: {project_dir / 'workspace' / 'repair_dry_run.json'}")
-    console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_DRY_RUN.md'}")
+    if dry_run:
+        preview = preview_repair_actions(project_dir, target)
+        _success(f"Repair dry-run written with {preview['action_count']} actions.")
+        console.print(f"JSON: {project_dir / 'workspace' / 'repair_dry_run.json'}")
+        console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_DRY_RUN.md'}")
+        return
+    try:
+        result = apply_repair_actions(project_dir, target, only=only, confirm=confirm)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success(f"Repair apply completed with {result['modified_file_count']} modified files.")
+    console.print(f"JSON: {project_dir / 'workspace' / 'repair_apply.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPAIR_APPLY.md'}")
 
 
 @app.command("compare-runs")

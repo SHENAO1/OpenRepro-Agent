@@ -90,6 +90,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Add `openrepro lineage` with `workspace/run_lineage.json` and `workspace/RUN_LINEAGE.md`.
 - [x] Record run manifest, config, source index, and verified candidate hashes.
 
+## v0.6.1 — Manifest-only repair apply
+
+- [x] Add `openrepro repair --apply --only manifest --confirm`.
+- [x] Regenerate missing or mismatched manifests from files already present on disk.
+- [x] Write `workspace/repair_apply.json` and `workspace/REPAIR_APPLY.md`.
+- [x] Keep apply mode from generating scientific artifacts, editing experiment code, or changing configuration values.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
