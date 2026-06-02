@@ -32,6 +32,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
+from .quality_gate import evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .run_compare import compare_runs
@@ -232,6 +233,35 @@ def run_experiment_cmd(
         _warn("Experiment run completed with runner failure.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Exit code: {metadata['exit_code']}")
+    if metadata.get("quality_gate"):
+        console.print(f"Quality gate: {metadata['quality_gate']['status']}")
+
+
+@app.command("quality-gate")
+def quality_gate_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_dir: Path | None = typer.Option(None, "--run-dir", help="Run directory. Defaults to the latest project run."),
+) -> None:
+    """Evaluate quality gates for a run directory."""
+    project_dir = require_project(project_name)
+    try:
+        result = evaluate_run_quality(project_dir, run_dir)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Run Quality Gate: {result['run_id']}")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Message")
+    for check in result["checks"]:
+        table.add_row(str(check["name"]), str(check["status"]), str(check["message"]))
+    console.print(table)
+    console.print(f"Status: {result['status']}")
+    console.print(f"JSON: {Path(result['run_dir']) / 'reports' / 'quality_gate.json'}")
+    console.print(f"Markdown: {Path(result['run_dir']) / 'reports' / 'quality_gate.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Run quality gate passed.")
 
 
 @app.command("rerun-experiment")
@@ -674,6 +704,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Missing data": summary["data_missing_count"],
         "Data hash mismatches": summary["data_hash_mismatch_count"],
         "Experiment runs": summary["experiment_run_count"],
+        "Latest quality gate": summary["quality_gate_status"],
+        "Quality gate failed checks": summary["quality_gate_failed_check_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -951,6 +983,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Missing data": status.data_missing_count,
         "Data hash mismatches": status.data_hash_mismatch_count,
         "Experiment runs": status.experiment_run_count,
+        "Latest quality gate": status.latest_quality_gate_status,
+        "Quality gate failed checks": status.latest_quality_gate_failed_check_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

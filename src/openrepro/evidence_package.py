@@ -14,6 +14,7 @@ from .experiment_spec import inspect_experiment_specs
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
+from .quality_gate import quality_gate_summaries
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
 EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0.1"
@@ -152,6 +153,8 @@ def _run_summaries(project_dir: Path) -> list[dict[str, Any]]:
         manifest = manifest if isinstance(manifest, dict) else {}
         validation = validate_run_manifest(run_dir)
         metadata = manifest.get("metadata", {}) if isinstance(manifest.get("metadata"), dict) else {}
+        quality_gate = read_json(run_dir / "reports" / "quality_gate.json", default={}) or {}
+        quality_gate = quality_gate if isinstance(quality_gate, dict) else {}
         summaries.append(
             {
                 "run_id": run_dir.name,
@@ -164,7 +167,12 @@ def _run_summaries(project_dir: Path) -> list[dict[str, Any]]:
                 "experiment_id": metadata.get("experiment_id"),
                 "template": metadata.get("template"),
                 "metric_files": _run_metric_files(run_dir),
+                "quality_gate_status": quality_gate.get("status") if quality_gate else "missing",
+                "quality_gate_failed_check_count": quality_gate.get("failed_check_count") if quality_gate else None,
                 "manifest_sha256": sha256_file(run_dir / "manifest.json") if (run_dir / "manifest.json").exists() else None,
+                "quality_gate_sha256": sha256_file(run_dir / "reports" / "quality_gate.json")
+                if (run_dir / "reports" / "quality_gate.json").exists()
+                else None,
             }
         )
     return summaries
@@ -247,6 +255,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     spec_summary = inspect_experiment_specs(project_dir)
     data_summary = data_index_summary(project_dir)
     runs = _run_summaries(project_dir)
+    quality_gates = quality_gate_summaries(project_dir)
     source_fingerprint = evidence_source_fingerprint(project_dir)
     package = {
         "schema_version": EVIDENCE_PACKAGE_SCHEMA_VERSION,
@@ -267,6 +276,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
         "experiments": experiments,
         "experiment_specs": spec_summary,
         "data_registry": data_summary,
+        "quality_gates": quality_gates,
         "runs": runs,
         "lineage": {
             "schema_version": lineage.get("schema_version"),
@@ -370,6 +380,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - experiment_spec_status_counts: {package['experiment_specs']['status_counts']}
 - data_registered_count: {package['data_registry']['registered_count']}
 - data_status_counts: {package['data_registry']['status_counts']}
+- quality_gate_passed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'passed')}
+- quality_gate_failed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'failed')}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

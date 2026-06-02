@@ -9,7 +9,7 @@ from typing import Any
 from .artifact_manager import list_run_dirs, sha256_file
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-LINEAGE_SCHEMA_VERSION = "1.3.0"
+LINEAGE_SCHEMA_VERSION = "1.4.0"
 
 
 def _hash_file(path: Path) -> str | None:
@@ -37,6 +37,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
     experiment_spec = run_dir / "configs" / "experiment_spec_snapshot.json"
     data_index = run_dir / "configs" / "data_index_snapshot.json"
     environment_snapshot = run_dir / "configs" / "environment_snapshot.json"
+    quality_gate = run_dir / "reports" / "quality_gate.json"
     runner = run_dir / "code" / "runner.py"
     hashes = {
         "manifest_sha256": _hash_file(manifest_path),
@@ -48,6 +49,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "experiment_spec_sha256": _hash_file(experiment_spec),
         "data_index_sha256": _hash_file(data_index),
         "environment_snapshot_sha256": _hash_file(environment_snapshot),
+        "quality_gate_sha256": _hash_file(quality_gate),
         "runner_sha256": _hash_file(runner),
     }
     return {
@@ -69,6 +71,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "experiment_spec_path": str(experiment_spec) if experiment_spec.exists() else None,
         "data_index_path": str(data_index) if data_index.exists() else None,
         "environment_snapshot_path": str(environment_snapshot) if environment_snapshot.exists() else None,
+        "quality_gate_path": str(quality_gate) if quality_gate.exists() else None,
         "runner_path": str(runner) if runner.exists() else None,
         "hashes": hashes,
         "provenance_complete": all(
@@ -81,6 +84,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
                 "experiment_spec_sha256",
                 "data_index_sha256",
                 "environment_snapshot_sha256",
+                "quality_gate_sha256",
                 "runner_sha256",
             }
         ),
@@ -92,6 +96,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
                 "experiment_spec_sha256",
                 "data_index_sha256",
                 "environment_snapshot_sha256",
+                "quality_gate_sha256",
                 "runner_sha256",
             ]
         )
@@ -143,8 +148,8 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
         f"- run_count: {lineage['run_count']}",
         f"- project_dir: `{lineage['project_dir']}`",
         "",
-        "| Run | Command | Repeat | Manifest | Config | Inputs | Spec | Data | Environment | Runner | Complete |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Run | Command | Repeat | Manifest | Config | Inputs | Spec | Data | Environment | Gate | Runner | Complete |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for run in lineage["runs"]:
         hashes = run["hashes"]
@@ -154,7 +159,7 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
             else ""
         )
         lines.append(
-            "| {run_id} | {parent_command} | {repeat} | {manifest} | {config} | {inputs} | {spec} | {data} | {environment} | {runner} | {complete} |".format(
+            "| {run_id} | {parent_command} | {repeat} | {manifest} | {config} | {inputs} | {spec} | {data} | {environment} | {gate} | {runner} | {complete} |".format(
                 run_id=run["run_id"],
                 parent_command=run["parent_command"],
                 repeat=repeat,
@@ -164,6 +169,7 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
                 spec=_short_hash(hashes.get("experiment_spec_sha256")),
                 data=_short_hash(hashes.get("data_index_sha256")),
                 environment=_short_hash(hashes.get("environment_snapshot_sha256")),
+                gate=_short_hash(hashes.get("quality_gate_sha256")),
                 runner=_short_hash(hashes.get("runner_sha256")),
                 complete=run.get("experiment_provenance_complete")
                 if run.get("experiment_provenance_complete") is not None

@@ -13,6 +13,7 @@ from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
+from .quality_gate import latest_quality_gate_summary
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
 
@@ -47,6 +48,8 @@ class ProjectStatus:
     data_missing_count: int
     data_hash_mismatch_count: int
     experiment_run_count: int
+    latest_quality_gate_status: str
+    latest_quality_gate_failed_check_count: int | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -268,6 +271,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             data_missing_count=0,
             data_hash_mismatch_count=0,
             experiment_run_count=0,
+            latest_quality_gate_status="missing",
+            latest_quality_gate_failed_check_count=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -299,6 +304,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     experiment_run_count = _experiment_run_count(project_dir)
     has_experiment_scaffold = _has_experiment_scaffold(project_dir)
     latest = latest_run_dir(project_dir)
+    quality_gate = latest_quality_gate_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -331,6 +337,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro run-experiment {project_dir} --experiment-id <id> --confirm"
     elif latest is None:
         next_step = f"Run: openrepro run-demo {project_dir}"
+    elif quality_gate["status"] in {"missing", "failed"}:
+        next_step = f"Run: openrepro quality-gate {project_dir}"
     elif not lineage_exists:
         next_step = f"Run: openrepro lineage {project_dir}"
     elif not report_exists:
@@ -342,7 +350,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.3.0 workflow is complete. Review registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.4.0 workflow is complete. Review run quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -366,6 +374,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         data_missing_count=data_summary["missing_count"],
         data_hash_mismatch_count=data_summary["hash_mismatch_count"],
         experiment_run_count=experiment_run_count,
+        latest_quality_gate_status=str(quality_gate["status"]),
+        latest_quality_gate_failed_check_count=quality_gate["failed_check_count"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

@@ -12,7 +12,7 @@ from .data_registry import data_contract
 from .experiment_templates import normalize_artifact_paths, template_input_requirements
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-EXPERIMENT_SPEC_SCHEMA_VERSION = "1.2.1"
+EXPERIMENT_SPEC_SCHEMA_VERSION = "1.4.0"
 
 TEMPLATE_METRICS = {
     "basic": [],

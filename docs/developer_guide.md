@@ -167,6 +167,15 @@ mismatches. Experiment specs should include the registered data contract, and
 `run-experiment` should snapshot the data index under
 `configs/data_index_snapshot.json` for lineage and evidence packages.
 
+v1.4.0 adds `quality_gate.py`. `run-experiment` should write
+`reports/quality_gate.json` and `reports/quality_gate.md` after manifest
+generation. Quality gate reports are intentionally excluded from run manifests
+so manual re-evaluation does not stale the manifest; lineage and evidence
+packages record their hashes separately. Quality gates should check execution
+evidence completeness: manifest validity, runner completion, required metrics,
+spec snapshots, data index snapshots, and environment snapshots. They must not
+be presented as scientific reproduction success.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

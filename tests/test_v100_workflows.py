@@ -46,7 +46,7 @@ def test_generate_evidence_package(tmp_path: Path):
     artifact_names = {item["name"]: item for item in package["workspace_artifacts"]}
 
     assert package["schema_version"] == "1.0.1"
-    assert package["openrepro_version"] == "1.3.0"
+    assert package["openrepro_version"] == "1.4.0"
     assert package["freshness"]["status"] == "current"
     assert package["source_fingerprint"]["sha256"]
     assert package["status"]["lineage_exists"] is True

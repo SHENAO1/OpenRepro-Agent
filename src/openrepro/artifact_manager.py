@@ -23,6 +23,10 @@ RUN_SUBDIRS = [
 ]
 
 MANIFEST_SCHEMA_VERSION = "0.4.0"
+MANIFEST_EXCLUDED_ARTIFACTS = {
+    "reports/quality_gate.json",
+    "reports/quality_gate.md",
+}
 
 REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
     "run-demo": [
@@ -189,9 +193,11 @@ def build_run_manifest(
     run_dir = Path(run_dir)
     required = required_artifacts or REQUIRED_RUN_ARTIFACTS.get(command, [])
     discovered = sorted(
-        relpath(path, run_dir).replace("\\", "/")
+        relative_path
         for path in run_dir.rglob("*")
         if path.is_file() and path.name != "manifest.json"
+        for relative_path in [relpath(path, run_dir).replace("\\", "/")]
+        if relative_path not in MANIFEST_EXCLUDED_ARTIFACTS
     )
     all_paths = sorted(set(discovered).union(path.replace("\\", "/") for path in required))
     manifest: dict[str, Any] = {

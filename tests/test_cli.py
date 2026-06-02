@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.3.0" in result.output
+    assert "OpenRepro-Agent v1.4.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -70,6 +70,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["validate-inputs", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-experiment-spec", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-experiment", "boc_demo", "--experiment-id", "cli_exp", "--confirm"],
+        ["quality-gate", "boc_demo"],
         ["rerun-experiment", "boc_demo", "--experiment-id", "cli_exp", "--confirm"],
         ["compare-experiments", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-demo", "boc_demo"],
@@ -77,6 +78,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["validate", "boc_demo", "--all"],
         ["inspect", "boc_demo"],
         ["run-sweep", "boc_demo", "--noise-std", "0.0", "--noise-std", "0.1", "--seed", "1"],
+        ["quality-gate", "boc_demo"],
         ["validate", "boc_demo"],
         ["validate", "boc_demo", "--all"],
         ["compare-runs", "boc_demo"],
@@ -131,5 +133,6 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert any((run_dir / "data" / "sweep_results.json").exists() for run_dir in run_dirs)
     assert any((run_dir / "data" / "execution_result.json").exists() for run_dir in run_dirs)
     assert all((run_dir / "manifest.json").exists() for run_dir in run_dirs)
+    assert any((run_dir / "reports" / "quality_gate.json").exists() for run_dir in run_dirs)
     assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.json").exists()
     assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.md").exists()

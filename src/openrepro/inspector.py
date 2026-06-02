@@ -14,6 +14,7 @@ from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .project_manager import get_status
+from .quality_gate import latest_quality_gate_summary, quality_gate_summaries
 from .utils import iso_now, read_json, write_json
 
 
@@ -152,6 +153,8 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     scaffolds = inspect_experiment_scaffolds(project_dir)
     spec_summary = inspect_experiment_specs(project_dir)
     data_summary = data_index_summary(project_dir)
+    quality_gates = quality_gate_summaries(project_dir)
+    latest_quality_gate = latest_quality_gate_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -197,6 +200,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "run_count": len(run_dirs),
         "run_command_counts": run_command_counts,
         "experiment_run_count": run_command_counts.get("run-experiment", 0),
+        "quality_gate_status": latest_quality_gate["status"],
+        "quality_gate_failed_check_count": latest_quality_gate["failed_check_count"],
+        "quality_gate_passed_count": sum(1 for gate in quality_gates if gate.get("status") == "passed"),
+        "quality_gate_failed_count": sum(1 for gate in quality_gates if gate.get("status") == "failed"),
+        "quality_gates": quality_gates,
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

@@ -16,6 +16,7 @@ from .environment_snapshot import build_environment_snapshot
 from .experiment_inputs import validate_experiment_inputs
 from .experiment_spec import validate_experiment_spec
 from .experiment_templates import normalize_artifact_paths
+from .quality_gate import evaluate_run_quality
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
 EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.2"
@@ -260,7 +261,35 @@ This report records controlled execution evidence only. It does not claim paper 
         "checked_artifacts": artifact_validation["checked_artifacts"],
         "errors": artifact_validation["errors"],
     }
-    if status == "completed" and not artifact_validation["valid"]:
-        errors = "; ".join(artifact_validation["errors"])
+    quality_gate = evaluate_run_quality(project_dir, run_dirs.root)
+    metadata["quality_gate"] = {
+        "status": quality_gate["status"],
+        "valid": quality_gate["valid"],
+        "failed_check_count": quality_gate["failed_check_count"],
+        "path": relpath(run_dirs.reports / "quality_gate.json", run_dirs.root),
+    }
+    write_json(run_dirs.root / "metadata.json", metadata)
+    write_run_manifest(
+        run_dirs.root,
+        "run-experiment",
+        required_artifacts=required_artifacts,
+        extra_metadata={
+            "experiment_id": experiment_id,
+            "template": template,
+            "status": status,
+            "exit_code": completed.returncode,
+            "expected_artifact_count": len(required_artifacts),
+            "input_completeness": input_completeness.get("status", "missing"),
+            "repeatability_check": environment_snapshot.get("repeatability_check", {}).get("status"),
+            "experiment_spec_sha256": spec_validation.get("spec_sha256"),
+            "quality_gate_status": quality_gate["status"],
+        },
+    )
+    final_validation = validate_run_manifest(run_dirs.root, required_artifacts=required_artifacts)
+    if status == "completed" and not final_validation["valid"]:
+        errors = "; ".join(final_validation["errors"])
         raise ValueError(f"Experiment artifact validation failed: {errors}")
+    if status == "completed" and not quality_gate["valid"]:
+        failed = ", ".join(check["name"] for check in quality_gate["checks"] if not check["passed"])
+        raise ValueError(f"Experiment quality gate failed: {failed}")
     return metadata

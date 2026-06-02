@@ -31,6 +31,7 @@ python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name code
 python -m openrepro.cli validate-inputs $Project --experiment-id smoke_exp
 python -m openrepro.cli validate-experiment-spec $Project --experiment-id smoke_exp
 python -m openrepro.cli run-experiment $Project --experiment-id smoke_exp --confirm
+python -m openrepro.cli quality-gate $Project
 python -m openrepro.cli rerun-experiment $Project --experiment-id smoke_exp --confirm
 python -m openrepro.cli compare-experiments $Project --experiment-id smoke_exp
 python -m openrepro.cli run-demo $Project
@@ -38,6 +39,7 @@ python -m openrepro.cli validate $Project
 python -m openrepro.cli validate $Project --all
 python -m openrepro.cli inspect $Project
 python -m openrepro.cli run-sweep $Project --noise-std 0.0 --noise-std 0.1 --seed 42
+python -m openrepro.cli quality-gate $Project
 python -m openrepro.cli validate $Project
 python -m openrepro.cli validate $Project --all
 python -m openrepro.cli compare-runs $Project
