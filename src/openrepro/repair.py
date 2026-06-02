@@ -11,12 +11,35 @@ from .artifact_manager import build_run_manifest, write_run_manifest
 from .diagnostics import diagnose_project
 from .utils import iso_now, read_json, safe_write_text, write_json
 
+QUALITY_GATE_AUTOMATION = {
+    "quality_gate_failed": "inspect_failed_quality_gate",
+    "quality_gate_manifest_failed": "preview_manifest_repair",
+    "quality_gate_metadata_missing": "rerun_producing_command",
+    "quality_gate_runner_failed": "inspect_runner_failure",
+    "quality_gate_spec_snapshot_missing": "validate_spec_then_rerun_experiment",
+    "quality_gate_data_snapshot_missing": "validate_data_then_rerun_experiment",
+    "quality_gate_environment_snapshot_missing": "rerun_experiment",
+    "quality_gate_metrics_missing": "rerun_experiment_or_restore_metrics",
+    "quality_gate_command_unsupported": "manual_review_required",
+}
+
+
+def _automation_for_issue(issue: dict[str, Any]) -> str:
+    code = str(issue.get("code"))
+    if code in QUALITY_GATE_AUTOMATION:
+        return QUALITY_GATE_AUTOMATION[code]
+    if code in {"manifest_mismatch", "missing_manifest"}:
+        return "preview_manifest_repair"
+    return "manual_review_required"
+
 
 def create_repair_plan(project_dir: Path, run_dir: Path | None = None) -> dict[str, Any]:
     """Write workspace/repair_plan.json and workspace/REPAIR_PLAN.md."""
     project_dir = Path(project_dir)
     diagnosis = diagnose_project(project_dir, run_dir)
     issues = diagnosis.get("issues", [])
+    quality_gate_summary = read_json(project_dir / "workspace" / "quality_gate_summary.json", default={}) or {}
+    quality_gate_summary = quality_gate_summary if isinstance(quality_gate_summary, dict) else {}
     actions = []
     for index, issue in enumerate(issues, start=1):
         actions.append(
@@ -26,7 +49,8 @@ def create_repair_plan(project_dir: Path, run_dir: Path | None = None) -> dict[s
                 "source": issue.get("source"),
                 "message": issue.get("message"),
                 "repair_suggestion": issue.get("repair_suggestion"),
-                "automation": "manual_review_required",
+                "automation": _automation_for_issue(issue),
+                "quality_gate_check": issue.get("check_name"),
             }
         )
     if not actions:
@@ -47,6 +71,11 @@ def create_repair_plan(project_dir: Path, run_dir: Path | None = None) -> dict[s
         "run_dir": diagnosis.get("run_dir"),
         "healthy": diagnosis.get("healthy"),
         "issue_count": len(issues),
+        "quality_gate_summary": {
+            "present": bool(quality_gate_summary),
+            "failed_count": quality_gate_summary.get("failed_count"),
+            "failed_gate_check_names": quality_gate_summary.get("failed_gate_check_names", []),
+        },
         "actions": actions,
         "policy": "Repair plans are advisory only in v0.4.0; no automatic code changes are made.",
     }
@@ -140,12 +169,32 @@ def preview_repair_actions(project_dir: Path, run_dir: Path | None = None) -> di
             "message": issue.get("message"),
             "mode": "dry_run",
             "will_modify_files": False,
+            "automation": _automation_for_issue(issue),
+            "quality_gate_check": issue.get("check_name"),
             "preview": issue.get("repair_suggestion"),
         }
         if code in {"manifest_mismatch", "missing_manifest"} and manifest_preview is not None:
             action["preview"] = "Would regenerate manifest.json from files currently present on disk."
             action["diff"] = manifest_preview["diff"]
             action["target_file"] = manifest_preview["file"]
+        elif code == "quality_gate_manifest_failed" and manifest_preview is not None:
+            action["preview"] = "Would preview manifest regeneration; restore trusted artifacts before applying."
+            action["diff"] = manifest_preview["diff"]
+            action["target_file"] = manifest_preview["file"]
+        elif code == "quality_gate_metrics_missing":
+            action["preview"] = "Would rerun the experiment or restore data/metrics.json with every required metric; no metrics are fabricated."
+        elif code == "quality_gate_runner_failed":
+            action["preview"] = "Would inspect runner stdout/stderr and rerun after scaffold, input, or dependency fixes."
+        elif code == "quality_gate_spec_snapshot_missing":
+            action["preview"] = "Would run validate-experiment-spec, then rerun the experiment to regenerate the spec snapshot."
+        elif code == "quality_gate_data_snapshot_missing":
+            action["preview"] = "Would run validate-data, then rerun the experiment to regenerate the data index snapshot."
+        elif code == "quality_gate_environment_snapshot_missing":
+            action["preview"] = "Would rerun the experiment to regenerate configs/environment_snapshot.json."
+        elif code == "quality_gate_metadata_missing":
+            action["preview"] = "Would rerun the producing command to regenerate metadata.json."
+        elif code == "quality_gate_failed":
+            action["preview"] = "Would inspect the failed quality gate checks and follow the check-specific repair actions below."
         elif code == "missing_artifact":
             action["preview"] = "Would not fabricate missing artifacts; rerun the producing command or restore the file."
         elif code == "invalid_demo_config":

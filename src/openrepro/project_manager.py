@@ -358,7 +358,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.4.1 workflow is complete. Review batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.5.0 workflow is complete. Review quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,

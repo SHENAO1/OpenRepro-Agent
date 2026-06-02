@@ -182,6 +182,13 @@ v1.4.1 extends quality gates into project-level summaries and diagnostics.
 Diagnostic issues should include failed gate check names so repair planning can
 suggest the producing command or artifact class without fabricating evidence.
 
+v1.5.0 makes repair planning quality-gate-aware. Diagnostics should emit both
+an aggregate `quality_gate_failed` issue and check-specific issue codes such as
+`quality_gate_metrics_missing`, `quality_gate_runner_failed`, or
+`quality_gate_data_snapshot_missing`. Repair plans and dry-runs should map those
+codes to explicit recovery actions, but they must not fabricate metrics,
+snapshots, datasets, or scientific outputs.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

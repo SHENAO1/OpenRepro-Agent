@@ -9,7 +9,7 @@ from .artifact_manager import latest_run_dir, validate_run_manifest
 from .config import get_demo_config
 from .document_loader import load_source_index
 from .quality_gate import quality_gate_summaries
-from .utils import iso_now
+from .utils import iso_now, read_json
 
 
 REPAIR_SUGGESTIONS: dict[str, str] = {
@@ -23,7 +23,26 @@ REPAIR_SUGGESTIONS: dict[str, str] = {
     "provider_disabled": "Use the default mock provider or explicitly enable a future real provider implementation.",
     "quality_gate_missing": "Run `openrepro quality-gate` for the target run.",
     "quality_gate_failed": "Inspect the failed quality gate checks, then rerun the producing command or restore the missing evidence.",
+    "quality_gate_manifest_failed": "Regenerate or repair the manifest after restoring trusted artifacts.",
+    "quality_gate_metadata_missing": "Restore metadata.json or rerun the producing command.",
+    "quality_gate_runner_failed": "Inspect runner stderr and rerun the experiment after fixing the scaffold or inputs.",
+    "quality_gate_spec_snapshot_missing": "Rerun the experiment after validating the experiment spec.",
+    "quality_gate_data_snapshot_missing": "Rerun the experiment after validating registered data.",
+    "quality_gate_environment_snapshot_missing": "Rerun the experiment to regenerate the environment snapshot.",
+    "quality_gate_metrics_missing": "Rerun the experiment or restore data/metrics.json with all required metrics.",
+    "quality_gate_command_unsupported": "Use quality gates on supported run commands or keep this run as manifest-only evidence.",
     "unknown_error": "Inspect logs and rerun the failing command with the smallest reproducible input.",
+}
+
+QUALITY_GATE_CHECK_CODES = {
+    "manifest_valid": "quality_gate_manifest_failed",
+    "metadata_present": "quality_gate_metadata_missing",
+    "runner_completed": "quality_gate_runner_failed",
+    "spec_snapshot_present": "quality_gate_spec_snapshot_missing",
+    "data_index_snapshot_present": "quality_gate_data_snapshot_missing",
+    "environment_snapshot_present": "quality_gate_environment_snapshot_missing",
+    "required_metrics_present": "quality_gate_metrics_missing",
+    "command_supported": "quality_gate_command_unsupported",
 }
 
 
@@ -49,19 +68,21 @@ def classify_message(message: str) -> str:
     return "unknown_error"
 
 
-def issue(code: str, message: str, source: str = "diagnostics") -> dict[str, str]:
+def issue(code: str, message: str, source: str = "diagnostics", **extra: Any) -> dict[str, Any]:
     """Create a normalized diagnosis issue."""
-    return {
+    data: dict[str, Any] = {
         "code": code,
         "source": source,
         "message": message,
         "repair_suggestion": REPAIR_SUGGESTIONS.get(code, REPAIR_SUGGESTIONS["unknown_error"]),
     }
+    data.update(extra)
+    return data
 
 
-def diagnose_validation_result(result: dict[str, Any]) -> list[dict[str, str]]:
+def diagnose_validation_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     """Create diagnosis issues from a manifest validation result."""
-    issues: list[dict[str, str]] = []
+    issues: list[dict[str, Any]] = []
     for message in result.get("errors", []):
         issues.append(issue(classify_message(str(message)), str(message), source="manifest"))
     for message in result.get("warnings", []):
@@ -69,15 +90,15 @@ def diagnose_validation_result(result: dict[str, Any]) -> list[dict[str, str]]:
     return issues
 
 
-def diagnose_error(message: str, source: str = "runtime") -> dict[str, str]:
+def diagnose_error(message: str, source: str = "runtime") -> dict[str, Any]:
     """Create one diagnosis issue from an exception or error message."""
     return issue(classify_message(message), message, source=source)
 
 
-def _quality_gate_issues(project_dir: Path, target: Path | None) -> list[dict[str, str]]:
+def _quality_gate_issues(project_dir: Path, target: Path | None) -> list[dict[str, Any]]:
     if target is None:
         return []
-    issues: list[dict[str, str]] = []
+    issues: list[dict[str, Any]] = []
     target_text = str(target)
     gate = None
     for summary in quality_gate_summaries(project_dir):
@@ -88,10 +109,27 @@ def _quality_gate_issues(project_dir: Path, target: Path | None) -> list[dict[st
         names = gate.get("failed_check_names", [])
         detail = ", ".join(names) if names else "unknown checks"
         issues.append(issue("quality_gate_failed", f"Quality gate failed for run: {target}; failed checks: {detail}", source="quality_gate"))
+        gate_path = Path(str(gate.get("path") or target / "reports" / "quality_gate.json"))
+        gate_payload = read_json(gate_path, default={}) or {}
+        checks = gate_payload.get("checks", []) if isinstance(gate_payload, dict) else []
+        for check in checks:
+            if not isinstance(check, dict) or check.get("passed"):
+                continue
+            check_name = str(check.get("name") or "unknown")
+            code = QUALITY_GATE_CHECK_CODES.get(check_name, "quality_gate_failed")
+            issues.append(
+                issue(
+                    code,
+                    f"Quality gate check failed for run {target}: {check_name}",
+                    source="quality_gate",
+                    check_name=check_name,
+                    check_details=check.get("details", {}),
+                )
+            )
     return issues
 
 
-def _demo_config_issues(project_dir: Path) -> list[dict[str, str]]:
+def _demo_config_issues(project_dir: Path) -> list[dict[str, Any]]:
     config = get_demo_config(project_dir)
     checks = [
         (int(config.get("code_length", 0) or 0) <= 0, "demo.code_length must be positive"),
@@ -108,7 +146,7 @@ def _demo_config_issues(project_dir: Path) -> list[dict[str, str]]:
 def diagnose_project(project_dir: Path, run_dir: Path | None = None) -> dict[str, Any]:
     """Diagnose a project and optional run directory."""
     project_dir = Path(project_dir)
-    issues: list[dict[str, str]] = []
+    issues: list[dict[str, Any]] = []
     source_index = load_source_index(project_dir)
     sources = source_index.get("sources", [])
     if not sources:
