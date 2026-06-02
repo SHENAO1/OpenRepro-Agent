@@ -36,7 +36,7 @@ def test_scaffold_writes_experiment_inputs_from_verified_candidates(tmp_path: Pa
     inspect_summary = inspect_project(project)
 
     assert summary["input_completeness_status"] == "complete"
-    assert inputs["schema_version"] == "0.9.0"
+    assert inputs["schema_version"] == "0.9.2"
     assert inputs["input_completeness"]["status"] == "complete"
     assert inputs["parameter_values"]["noise_std"] == 0.05
     assert inputs["parameter_values"]["code_length"] == 128

@@ -163,6 +163,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Add same-seed repeatability checks against prior experiment runs.
 - [x] Extend lineage with experiment config, inputs, environment, and runner hashes.
 
+## v0.9.2 — Experiment input calibration
+
+- [x] Add `openrepro validate-inputs`.
+- [x] Add `openrepro set-input`.
+- [x] Track input sources as `verified_candidate`, `manual_override`, or `default`.
+- [x] Surface missing required input counts in `inspect` and `status`.
+- [x] Record input validation details and warnings in run evidence.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

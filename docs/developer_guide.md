@@ -140,6 +140,11 @@ same-seed repeatability check under `configs/environment_snapshot.json`.
 Lineage entries for `run-experiment` should include hashes for experiment
 config, experiment inputs, environment snapshot, and runner code.
 
+v0.9.2 makes experiment inputs editable and auditable. `validate-inputs` should
+refresh completeness and write workspace validation artifacts. `set-input`
+should record input sources, preserve manual overrides, and keep generated
+runner behavior tied to `experiment_inputs.json`.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

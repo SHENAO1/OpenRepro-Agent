@@ -20,6 +20,7 @@ from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
 from .experiment_scaffold import scaffold_experiment
+from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
 from .experiment_templates import list_experiment_templates
 from .handoff_generator import generate_handoff
@@ -246,6 +247,54 @@ def list_templates_cmd() -> None:
         )
     console.print(table)
     _success("Listed experiment templates.")
+
+
+@app.command("validate-inputs")
+def validate_inputs_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+) -> None:
+    """Validate experiment input completeness for a scaffold."""
+    project_dir = require_project(project_name)
+    try:
+        result = validate_experiment_inputs(project_dir, experiment_id)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Experiment Inputs: {experiment_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "required", "present", "missing", "source_counts"]:
+        table.add_row(key, str(result[key]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_input_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_INPUT_VALIDATION.md'}")
+    if result["status"] != "complete":
+        _warn("Experiment inputs need attention.")
+        raise typer.Exit(1)
+    _success("Experiment inputs are complete.")
+
+
+@app.command("set-input")
+def set_input_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+    name: str = typer.Option(..., "--name", help="Input name, e.g. noise_std or code_length."),
+    value: str = typer.Option(..., "--value", help="Input value. JSON scalars/lists are accepted."),
+    source: str = typer.Option("manual_override", "--source", help="Input source: manual_override, verified_candidate, or default."),
+    note: str = typer.Option("", "--note", help="Optional note for the input override."),
+) -> None:
+    """Set or override a scaffold experiment input."""
+    project_dir = require_project(project_name)
+    try:
+        result = set_experiment_input(project_dir, experiment_id, name=name, value=value, source=source, note=note)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success(f"Set input {name} for experiment {experiment_id}.")
+    console.print(f"Status: {result['status']}")
+    console.print(f"Missing: {result['missing']}")
+    console.print(f"Inputs: {result['experiment_inputs_path']}")
 
 
 @app.command("scaffold-experiment")
@@ -476,6 +525,7 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Experiment scaffolds": summary["experiment_scaffold_count"],
         "Experiment templates": summary["experiment_template_counts"],
         "Input completeness": summary["experiment_input_completeness_counts"],
+        "Missing required inputs": summary["experiment_missing_required_input_count"],
         "Expected artifacts attention": summary["experiment_expected_artifacts_attention_count"],
         "Experiment runs": summary["experiment_run_count"],
         "Runs": summary["run_count"],
@@ -725,6 +775,7 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Candidate reviews": status.candidate_review_count,
         "Experiment scaffolds": status.experiment_scaffold_count,
         "Experiment templates": status.experiment_template_counts,
+        "Missing required inputs": status.experiment_missing_required_input_count,
         "Expected artifacts attention": status.experiment_expected_artifacts_attention_count,
         "Experiment runs": status.experiment_run_count,
         "Latest run dir": status.latest_run_dir or "None",

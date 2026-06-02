@@ -8,7 +8,7 @@ from typing import Any
 
 from .utils import read_json
 
-TEMPLATE_SCHEMA_VERSION = "0.9.1"
+TEMPLATE_SCHEMA_VERSION = "0.9.2"
 BASE_RUN_REQUIRED_ARTIFACTS = [
     "logs/run.log",
     "data/execution_result.json",
@@ -218,12 +218,14 @@ def inspect_experiment_scaffolds(project_dir: Path) -> dict[str, Any]:
     template_counts = Counter(item["template"] for item in scaffolds)
     issue_counts = Counter(issue for item in scaffolds for issue in item["issues"])
     completeness_counts = Counter(item["input_completeness_status"] for item in scaffolds)
+    missing_required_input_count = sum(len(item.get("missing_required_inputs", [])) for item in scaffolds)
     valid_expected_count = sum(1 for item in scaffolds if item["expected_artifacts_status"] == "valid")
     return {
         "schema_version": TEMPLATE_SCHEMA_VERSION,
         "scaffold_count": len(scaffolds),
         "template_counts": dict(template_counts),
         "input_completeness_counts": dict(completeness_counts),
+        "missing_required_input_count": missing_required_input_count,
         "expected_artifacts_valid_count": valid_expected_count,
         "expected_artifacts_attention_count": len(scaffolds) - valid_expected_count,
         "issue_counts": dict(issue_counts),

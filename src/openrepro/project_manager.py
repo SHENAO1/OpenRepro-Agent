@@ -33,6 +33,7 @@ class ProjectStatus:
     candidate_review_count: int
     experiment_scaffold_count: int
     experiment_template_counts: dict[str, int]
+    experiment_missing_required_input_count: int
     experiment_expected_artifacts_attention_count: int
     experiment_run_count: int
     latest_run_dir: str | None
@@ -242,6 +243,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             candidate_review_count=0,
             experiment_scaffold_count=0,
             experiment_template_counts={},
+            experiment_missing_required_input_count=0,
             experiment_expected_artifacts_attention_count=0,
             experiment_run_count=0,
             latest_run_dir=None,
@@ -299,7 +301,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.9.1 workflow is complete. Review environment snapshots, experiment inputs, templates, candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v0.9.2 workflow is complete. Review calibrated experiment inputs, environment snapshots, templates, candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -312,6 +314,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         candidate_review_count=candidate_review_count,
         experiment_scaffold_count=scaffold_summary["scaffold_count"],
         experiment_template_counts=scaffold_summary["template_counts"],
+        experiment_missing_required_input_count=scaffold_summary["missing_required_input_count"],
         experiment_expected_artifacts_attention_count=scaffold_summary["expected_artifacts_attention_count"],
         experiment_run_count=experiment_run_count,
         latest_run_dir=str(latest) if latest else None,

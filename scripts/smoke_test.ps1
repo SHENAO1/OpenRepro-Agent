@@ -22,6 +22,9 @@ python -m openrepro.cli list-candidates $Project
 python -m openrepro.cli review-candidates $Project --candidate-id F001 --status needs_more_evidence --reviewer smoke
 python -m openrepro.cli approve-candidates $Project --all --reviewer smoke
 python -m openrepro.cli scaffold-experiment $Project --experiment-id smoke_exp --template boc-like
+python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name noise_std --value 0.05 --note smoke
+python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name code_length --value 128 --note smoke
+python -m openrepro.cli validate-inputs $Project --experiment-id smoke_exp
 python -m openrepro.cli run-experiment $Project --experiment-id smoke_exp --confirm
 python -m openrepro.cli run-demo $Project
 python -m openrepro.cli validate $Project

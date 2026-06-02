@@ -12,10 +12,11 @@ from typing import Any
 from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run_manifest, write_run_manifest
 from .config import load_project_config
 from .environment_snapshot import build_environment_snapshot
+from .experiment_inputs import validate_experiment_inputs
 from .experiment_templates import normalize_artifact_paths
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.1"
+EXPERIMENT_RUN_SCHEMA_VERSION = "0.9.2"
 
 
 def _experiment_dir(project_dir: Path, experiment_id: str) -> Path:
@@ -74,6 +75,7 @@ def run_experiment(
     required_artifacts = _required_artifacts_for_run(expected_artifacts)
     template = str(config.get("template") or expected_artifacts.get("template") or "basic")
     experiment_inputs_path = exp_dir / "experiment_inputs.json"
+    input_validation = validate_experiment_inputs(project_dir, experiment_id)
     experiment_inputs = read_json(experiment_inputs_path, default={}) or {}
     experiment_inputs = experiment_inputs if isinstance(experiment_inputs, dict) else {}
     input_completeness = experiment_inputs.get("input_completeness", {}) if experiment_inputs else {}
@@ -139,6 +141,7 @@ status: {status}
             "path": str(experiment_inputs_path) if experiment_inputs else None,
             "input_completeness": input_completeness or {"status": "missing"},
         },
+        "input_validation": input_validation,
         "policy": "Controlled experiment execution records evidence only; it does not claim paper reproduction success.",
     }
     write_json(run_dirs.data / "execution_result.json", execution_result)
@@ -167,6 +170,7 @@ status: {status}
 - experiment_inputs_path: `{experiment_inputs_path if experiment_inputs else None}`
 - input_completeness: {input_completeness.get('status', 'missing')}
 - missing_required_inputs: {input_completeness.get('missing', [])}
+- input_warning: {input_completeness.get('warning')}
 - environment_snapshot: `configs/environment_snapshot.json`
 - random_seed: {environment_snapshot.get('random_seed')}
 - repeatability_check: {environment_snapshot.get('repeatability_check', {}).get('status')}
@@ -201,6 +205,7 @@ This report records controlled execution evidence only. It does not claim paper 
             "path": str(experiment_inputs_path) if experiment_inputs else None,
             "snapshot": relpath(run_dirs.configs / "experiment_inputs_snapshot.json", run_dirs.root),
             "input_completeness": input_completeness or {"status": "missing"},
+            "validation": input_validation,
         },
         "environment_snapshot": {
             "snapshot": relpath(run_dirs.configs / "environment_snapshot.json", run_dirs.root),

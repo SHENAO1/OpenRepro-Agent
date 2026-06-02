@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.9.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.9.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.9.1 workflow is:
+The v0.9.2 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -144,6 +144,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Extend lineage with experiment config, input, environment, and runner hashes.
 - Add a lightweight same-seed repeatability check against prior experiment runs.
 
+## What v0.9.2 adds
+
+- Add `openrepro validate-inputs` for experiment input completeness checks.
+- Add `openrepro set-input` for manual input calibration and overrides.
+- Track input sources as `verified_candidate`, `manual_override`, or `default`.
+- Surface missing required input counts in `inspect` and `status`.
+- Record input validation details and warnings in experiment run evidence.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -202,6 +210,9 @@ openrepro list-candidates boc_demo
 openrepro review-candidates boc_demo --candidate-id F001 --status needs_more_evidence --reviewer human
 openrepro approve-candidates boc_demo --all --reviewer human
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
+openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
+openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
+openrepro validate-inputs boc_demo --experiment-id boc_candidate_exp
 openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro run-demo boc_demo
 openrepro validate boc_demo
@@ -351,6 +362,21 @@ Verified candidates are also mapped into `experiment_inputs.json`. The file
 contains formula evidence, parameter records, `parameter_values`, and input
 completeness status. Template runners read it through
 `OPENREPRO_EXPERIMENT_INPUTS`.
+
+Use `openrepro set-input` to add or override individual values. Manual values
+are marked as `manual_override` and validation artifacts are written under
+`workspace/experiment_input_validation.json` and
+`workspace/EXPERIMENT_INPUT_VALIDATION.md`.
+
+### `openrepro validate-inputs <project_name> --experiment-id ID`
+
+Checks whether the scaffold has all inputs required by its template. The command
+exits non-zero when required inputs are missing.
+
+### `openrepro set-input <project_name> --experiment-id ID --name NAME --value VALUE`
+
+Sets an input value in `experiment_inputs.json` and refreshes input validation.
+Values may be JSON scalars or comma-separated lists.
 
 ### `openrepro list-templates`
 
@@ -761,12 +787,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.8.2: template registry, `list-templates`, and scaffold expected-artifact diagnostics.
 - v0.9.0: verified candidate to experiment input mapping, input snapshots, and input-aware template runners.
 - v0.9.1: environment snapshots, runner/input/environment lineage hashes, and same-seed repeatability checks.
+- v0.9.2: input validation, manual input overrides, and missing-input visibility.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.9.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.9.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
