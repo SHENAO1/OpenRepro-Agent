@@ -2,30 +2,36 @@
 set -euo pipefail
 
 PROJECT="boc_demo_smoke"
+export PYTHONPATH="${PYTHONPATH:-}:src"
 rm -rf "$PROJECT" boc_benchmark_smoke sample_boc_suite_project smoke_suite_sample_boc_like_demo_1 benchmarks/runs
 
-openrepro init "$PROJECT"
-openrepro configure-provider "$PROJECT" --provider mock --disable-real-api
-openrepro ingest "$PROJECT" --source examples/boc_notes.md
-openrepro analyze "$PROJECT"
-openrepro plan "$PROJECT"
-openrepro scaffold-experiment "$PROJECT" --experiment-id smoke_exp
-openrepro run-demo "$PROJECT"
-openrepro validate "$PROJECT"
-openrepro validate "$PROJECT" --all
-openrepro inspect "$PROJECT"
-openrepro run-sweep "$PROJECT" --noise-std 0.0 --noise-std 0.1 --seed 42
-openrepro validate "$PROJECT"
-openrepro validate "$PROJECT" --all
-openrepro compare-runs "$PROJECT"
-openrepro diagnose "$PROJECT"
-openrepro repair-plan "$PROJECT"
-openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
-openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix smoke_suite
-openrepro benchmark-index
-openrepro report "$PROJECT"
-openrepro handoff "$PROJECT"
-openrepro status "$PROJECT"
+python -m openrepro.cli init "$PROJECT"
+python -m openrepro.cli configure-provider "$PROJECT" --provider mock --disable-real-api
+python -m openrepro.cli ingest "$PROJECT" --source examples/boc_notes.md
+python -m openrepro.cli analyze "$PROJECT"
+python -m openrepro.cli plan "$PROJECT"
+python -m openrepro.cli approve-candidates "$PROJECT" --all --reviewer smoke
+python -m openrepro.cli scaffold-experiment "$PROJECT" --experiment-id smoke_exp
+python -m openrepro.cli run-demo "$PROJECT"
+python -m openrepro.cli validate "$PROJECT"
+python -m openrepro.cli validate "$PROJECT" --all
+python -m openrepro.cli inspect "$PROJECT"
+python -m openrepro.cli run-sweep "$PROJECT" --noise-std 0.0 --noise-std 0.1 --seed 42
+python -m openrepro.cli validate "$PROJECT"
+python -m openrepro.cli validate "$PROJECT" --all
+python -m openrepro.cli compare-runs "$PROJECT"
+python -m openrepro.cli lineage "$PROJECT"
+python -m openrepro.cli diagnose "$PROJECT"
+python -m openrepro.cli repair-plan "$PROJECT"
+python -m openrepro.cli repair "$PROJECT" --dry-run
+python -m openrepro.cli repair "$PROJECT" --apply --only manifest --confirm
+python -m openrepro.cli doctor "$PROJECT"
+python -m openrepro.cli benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
+python -m openrepro.cli benchmark-suite --suite benchmarks/sample_suite.json --project-prefix smoke_suite
+python -m openrepro.cli benchmark-index
+python -m openrepro.cli report "$PROJECT"
+python -m openrepro.cli handoff "$PROJECT"
+python -m openrepro.cli status "$PROJECT"
 
 mkdir -p .codex_tmp/pytest-basetemp
 python -m pytest -q --basetemp .codex_tmp/pytest-basetemp

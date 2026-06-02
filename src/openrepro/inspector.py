@@ -48,6 +48,23 @@ def _repair_dry_run_summary(project_dir: Path) -> dict[str, Any]:
     }
 
 
+def _lineage_summary(project_dir: Path) -> dict[str, Any]:
+    data = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
+    if not isinstance(data, dict):
+        data = {}
+    complete_runs = 0
+    for item in data.get("runs", []) if isinstance(data.get("runs", []), list) else []:
+        if isinstance(item, dict) and item.get("provenance_complete"):
+            complete_runs += 1
+    return {
+        "status": "present" if data else "missing",
+        "created_at": data.get("created_at"),
+        "run_count": int(data.get("run_count", 0) or 0),
+        "complete_run_count": complete_runs,
+        "path": str(project_dir / "workspace" / "run_lineage.json") if data else None,
+    }
+
+
 def _benchmark_runs_for_project(project_dir: Path) -> list[dict[str, Any]]:
     runs_dirs = [Path.cwd() / "benchmarks" / "runs", _repo_root() / "benchmarks" / "runs"]
     seen: set[str] = set()
@@ -85,9 +102,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     benchmark_runs = _benchmark_runs_for_project(project_dir)
     verified = _verified_summary(project_dir)
     repair_dry_run = _repair_dry_run_summary(project_dir)
+    lineage = _lineage_summary(project_dir)
 
     summary = {
-        "schema_version": "0.5.1",
+        "schema_version": "0.6.2",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),
@@ -109,6 +127,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "latest_repair_dry_run_status": repair_dry_run["status"],
         "latest_repair_dry_run_action_count": repair_dry_run["action_count"],
         "latest_repair_dry_run_healthy": repair_dry_run["healthy"],
+        "lineage_status": lineage["status"],
+        "lineage_run_count": lineage["run_count"],
+        "lineage_complete_run_count": lineage["complete_run_count"],
         "next_step": status.next_step,
     }
     write_json(project_dir / "workspace" / "inspect_summary.json", summary)

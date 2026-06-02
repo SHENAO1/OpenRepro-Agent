@@ -97,6 +97,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Write `workspace/repair_apply.json` and `workspace/REPAIR_APPLY.md`.
 - [x] Keep apply mode from generating scientific artifacts, editing experiment code, or changing configuration values.
 
+## v0.6.2 — Stability and health checks
+
+- [x] Add `openrepro doctor` with dependency, project structure, config, and provider readiness checks.
+- [x] Surface lineage status in `inspect`, `status`, and handoff files.
+- [x] Add `handoff/RUN_LINEAGE.md` to generated handoff bundles.
+- [x] Expand smoke tests to cover approval, lineage, repair dry-run/apply, and doctor commands.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

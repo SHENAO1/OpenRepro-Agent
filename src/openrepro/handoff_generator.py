@@ -65,11 +65,12 @@ def _code_status(project_dir: Path) -> str:
     status = get_status(project_dir).to_dict()
     verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
+    lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     return f"""# Code Status
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.5.1 命令入口。
+- `cli.py`：已完成 v0.6.2 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -79,6 +80,8 @@ def _code_status(project_dir: Path) -> str:
 - `benchmark_runner.py`：已完成 workflow-compliance benchmark runner。
 - `diagnostics.py`：已完成失败分类与修复建议。
 - `repair.py`：已完成 repair-plan 和 repair dry-run 预览。
+- `lineage.py`：已完成 run lineage 产物。
+- `doctor.py`：已完成项目健康检查。
 - `report_generator.py`：已完成项目报告。
 - `handoff_generator.py`：已完成多 Agent 交接文件生成。
 - `api_usage.py`：已完成零 Token mock usage 统计。
@@ -99,6 +102,12 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {repair}
+```
+
+## Run Lineage 状态
+
+```json
+{lineage}
 ```
 
 ## 已完成
@@ -157,7 +166,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.5.1 闭环检查
+## v0.6.2 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -166,6 +175,7 @@ def _next_steps(project_dir: Path) -> str:
 - run-demo: {'已完成' if status.latest_run_dir else '未完成'}
 - report: {'已完成' if status.report_exists else '未完成'}
 - repair-dry-run: {'已完成' if (project_dir / 'workspace' / 'repair_dry_run.json').exists() else '未完成'}
+- lineage: {'已完成' if (project_dir / 'workspace' / 'run_lineage.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
 
 ## 下一阶段建议
@@ -175,7 +185,8 @@ def _next_steps(project_dir: Path) -> str:
 3. 使用 `openrepro approve-candidates <project> --all --reviewer <name>` 记录审批产物。
 4. 使用 `openrepro validate` 校验最新运行 manifest。
 5. 使用 `openrepro repair <project> --dry-run` 预览可控修复。
-6. 使用 `openrepro benchmark --task benchmarks/sample_task.json` 记录 workflow-compliance evidence。
+6. 使用 `openrepro lineage <project>` 生成 run lineage。
+7. 使用 `openrepro benchmark --task benchmarks/sample_task.json` 记录 workflow-compliance evidence。
 """
 
 
@@ -223,6 +234,7 @@ def _agent_handoff(project_dir: Path) -> str:
     latest = latest_run_dir(project_dir)
     verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
+    lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     return f"""# Agent Handoff
 
 ## 给 Claude Code / Codex / GitHub Copilot 的接续说明
@@ -251,14 +263,21 @@ def _agent_handoff(project_dir: Path) -> str:
 {repair}
 ```
 
+## Run Lineage 摘要
+
+```json
+{lineage}
+```
+
 ## 接续开发重点
 
 1. 先阅读 `handoff/PROJECT_CONTEXT.md`。
 2. 核对 `handoff/PAPER_SUMMARY.md` 和 `handoff/MODEL_LEDGER.md`，不要把规则分析结果当作已验证事实。
 3. 检查 `handoff/EXPERIMENT_PLAN.md` 中的 Demo 与后续真实复现实验差异。
 4. 检查 `handoff/VERIFIED_CANDIDATES.md` 和 `handoff/REPAIR_DRY_RUN.md`，确认审批与修复预览状态。
-5. 若要接入真实 LLM Provider，请扩展 `api_usage.py`，保留零 Token mock 统计原则。
-6. 所有新增实验结果必须来自实际运行产物，不得虚构 benchmark 或 Token 消耗。
+5. 检查 `handoff/RUN_LINEAGE.md`，确认 run provenance 是否齐全。
+6. 若要接入真实 LLM Provider，请扩展 `api_usage.py`，保留零 Token mock 统计原则。
+7. 所有新增实验结果必须来自实际运行产物，不得虚构 benchmark 或 Token 消耗。
 
 ## 已完成
 
@@ -326,6 +345,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "workspace" / "REPAIR_DRY_RUN.md",
             "Repair Dry Run",
             "尚未运行 repair --dry-run，暂无修复预览。",
+        ),
+        "RUN_LINEAGE.md": _copy_or_placeholder(
+            project_dir / "workspace" / "RUN_LINEAGE.md",
+            "Run Lineage",
+            "尚未运行 lineage，暂无运行谱系。",
         ),
         "NEXT_STEPS.md": _next_steps(project_dir),
         "AGENT_HANDOFF.md": _agent_handoff(project_dir),

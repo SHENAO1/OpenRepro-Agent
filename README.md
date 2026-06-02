@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.6.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.6.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -11,7 +11,7 @@ Research-paper reproduction often fails because notes, assumptions, formulas, ex
 The v0.5.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -79,6 +79,13 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Write `workspace/repair_apply.json` and `workspace/REPAIR_APPLY.md`.
 - Keep repair application limited to manifest regeneration from files already present on disk.
 
+## What v0.6.2 adds
+
+- Add `openrepro doctor` for dependency, project structure, config, and provider readiness checks.
+- Surface lineage status in `inspect`, `status`, and handoff files.
+- Add `handoff/RUN_LINEAGE.md` to generated handoff bundles.
+- Expand smoke tests to cover approval, lineage, repair dry-run/apply, and doctor commands.
+
 ## What v0.4.0 does not support
 
 - It does not fully read or understand papers.
@@ -145,6 +152,7 @@ openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
 openrepro lineage boc_demo
+openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
 openrepro benchmark-index
@@ -432,6 +440,17 @@ manifest, config snapshot, project source index, and verified candidates when
 available. The lineage report is provenance evidence only; it does not claim
 scientific reproduction success.
 
+### `openrepro doctor <project_name>`
+
+Checks local dependencies, project structure, project config, and provider readiness. It writes:
+
+```text
+workspace/doctor.json
+workspace/DOCTOR.md
+```
+
+Doctor checks workflow readiness only; it does not claim scientific reproduction success.
+
 ### `openrepro benchmark --task <task.json> [--project <project_name>]`
 
 Runs a workflow-compliance benchmark task. If `--project` is omitted, the task id becomes the project name. If the project does not exist, it is initialized automatically.
@@ -598,12 +617,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.5.2: provider prompt/response preview redaction, cache namespace, and cache policy controls.
 - v0.6.0: benchmark provenance fields and project run lineage artifacts.
 - v0.6.1: confirmed manifest-only repair apply.
+- v0.6.2: doctor checks, lineage status visibility, and expanded smoke coverage.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.6.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.6.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

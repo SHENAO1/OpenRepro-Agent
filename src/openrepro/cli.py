@@ -17,6 +17,7 @@ from .config import configure_api_provider, provider_status
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
+from .doctor import run_doctor
 from .experiment_scaffold import scaffold_experiment
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
@@ -355,6 +356,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Diagnosis issues": summary["diagnosis_issue_count"],
         "Repair dry-run": summary["latest_repair_dry_run_status"],
         "Repair dry-run actions": summary["latest_repair_dry_run_action_count"],
+        "Lineage": summary["lineage_status"],
+        "Lineage runs": summary["lineage_run_count"],
         "Next step": summary["next_step"],
     }
     for key, value in rows.items():
@@ -481,6 +484,26 @@ def lineage_cmd(project_name: str = typer.Argument(..., help="Project directory.
     console.print(f"Markdown: {project_dir / 'workspace' / 'RUN_LINEAGE.md'}")
 
 
+@app.command("doctor")
+def doctor_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Check local dependencies, project structure, config, and provider readiness."""
+    project_dir = require_project(project_name)
+    result = run_doctor(project_dir)
+    if result["healthy"]:
+        _success(f"Doctor passed with {result['warn_count']} warnings.")
+    else:
+        _warn(f"Doctor found {result['fail_count']} failures and {result['warn_count']} warnings.")
+    table = Table(title=f"OpenRepro Doctor: {project_name}")
+    table.add_column("Status")
+    table.add_column("Code")
+    table.add_column("Message")
+    for check in result["checks"]:
+        table.add_row(check["status"], check["code"], check["message"])
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'doctor.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DOCTOR.md'}")
+
+
 @app.command("benchmark")
 def benchmark_cmd(
     task: Path = typer.Option(..., "--task", help="Benchmark task JSON file."),
@@ -571,6 +594,7 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Analyzed": status.analyzed,
         "Planned": status.planned,
         "Latest run dir": status.latest_run_dir or "None",
+        "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
         "Handoff complete": status.handoff_complete,
         "Next step": status.next_step,
@@ -578,3 +602,7 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
     for key, value in rows.items():
         table.add_row(key, str(value))
     console.print(table)
+
+
+if __name__ == "__main__":
+    app()

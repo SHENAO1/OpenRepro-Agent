@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+$env:PYTHONPATH = "src;$env:PYTHONPATH"
 $Project = "boc_demo_smoke"
 $GeneratedProjects = @($Project, "boc_benchmark_smoke", "sample_boc_suite_project", "smoke_suite_sample_boc_like_demo_1")
 
@@ -11,28 +12,33 @@ if (Test-Path benchmarks\runs) {
   Remove-Item -Recurse -Force benchmarks\runs
 }
 
-openrepro init $Project
-openrepro configure-provider $Project --provider mock --disable-real-api
-openrepro ingest $Project --source examples/boc_notes.md
-openrepro analyze $Project
-openrepro plan $Project
-openrepro scaffold-experiment $Project --experiment-id smoke_exp
-openrepro run-demo $Project
-openrepro validate $Project
-openrepro validate $Project --all
-openrepro inspect $Project
-openrepro run-sweep $Project --noise-std 0.0 --noise-std 0.1 --seed 42
-openrepro validate $Project
-openrepro validate $Project --all
-openrepro compare-runs $Project
-openrepro diagnose $Project
-openrepro repair-plan $Project
-openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
-openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix smoke_suite
-openrepro benchmark-index
-openrepro report $Project
-openrepro handoff $Project
-openrepro status $Project
+python -m openrepro.cli init $Project
+python -m openrepro.cli configure-provider $Project --provider mock --disable-real-api
+python -m openrepro.cli ingest $Project --source examples/boc_notes.md
+python -m openrepro.cli analyze $Project
+python -m openrepro.cli plan $Project
+python -m openrepro.cli approve-candidates $Project --all --reviewer smoke
+python -m openrepro.cli scaffold-experiment $Project --experiment-id smoke_exp
+python -m openrepro.cli run-demo $Project
+python -m openrepro.cli validate $Project
+python -m openrepro.cli validate $Project --all
+python -m openrepro.cli inspect $Project
+python -m openrepro.cli run-sweep $Project --noise-std 0.0 --noise-std 0.1 --seed 42
+python -m openrepro.cli validate $Project
+python -m openrepro.cli validate $Project --all
+python -m openrepro.cli compare-runs $Project
+python -m openrepro.cli lineage $Project
+python -m openrepro.cli diagnose $Project
+python -m openrepro.cli repair-plan $Project
+python -m openrepro.cli repair $Project --dry-run
+python -m openrepro.cli repair $Project --apply --only manifest --confirm
+python -m openrepro.cli doctor $Project
+python -m openrepro.cli benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
+python -m openrepro.cli benchmark-suite --suite benchmarks/sample_suite.json --project-prefix smoke_suite
+python -m openrepro.cli benchmark-index
+python -m openrepro.cli report $Project
+python -m openrepro.cli handoff $Project
+python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null
 python -m pytest -q --basetemp .codex_tmp\pytest-basetemp

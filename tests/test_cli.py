@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v0.6.1" in result.output
+    assert "OpenRepro-Agent v0.6.2" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -69,6 +69,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["validate", "boc_demo", "--all"],
         ["compare-runs", "boc_demo"],
         ["lineage", "boc_demo"],
+        ["doctor", "boc_demo"],
         ["diagnose", "boc_demo"],
         ["repair-plan", "boc_demo"],
         ["repair", "boc_demo", "--dry-run"],
@@ -95,6 +96,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "repair_plan.json").exists()
     assert (project / "workspace" / "run_comparison.json").exists()
     assert (project / "workspace" / "run_lineage.json").exists()
+    assert (project / "workspace" / "doctor.json").exists()
     assert (project / "reports" / "report.md").exists()
     assert (project / "experiments" / "cli_exp" / "APPROVAL_REQUIRED.md").exists()
     assert (project / "experiments" / "cli_exp" / "experiment_config.json").exists()

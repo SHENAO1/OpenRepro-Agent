@@ -45,11 +45,13 @@ def test_inspect_summary_reports_project_health(tmp_path: Path, monkeypatch):
     assert summary["latest_manifest_status"] == "valid"
     assert summary["latest_manifest_valid"] is True
     assert summary["diagnosis_healthy"] is True
-    assert saved["schema_version"] == "0.5.1"
+    assert saved["schema_version"] == "0.6.2"
     assert saved["verified_formula_candidate_count"] == 0
     assert saved["verified_parameter_candidate_count"] == 0
     assert saved["verified_candidates_status"] == "missing"
     assert saved["latest_repair_dry_run_status"] == "missing"
+    assert saved["lineage_status"] == "missing"
+    assert saved["lineage_run_count"] == 0
 
 
 def test_validate_all_passes_when_all_manifests_are_valid(tmp_path: Path, monkeypatch):

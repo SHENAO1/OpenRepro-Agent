@@ -101,6 +101,17 @@ success.
 hash, config hash, source index hash, and verified candidate hash when present.
 Lineage artifacts are provenance evidence only.
 
+`openrepro inspect`, `openrepro status`, and handoff files should surface whether
+lineage has been generated so agents can avoid guessing project provenance
+state.
+
+## Doctor checks
+
+`openrepro doctor <project_name>` writes `workspace/doctor.json` and
+`workspace/DOCTOR.md`. Doctor checks should stay focused on environment and
+workflow readiness: dependency availability, project structure, config presence,
+and provider readiness. They must not infer scientific validity.
+
 ## Repair and run comparison
 
 `openrepro repair-plan` is advisory only in v0.4.0 and must not mutate project

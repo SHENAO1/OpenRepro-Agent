@@ -30,6 +30,7 @@ class ProjectStatus:
     analyzed: bool
     planned: bool
     latest_run_dir: str | None
+    lineage_exists: bool
     report_exists: bool
     handoff_complete: bool
     next_step: str
@@ -210,6 +211,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             analyzed=False,
             planned=False,
             latest_run_dir=None,
+            lineage_exists=False,
             report_exists=False,
             handoff_complete=False,
             next_step=f"Run: openrepro init {project_name}",
@@ -230,6 +232,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     )
     verified_candidate_count = _verified_candidate_count(project_dir)
     latest = latest_run_dir(project_dir)
+    lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
 
@@ -243,12 +246,14 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro approve-candidates {project_dir} --all --reviewer <name>"
     elif latest is None:
         next_step = f"Run: openrepro run-demo {project_dir}"
+    elif not lineage_exists:
+        next_step = f"Run: openrepro lineage {project_dir}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.5.1 workflow is complete. Review inspect summary, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v0.6.2 workflow is complete. Review doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -259,6 +264,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         analyzed=analyzed,
         planned=planned,
         latest_run_dir=str(latest) if latest else None,
+        lineage_exists=lineage_exists,
         report_exists=report_exists,
         handoff_complete=handoff_complete,
         next_step=next_step,
