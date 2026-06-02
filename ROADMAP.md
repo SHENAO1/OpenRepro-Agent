@@ -119,6 +119,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Write `workspace/candidate_reviews.json` and `workspace/CANDIDATE_REVIEWS.md`.
 - [x] Sync `verified_by_human` reviews into verified candidate artifacts.
 
+## v0.7.2 — Stabilization and release hygiene
+
+- [x] Improve `openrepro status` next-step suggestions for candidate review, scaffold, and experiment-run flows.
+- [x] Add candidate review and experiment-run counts to status and inspect output.
+- [x] Keep smoke scripts aligned with the v0.7.x command set.
+- [x] Add release tags for recent versions.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

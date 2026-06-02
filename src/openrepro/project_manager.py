@@ -29,6 +29,8 @@ class ProjectStatus:
     ingested: bool
     analyzed: bool
     planned: bool
+    candidate_review_count: int
+    experiment_run_count: int
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -195,6 +197,29 @@ def _verified_candidate_count(project_dir: Path) -> int:
     return int(data.get("formula_candidate_count", 0) or 0) + int(data.get("parameter_candidate_count", 0) or 0)
 
 
+def _candidate_review_count(project_dir: Path) -> int:
+    data = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
+    reviews = data.get("reviews", []) if isinstance(data, dict) else []
+    return len(reviews)
+
+
+def _experiment_run_count(project_dir: Path) -> int:
+    outputs = project_dir / "outputs"
+    if not outputs.exists():
+        return 0
+    count = 0
+    for run_dir in outputs.iterdir():
+        manifest = read_json(run_dir / "manifest.json", default={}) or {}
+        if isinstance(manifest, dict) and manifest.get("command") == "run-experiment":
+            count += 1
+    return count
+
+
+def _has_experiment_scaffold(project_dir: Path) -> bool:
+    experiments = project_dir / "experiments"
+    return experiments.exists() and any(path.is_dir() for path in experiments.iterdir())
+
+
 def get_status(project_name: str | Path) -> ProjectStatus:
     """Inspect a project's current workflow state."""
     project_dir = Path(project_name)
@@ -210,6 +235,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             ingested=False,
             analyzed=False,
             planned=False,
+            candidate_review_count=0,
+            experiment_run_count=0,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -231,6 +258,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         "parameter_candidates.json",
     )
     verified_candidate_count = _verified_candidate_count(project_dir)
+    candidate_review_count = _candidate_review_count(project_dir)
+    experiment_run_count = _experiment_run_count(project_dir)
+    has_experiment_scaffold = _has_experiment_scaffold(project_dir)
     latest = latest_run_dir(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
@@ -242,8 +272,14 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro analyze {project_dir}"
     elif not planned:
         next_step = f"Run: openrepro plan {project_dir}"
+    elif candidate_count > 0 and candidate_review_count == 0 and verified_candidate_count == 0:
+        next_step = f"Run: openrepro list-candidates {project_dir}"
     elif candidate_count > 0 and verified_candidate_count == 0:
-        next_step = f"Run: openrepro approve-candidates {project_dir} --all --reviewer <name>"
+        next_step = f"Run: openrepro review-candidates {project_dir} --candidate-id <id> --status verified_by_human --reviewer <name>"
+    elif not has_experiment_scaffold:
+        next_step = f"Run: openrepro scaffold-experiment {project_dir} --experiment-id <id>"
+    elif experiment_run_count == 0:
+        next_step = f"Run: openrepro run-experiment {project_dir} --experiment-id <id> --confirm"
     elif latest is None:
         next_step = f"Run: openrepro run-demo {project_dir}"
     elif not lineage_exists:
@@ -253,7 +289,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.7.1 workflow is complete. Review candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v0.7.2 workflow is complete. Review candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -263,6 +299,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         ingested=ingested,
         analyzed=analyzed,
         planned=planned,
+        candidate_review_count=candidate_review_count,
+        experiment_run_count=experiment_run_count,
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

@@ -76,6 +76,17 @@ def _lineage_summary(project_dir: Path) -> dict[str, Any]:
     }
 
 
+def _run_command_counts(run_dirs: list[Path]) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for run_dir in run_dirs:
+        manifest = read_json(run_dir / "manifest.json", default={}) or {}
+        if isinstance(manifest, dict):
+            counts[str(manifest.get("command") or "unknown")] += 1
+        else:
+            counts["unknown"] += 1
+    return dict(counts)
+
+
 def _benchmark_runs_for_project(project_dir: Path) -> list[dict[str, Any]]:
     runs_dirs = [Path.cwd() / "benchmarks" / "runs", _repo_root() / "benchmarks" / "runs"]
     seen: set[str] = set()
@@ -115,9 +126,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     reviews = _candidate_review_summary(project_dir)
     repair_dry_run = _repair_dry_run_summary(project_dir)
     lineage = _lineage_summary(project_dir)
+    run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
-        "schema_version": "0.6.2",
+        "schema_version": "0.7.2",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),
@@ -133,6 +145,8 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "candidate_review_count": reviews["review_count"],
         "candidate_review_status_counts": reviews["status_counts"],
         "run_count": len(run_dirs),
+        "run_command_counts": run_command_counts,
+        "experiment_run_count": run_command_counts.get("run-experiment", 0),
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

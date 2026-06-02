@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.7.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.7.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.5.0 workflow is:
+The v0.7.2 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
@@ -100,13 +100,20 @@ init → configure-provider → ingest → analyze → plan → list-candidates 
 - Write `workspace/candidate_reviews.json` and `workspace/CANDIDATE_REVIEWS.md`.
 - Sync `verified_by_human` reviews into the existing verified candidate approval artifact.
 
-## What v0.4.0 does not support
+## What v0.7.2 adds
+
+- Improve `openrepro status` next-step suggestions for list/review/scaffold/run-experiment flows.
+- Add candidate review and experiment-run counts to status and inspect output.
+- Expand smoke scripts to cover the v0.7.x command set.
+- Add release tags for recent versions.
+
+## Current limitations
 
 - It does not fully read or understand papers.
 - It does not verify mathematical formulas automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
-- It does not apply repair previews automatically; v0.5.0 dry-run output is for review.
+- It does not apply repair previews automatically; dry-run output is for review.
 - It does not enable real LLM providers by default; OpenAI-compatible calls require explicit opt-in and environment-backed secrets.
 - It does not claim benchmark scores, user counts, token usage, or efficiency improvements.
 - The BOC demo is a **lightweight BOC-like demo**, not a complete BOC acquisition/tracking implementation and not a full reproduction of any paper.
@@ -670,7 +677,7 @@ Important rule: handoff files must distinguish between confirmed facts, assumpti
 
 ## Benchmark policy
 
-The `benchmarks/` directory contains a task schema, a sample task, a sample suite, generated benchmark run outputs, and a rebuildable benchmark index. v0.4.0 reports workflow-compliance evidence only. It does not report scientific benchmark scores or claim a paper has been reproduced.
+The `benchmarks/` directory contains a task schema, a sample task, a sample suite, generated benchmark run outputs, and a rebuildable benchmark index. Benchmarks report workflow-compliance evidence and provenance only. They do not report scientific benchmark scores or claim a paper has been reproduced.
 
 ## Roadmap snapshot
 
@@ -687,12 +694,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.6.2: doctor checks, lineage status visibility, and expanded smoke coverage.
 - v0.7.0: confirmed execution of verified experiment scaffolds.
 - v0.7.1: candidate listing and review lifecycle.
+- v0.7.2: status/inspect stabilization, smoke coverage, and release tag cleanup.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.7.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.7.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
