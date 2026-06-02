@@ -104,6 +104,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Add `handoff/RUN_LINEAGE.md` to generated handoff bundles.
 - [x] Expand smoke tests to cover approval, lineage, repair dry-run/apply, and doctor commands.
 
+## v0.7.0 — Controlled experiment execution
+
+- [x] Add `openrepro run-experiment`.
+- [x] Require `verified_inputs_ready`, runnable experiment config, and explicit `--confirm`.
+- [x] Capture runner stdout/stderr, execution metadata, config snapshot, runner copy, report, and manifest.
+- [x] Keep experiment runs as execution evidence only, not reproduction claims.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

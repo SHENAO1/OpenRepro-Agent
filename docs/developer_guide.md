@@ -94,6 +94,12 @@ Experiment scaffolds may use that artifact to mark inputs as
 `verified_inputs_ready`, but this still does not claim paper reproduction
 success.
 
+`openrepro run-experiment` may execute only verified experiment scaffolds. It
+must require `--confirm`, require `status: verified_inputs_ready`, capture
+execution evidence under a normal output run directory, and write a manifest.
+It must not reinterpret a successful runner exit as scientific reproduction
+success.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

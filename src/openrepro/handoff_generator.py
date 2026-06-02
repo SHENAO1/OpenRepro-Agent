@@ -23,6 +23,17 @@ def _source_lines(project_dir: Path) -> str:
     )
 
 
+def _has_run_command(project_dir: Path, command: str) -> bool:
+    outputs = project_dir / "outputs"
+    if not outputs.exists():
+        return False
+    for run_dir in outputs.iterdir():
+        manifest = read_json(run_dir / "manifest.json", default={}) or {}
+        if isinstance(manifest, dict) and manifest.get("command") == command:
+            return True
+    return False
+
+
 def _copy_or_placeholder(source: Path, title: str, placeholder: str) -> str:
     if source.exists():
         return source.read_text(encoding="utf-8")
@@ -70,11 +81,12 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.6.2 命令入口。
+- `cli.py`：已完成 v0.7.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
 - `approval.py`：已完成 verified candidate 审批产物。
+- `experiment_runner.py`：已完成 verified experiment 受控执行。
 - `planner.py`：已完成实验计划模板与校验文件。
 - `demo_runner.py`：已完成 lightweight BOC-like Demo 和参数扫掠。
 - `benchmark_runner.py`：已完成 workflow-compliance benchmark runner。
@@ -166,12 +178,13 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.6.2 闭环检查
+## v0.7.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
 - plan: {'已完成' if status.planned else '未完成'}
 - approve-candidates: {'已完成' if (project_dir / 'workspace' / 'verified_candidates.json').exists() else '未完成'}
+- run-experiment: {'已完成' if _has_run_command(project_dir, 'run-experiment') else '未完成'}
 - run-demo: {'已完成' if status.latest_run_dir else '未完成'}
 - report: {'已完成' if status.report_exists else '未完成'}
 - repair-dry-run: {'已完成' if (project_dir / 'workspace' / 'repair_dry_run.json').exists() else '未完成'}

@@ -12,6 +12,7 @@ python -m openrepro.cli analyze "$PROJECT"
 python -m openrepro.cli plan "$PROJECT"
 python -m openrepro.cli approve-candidates "$PROJECT" --all --reviewer smoke
 python -m openrepro.cli scaffold-experiment "$PROJECT" --experiment-id smoke_exp
+python -m openrepro.cli run-experiment "$PROJECT" --experiment-id smoke_exp --confirm
 python -m openrepro.cli run-demo "$PROJECT"
 python -m openrepro.cli validate "$PROJECT"
 python -m openrepro.cli validate "$PROJECT" --all

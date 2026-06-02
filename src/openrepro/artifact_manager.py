@@ -51,6 +51,14 @@ REQUIRED_RUN_ARTIFACTS: dict[str, list[str]] = {
         "api_usage/api_usage_summary.json",
         "metadata.json",
     ],
+    "run-experiment": [
+        "logs/run.log",
+        "data/execution_result.json",
+        "reports/experiment_report.md",
+        "configs/experiment_config_snapshot.json",
+        "code/runner.py",
+        "metadata.json",
+    ],
     "benchmark": [
         "benchmark_result.json",
         "benchmark_report.md",

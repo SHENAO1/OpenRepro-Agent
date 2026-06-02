@@ -19,6 +19,7 @@ from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
 from .experiment_scaffold import scaffold_experiment
+from .experiment_runner import run_experiment
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -197,6 +198,33 @@ def run_sweep_cmd(
     _success("Sweep run completed.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Result count: {metadata['result_count']}")
+
+
+@app.command("run-experiment")
+def run_experiment_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+    confirm: bool = typer.Option(False, "--confirm", help="Required to execute a verified experiment runner."),
+    timeout_seconds: int = typer.Option(300, "--timeout-seconds", help="Runner timeout in seconds."),
+) -> None:
+    """Run a verified experiment scaffold and record execution evidence."""
+    project_dir = require_project(project_name)
+    try:
+        metadata = run_experiment(
+            project_dir,
+            experiment_id=experiment_id,
+            confirm=confirm,
+            timeout_seconds=timeout_seconds,
+        )
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    if metadata["status"] == "completed":
+        _success("Experiment run completed.")
+    else:
+        _warn("Experiment run completed with runner failure.")
+    console.print(f"Run directory: {metadata['run_dir']}")
+    console.print(f"Exit code: {metadata['exit_code']}")
 
 
 @app.command("scaffold-experiment")
