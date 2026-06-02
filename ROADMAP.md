@@ -111,6 +111,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Capture runner stdout/stderr, execution metadata, config snapshot, runner copy, report, and manifest.
 - [x] Keep experiment runs as execution evidence only, not reproduction claims.
 
+## v0.7.1 — Candidate review lifecycle
+
+- [x] Add `openrepro list-candidates`.
+- [x] Add `openrepro review-candidates`.
+- [x] Support review statuses `verified_by_human`, `rejected_by_human`, and `needs_more_evidence`.
+- [x] Write `workspace/candidate_reviews.json` and `workspace/CANDIDATE_REVIEWS.md`.
+- [x] Sync `verified_by_human` reviews into verified candidate artifacts.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

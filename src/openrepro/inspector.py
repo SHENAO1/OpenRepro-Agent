@@ -35,6 +35,17 @@ def _verified_summary(project_dir: Path) -> dict[str, Any]:
     }
 
 
+def _candidate_review_summary(project_dir: Path) -> dict[str, Any]:
+    data = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
+    reviews = data.get("reviews", []) if isinstance(data, dict) else []
+    counts = Counter(str(item.get("status")) for item in reviews if isinstance(item, dict))
+    return {
+        "status": "present" if reviews else "missing",
+        "review_count": len(reviews),
+        "status_counts": dict(counts),
+    }
+
+
 def _repair_dry_run_summary(project_dir: Path) -> dict[str, Any]:
     data = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     if not isinstance(data, dict):
@@ -101,6 +112,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     diagnosis = diagnose_project(project_dir, latest)
     benchmark_runs = _benchmark_runs_for_project(project_dir)
     verified = _verified_summary(project_dir)
+    reviews = _candidate_review_summary(project_dir)
     repair_dry_run = _repair_dry_run_summary(project_dir)
     lineage = _lineage_summary(project_dir)
 
@@ -117,6 +129,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "verified_formula_candidate_count": verified["formula_candidate_count"],
         "verified_parameter_candidate_count": verified["parameter_candidate_count"],
         "verified_candidates_status": verified["status"],
+        "candidate_review_status": reviews["status"],
+        "candidate_review_count": reviews["review_count"],
+        "candidate_review_status_counts": reviews["status_counts"],
         "run_count": len(run_dirs),
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,

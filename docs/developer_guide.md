@@ -94,6 +94,14 @@ Experiment scaffolds may use that artifact to mark inputs as
 `verified_inputs_ready`, but this still does not claim paper reproduction
 success.
 
+v0.7.1 adds `openrepro list-candidates` and `openrepro review-candidates`.
+Review status values are `verified_by_human`, `rejected_by_human`, and
+`needs_more_evidence`; unreviewed candidates remain `candidate_unverified`.
+Reviews should be written to `workspace/candidate_reviews.json` and
+`workspace/CANDIDATE_REVIEWS.md`. A `verified_by_human` review should also
+update the verified candidate artifact so existing experiment guardrails keep
+working.
+
 `openrepro run-experiment` may execute only verified experiment scaffolds. It
 must require `--confirm`, require `status: verified_inputs_ready`, capture
 execution evidence under a normal output run directory, and write a manifest.

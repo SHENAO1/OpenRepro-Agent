@@ -13,6 +13,7 @@ from .analyzer import analyze_project
 from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
+from .candidate_review import list_candidates, review_candidates
 from .config import configure_api_provider, provider_status
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
@@ -284,6 +285,64 @@ def approve_candidates_cmd(
     console.print(f"Markdown: {project_dir / 'workspace' / 'VERIFIED_CANDIDATES.md'}")
 
 
+@app.command("list-candidates")
+def list_candidates_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    status: str | None = typer.Option(None, "--status", help="Optional review status filter."),
+) -> None:
+    """List formula and parameter candidates with review state."""
+    project_dir = require_project(project_name)
+    result = list_candidates(project_dir, status=status)
+    table = Table(title=f"Candidates: {project_name}")
+    table.add_column("ID")
+    table.add_column("Type")
+    table.add_column("Review Status")
+    table.add_column("Source")
+    table.add_column("Evidence")
+    for item in result["candidates"]:
+        table.add_row(
+            str(item.get("candidate_id")),
+            str(item.get("candidate_type")),
+            str(item.get("review_status")),
+            str(item.get("source_name")),
+            str(item.get("evidence") or item.get("name") or "")[:80],
+        )
+    console.print(table)
+    _success(f"Listed {result['candidate_count']} candidates.")
+
+
+@app.command("review-candidates")
+def review_candidates_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    candidate_id: list[str] | None = typer.Option(
+        None,
+        "--candidate-id",
+        help="Candidate id to review. Repeat to review multiple candidates.",
+    ),
+    status: str = typer.Option(..., "--status", help="verified_by_human, rejected_by_human, or needs_more_evidence."),
+    reviewer: str = typer.Option("human", "--reviewer", help="Reviewer label."),
+    note: str = typer.Option("", "--note", help="Review note."),
+) -> None:
+    """Record a human review decision for selected candidates."""
+    project_dir = require_project(project_name)
+    try:
+        result = review_candidates(
+            project_dir,
+            candidate_ids=candidate_id or [],
+            status=status,
+            reviewer=reviewer,
+            note=note,
+        )
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success(f"Recorded {result['latest_review_count']} candidate reviews.")
+    console.print(f"JSON: {project_dir / 'workspace' / 'candidate_reviews.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CANDIDATE_REVIEWS.md'}")
+    if status == "verified_by_human":
+        console.print(f"Verified candidates: {project_dir / 'workspace' / 'verified_candidates.json'}")
+
+
 @app.command("validate")
 def validate_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -377,6 +436,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Verified formulas": summary["verified_formula_candidate_count"],
         "Verified parameters": summary["verified_parameter_candidate_count"],
         "Verified status": summary["verified_candidates_status"],
+        "Candidate reviews": summary["candidate_review_count"],
+        "Review status counts": summary["candidate_review_status_counts"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],

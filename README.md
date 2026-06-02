@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.7.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.7.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -11,7 +11,7 @@ Research-paper reproduction often fails because notes, assumptions, formulas, ex
 The v0.5.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -93,6 +93,13 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Capture runner stdout/stderr, execution metadata, report, config snapshot, runner copy, and manifest.
 - Keep experiment runs as execution evidence only, not scientific reproduction claims.
 
+## What v0.7.1 adds
+
+- Add `openrepro list-candidates` to inspect formula and parameter candidates with review status.
+- Add `openrepro review-candidates` with statuses `verified_by_human`, `rejected_by_human`, and `needs_more_evidence`.
+- Write `workspace/candidate_reviews.json` and `workspace/CANDIDATE_REVIEWS.md`.
+- Sync `verified_by_human` reviews into the existing verified candidate approval artifact.
+
 ## What v0.4.0 does not support
 
 - It does not fully read or understand papers.
@@ -146,6 +153,8 @@ openrepro configure-provider boc_demo --provider mock --disable-real-api
 openrepro ingest boc_demo --source examples/boc_notes.md
 openrepro analyze boc_demo
 openrepro plan boc_demo
+openrepro list-candidates boc_demo
+openrepro review-candidates boc_demo --candidate-id F001 --status needs_more_evidence --reviewer human
 openrepro approve-candidates boc_demo --all --reviewer human
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp
 openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
@@ -311,6 +320,32 @@ openrepro approve-candidates boc_demo --formula-id F001 --parameter-id P001
 ```
 
 Verified candidates are implementation inputs only. They do not prove that the paper has been reproduced.
+
+### `openrepro list-candidates <project_name>`
+
+Lists formula and parameter candidates with their latest review status. By
+default, unreviewed records keep `candidate_unverified`.
+
+### `openrepro review-candidates <project_name>`
+
+Records a human review status for one or more candidates:
+
+```bash
+openrepro review-candidates boc_demo --candidate-id F001 --status needs_more_evidence --reviewer human --note "Need page-level context."
+openrepro review-candidates boc_demo --candidate-id P001 --status rejected_by_human --reviewer human
+openrepro review-candidates boc_demo --candidate-id F002 --status verified_by_human --reviewer human
+```
+
+Review artifacts are written to:
+
+```text
+workspace/candidate_reviews.json
+workspace/CANDIDATE_REVIEWS.md
+```
+
+When a review uses `verified_by_human`, OpenRepro-Agent also updates
+`workspace/verified_candidates.json` for compatibility with experiment
+scaffolding and `run-experiment`.
 
 ### `openrepro run-experiment <project_name> --experiment-id ID --confirm`
 
@@ -651,12 +686,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.6.1: confirmed manifest-only repair apply.
 - v0.6.2: doctor checks, lineage status visibility, and expanded smoke coverage.
 - v0.7.0: confirmed execution of verified experiment scaffolds.
+- v0.7.1: candidate listing and review lifecycle.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.7.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.7.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

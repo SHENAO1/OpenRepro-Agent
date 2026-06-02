@@ -75,17 +75,19 @@ def _run_log_summary(project_dir: Path) -> str:
 def _code_status(project_dir: Path) -> str:
     status = get_status(project_dir).to_dict()
     verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    reviews = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     return f"""# Code Status
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.7.0 命令入口。
+- `cli.py`：已完成 v0.7.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
 - `approval.py`：已完成 verified candidate 审批产物。
+- `candidate_review.py`：已完成候选 review 生命周期。
 - `experiment_runner.py`：已完成 verified experiment 受控执行。
 - `planner.py`：已完成实验计划模板与校验文件。
 - `demo_runner.py`：已完成 lightweight BOC-like Demo 和参数扫掠。
@@ -108,6 +110,12 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {verified}
+```
+
+## Candidate Review 状态
+
+```json
+{reviews}
 ```
 
 ## Repair Dry-Run 状态
@@ -178,12 +186,13 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.7.0 闭环检查
+## v0.7.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
 - plan: {'已完成' if status.planned else '未完成'}
 - approve-candidates: {'已完成' if (project_dir / 'workspace' / 'verified_candidates.json').exists() else '未完成'}
+- review-candidates: {'已完成' if (project_dir / 'workspace' / 'candidate_reviews.json').exists() else '未完成'}
 - run-experiment: {'已完成' if _has_run_command(project_dir, 'run-experiment') else '未完成'}
 - run-demo: {'已完成' if status.latest_run_dir else '未完成'}
 - report: {'已完成' if status.report_exists else '未完成'}
@@ -246,6 +255,7 @@ def _agent_handoff(project_dir: Path) -> str:
     status = get_status(project_dir)
     latest = latest_run_dir(project_dir)
     verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    reviews = read_json(project_dir / "workspace" / "candidate_reviews.json", default={}) or {}
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     return f"""# Agent Handoff
@@ -268,6 +278,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {verified}
+```
+
+## Candidate Review 摘要
+
+```json
+{reviews}
 ```
 
 ## Repair Dry-Run 摘要
@@ -345,6 +361,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "workspace" / "VERIFIED_CANDIDATES.md",
             "Verified Candidates",
             "尚未运行 approve-candidates，暂无人工审批候选。",
+        ),
+        "CANDIDATE_REVIEWS.md": _copy_or_placeholder(
+            project_dir / "workspace" / "CANDIDATE_REVIEWS.md",
+            "Candidate Reviews",
+            "尚未运行 review-candidates，暂无候选 review 历史。",
         ),
         "EXPERIMENT_PLAN.md": _copy_or_placeholder(
             project_dir / "workspace" / "EXPERIMENT_PLAN.md",

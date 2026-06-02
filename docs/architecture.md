@@ -14,6 +14,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, opt-in OpenAI-compatible provider, and request-hash cache.
+- `candidate_review.py`: candidate listing and human review lifecycle.
 - `experiment_scaffold.py`: human-gated experiment scaffolds from candidate evidence.
 - `experiment_runner.py`: controlled execution for verified experiment scaffolds.
 - `benchmark_runner.py`: workflow-compliance benchmark and benchmark-suite execution.
@@ -35,6 +36,7 @@ sources/ + project_config.yaml
   → workspace/paper_summary.md + MODEL_LEDGER.md + analysis_result.json
   → workspace/formula_candidates.json + parameter_candidates.json + model_ledger.json
   → workspace/EXPERIMENT_PLAN.md + experiment_plan_validation.json
+  → workspace/candidate_reviews.json + CANDIDATE_REVIEWS.md
   → workspace/verified_candidates.json + VERIFIED_CANDIDATES.md
   → experiments/<experiment_id>/...
   → outputs/<timestamp>_<project>_<experiment_id>/...

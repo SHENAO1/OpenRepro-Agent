@@ -10,6 +10,8 @@ python -m openrepro.cli configure-provider "$PROJECT" --provider mock --disable-
 python -m openrepro.cli ingest "$PROJECT" --source examples/boc_notes.md
 python -m openrepro.cli analyze "$PROJECT"
 python -m openrepro.cli plan "$PROJECT"
+python -m openrepro.cli list-candidates "$PROJECT"
+python -m openrepro.cli review-candidates "$PROJECT" --candidate-id F001 --status needs_more_evidence --reviewer smoke
 python -m openrepro.cli approve-candidates "$PROJECT" --all --reviewer smoke
 python -m openrepro.cli scaffold-experiment "$PROJECT" --experiment-id smoke_exp
 python -m openrepro.cli run-experiment "$PROJECT" --experiment-id smoke_exp --confirm

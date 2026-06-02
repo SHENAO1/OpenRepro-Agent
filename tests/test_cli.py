@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v0.7.0" in result.output
+    assert "OpenRepro-Agent v0.7.1" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -58,6 +58,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["ingest", "boc_demo", "--source", str(source)],
         ["analyze", "boc_demo"],
         ["plan", "boc_demo"],
+        ["list-candidates", "boc_demo"],
+        ["review-candidates", "boc_demo", "--candidate-id", "F001", "--status", "needs_more_evidence", "--reviewer", "cli-test"],
         ["approve-candidates", "boc_demo", "--all", "--reviewer", "cli-test"],
         ["scaffold-experiment", "boc_demo", "--experiment-id", "cli_exp"],
         ["run-experiment", "boc_demo", "--experiment-id", "cli_exp", "--confirm"],
@@ -93,6 +95,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "inspect_summary.json").exists()
     assert (project / "workspace" / "experiment_scaffold_summary.json").exists()
     assert (project / "workspace" / "verified_candidates.json").exists()
+    assert (project / "workspace" / "candidate_reviews.json").exists()
     assert (project / "workspace" / "repair_dry_run.json").exists()
     assert (project / "workspace" / "repair_plan.json").exists()
     assert (project / "workspace" / "run_comparison.json").exists()
