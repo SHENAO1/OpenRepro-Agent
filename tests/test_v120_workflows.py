@@ -43,10 +43,13 @@ def test_experiment_spec_validation_and_run_snapshot(tmp_path: Path):
 
     assert validation["valid"] is True
     assert validation["spec_sha256"]
+    assert validation["source_fingerprint"]["current_sha256"]
     assert (project / "experiments" / "spec_exp" / "experiment_spec.json").exists()
     assert (run_dir / "configs" / "experiment_spec_snapshot.json").exists()
     assert "configs/experiment_spec_snapshot.json" in manifest["required_artifacts"]
     assert metadata["experiment_spec"]["sha256"] == validation["spec_sha256"]
+    spec_snapshot = read_json(run_dir / "configs" / "experiment_spec_snapshot.json")
+    assert spec_snapshot["claim_contract"]["verified_claim_ids"]
 
 
 def test_compare_experiments_reports_spec_hash(tmp_path: Path):

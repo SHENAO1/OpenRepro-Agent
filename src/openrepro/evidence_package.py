@@ -8,6 +8,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
+from .claim_trace import generate_claim_trace
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
@@ -35,6 +36,7 @@ WORKSPACE_ARTIFACTS = [
     "data_index.json",
     "data_validation.json",
     "quality_gate_summary.json",
+    "claim_trace.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -248,6 +250,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     if not project_dir.exists():
         raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
+    claim_trace = generate_claim_trace(project_dir)
     inspect_summary = inspect_project(project_dir)
     lineage = generate_run_lineage(project_dir)
     status = get_status(project_dir).to_dict()
@@ -279,6 +282,14 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
         "experiment_specs": spec_summary,
         "data_registry": data_summary,
         "quality_gates": quality_gates,
+        "claim_trace": {
+            "schema_version": claim_trace.get("schema_version"),
+            "claim_count": claim_trace.get("claim_count"),
+            "verified_claim_count": claim_trace.get("verified_claim_count"),
+            "experiment_trace_count": claim_trace.get("experiment_trace_count"),
+            "run_trace_count": claim_trace.get("run_trace_count"),
+            "path": str(project_dir / "workspace" / "claim_trace.json"),
+        },
         "runs": runs,
         "lineage": {
             "schema_version": lineage.get("schema_version"),
@@ -387,6 +398,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - quality_gate_passed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'passed')}
 - quality_gate_failed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'failed')}
 - failed_quality_gate_check_names: {sorted({name for gate in package['quality_gates'] for name in gate.get('failed_check_names', [])})}
+- claim_trace_claim_count: {package['claim_trace']['claim_count']}
+- claim_trace_experiment_count: {package['claim_trace']['experiment_trace_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

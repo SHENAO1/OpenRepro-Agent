@@ -8,6 +8,7 @@ from typing import Any
 
 from . import __version__
 from .artifact_manager import latest_run_dir, required_handoff_files
+from .claim_trace import claim_trace_summary
 from .config import create_project_config, load_project_config, save_project_config
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status
@@ -52,6 +53,8 @@ class ProjectStatus:
     latest_quality_gate_failed_check_count: int | None
     latest_experiment_quality_gate_status: str
     latest_experiment_quality_gate_failed_check_count: int | None
+    claim_trace_exists: bool
+    claim_trace_claim_count: int
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -277,6 +280,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             latest_quality_gate_failed_check_count=None,
             latest_experiment_quality_gate_status="missing",
             latest_experiment_quality_gate_failed_check_count=None,
+            claim_trace_exists=False,
+            claim_trace_claim_count=0,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -310,6 +315,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     latest = latest_run_dir(project_dir)
     quality_gate = latest_quality_gate_summary(project_dir)
     experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
+    trace_summary = claim_trace_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -349,6 +355,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro quality-gate {project_dir}"
     elif not lineage_exists:
         next_step = f"Run: openrepro lineage {project_dir}"
+    elif not trace_summary["present"]:
+        next_step = f"Run: openrepro trace-claims {project_dir}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -358,7 +366,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.5.0 workflow is complete. Review quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.6.0 workflow is complete. Review claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -386,6 +394,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         latest_quality_gate_failed_check_count=quality_gate["failed_check_count"],
         latest_experiment_quality_gate_status=str(experiment_quality_gate["status"]),
         latest_experiment_quality_gate_failed_check_count=experiment_quality_gate["failed_check_count"],
+        claim_trace_exists=bool(trace_summary["present"]),
+        claim_trace_claim_count=trace_summary["claim_count"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

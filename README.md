@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.5.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.6.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.5.0 workflow is:
+The v1.6.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -228,6 +228,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Add repair dry-run previews for common quality gate failures without fabricating artifacts.
 - Include the quality gate summary inside `workspace/repair_plan.json`.
 
+## What v1.6.0 adds
+
+- Add `openrepro trace-claims` for claim-to-evidence traceability.
+- Write `workspace/claim_trace.json` and `workspace/CLAIM_TRACE.md`.
+- Add `claim_contract` to experiment specs.
+- Link candidate claims, verified claims, experiment scaffolds, registered data, and runs.
+- Include claim trace summaries in `inspect`, `status`, and evidence packages.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -311,6 +319,7 @@ openrepro validate boc_demo
 openrepro compare-runs boc_demo
 openrepro quality-gate boc_demo --all
 openrepro lineage boc_demo
+openrepro trace-claims boc_demo
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -623,6 +632,20 @@ Use `--all` to evaluate every run directory and write:
 workspace/quality_gate_summary.json
 workspace/QUALITY_GATE_SUMMARY.md
 ```
+
+### `openrepro trace-claims <project_name>`
+
+Builds claim-to-evidence traceability and writes:
+
+```text
+workspace/claim_trace.json
+workspace/CLAIM_TRACE.md
+```
+
+Formula and parameter candidates are treated as traceable claims. The trace
+links them to experiment specs, registered data, and run evidence. It is an
+audit map only; it does not prove that any paper claim has been scientifically
+reproduced.
 
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
@@ -996,12 +1019,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.4.0: run quality gates, quality gate reports, and gate status in evidence outputs.
 - v1.4.1: batch quality gates, failed-check summaries, and quality-gate diagnostics.
 - v1.5.0: quality-gate-aware repair plans and repair dry-run previews.
+- v1.6.0: claim traceability across candidates, experiments, data, and runs.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.5.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.6.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

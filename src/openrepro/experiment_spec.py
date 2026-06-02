@@ -12,7 +12,7 @@ from .data_registry import data_contract
 from .experiment_templates import normalize_artifact_paths, template_input_requirements
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-EXPERIMENT_SPEC_SCHEMA_VERSION = "1.4.0"
+EXPERIMENT_SPEC_SCHEMA_VERSION = "1.6.0"
 
 TEMPLATE_METRICS = {
     "basic": [],
@@ -51,6 +51,20 @@ def _spec_source_payload(
             "verified_formula": config.get("verified_formula_candidate_ids", []),
             "verified_parameter": config.get("verified_parameter_candidate_ids", []),
         },
+        "claim_contract": {
+            "claim_ids": sorted(
+                {
+                    *(f"formula:{item}" for item in config.get("formula_candidate_ids", []) if item),
+                    *(f"parameter:{item}" for item in config.get("parameter_candidate_ids", []) if item),
+                }
+            ),
+            "verified_claim_ids": sorted(
+                {
+                    *(f"formula:{item}" for item in config.get("verified_formula_candidate_ids", []) if item),
+                    *(f"parameter:{item}" for item in config.get("verified_parameter_candidate_ids", []) if item),
+                }
+            ),
+        },
         "input_contract": {
             "required": requirements["required"],
             "optional": requirements["optional"],
@@ -82,6 +96,7 @@ def build_experiment_spec(
     artifact_contract = source_payload["artifact_contract"]
     metric_contract = source_payload["metric_contract"]
     data_sources = source_payload["data_contract"]
+    claim_contract = source_payload["claim_contract"]
     return {
         "schema_version": EXPERIMENT_SPEC_SCHEMA_VERSION,
         "created_at": iso_now(),
@@ -108,6 +123,7 @@ def build_experiment_spec(
             "comparison_policy": "Metrics are compared as engineering evidence only.",
         },
         "data_contract": data_sources,
+        "claim_contract": claim_contract,
         "source_fingerprint": {
             "schema_version": EXPERIMENT_SPEC_SCHEMA_VERSION,
             "sha256": _stable_hash(source_payload),

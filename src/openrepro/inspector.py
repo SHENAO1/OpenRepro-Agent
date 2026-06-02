@@ -8,6 +8,7 @@ from typing import Any
 
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
+from .claim_trace import claim_trace_summary
 from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
@@ -156,6 +157,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     quality_gates = quality_gate_summaries(project_dir)
     latest_quality_gate = latest_quality_gate_summary(project_dir)
     latest_experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
+    trace_summary = claim_trace_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -209,6 +211,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "quality_gate_passed_count": sum(1 for gate in quality_gates if gate.get("status") == "passed"),
         "quality_gate_failed_count": sum(1 for gate in quality_gates if gate.get("status") == "failed"),
         "quality_gates": quality_gates,
+        "claim_trace_status": "present" if trace_summary["present"] else "missing",
+        "claim_trace_claim_count": trace_summary["claim_count"],
+        "claim_trace_verified_claim_count": trace_summary["verified_claim_count"],
+        "claim_trace_experiment_count": trace_summary["experiment_trace_count"],
+        "claim_trace_run_count": trace_summary["run_trace_count"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

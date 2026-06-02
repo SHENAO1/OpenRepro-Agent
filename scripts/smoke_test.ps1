@@ -45,6 +45,7 @@ python -m openrepro.cli validate $Project --all
 python -m openrepro.cli compare-runs $Project
 python -m openrepro.cli quality-gate $Project --all
 python -m openrepro.cli lineage $Project
+python -m openrepro.cli trace-claims $Project
 python -m openrepro.cli diagnose $Project
 python -m openrepro.cli repair-plan $Project
 python -m openrepro.cli repair $Project --dry-run

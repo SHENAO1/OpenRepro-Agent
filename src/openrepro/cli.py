@@ -14,6 +14,7 @@ from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
+from .claim_trace import generate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
@@ -345,6 +346,20 @@ def compare_experiments_cmd(
     console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_COMPARISON.md'}")
     for warning in comparison.get("warnings", []):
         _warn(str(warning))
+
+
+@app.command("trace-claims")
+def trace_claims_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate claim-to-evidence traceability artifacts."""
+    project_dir = require_project(project_name)
+    trace = generate_claim_trace(project_dir)
+    _success("Claim trace generated.")
+    console.print(f"Claims: {trace['claim_count']}")
+    console.print(f"Verified claims: {trace['verified_claim_count']}")
+    console.print(f"Experiments: {trace['experiment_trace_count']}")
+    console.print(f"Runs: {trace['run_trace_count']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_trace.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_TRACE.md'}")
 
 
 @app.command("list-templates")
@@ -738,6 +753,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Latest experiment gate": summary["experiment_quality_gate_status"],
         "Experiment gate failed checks": summary["experiment_quality_gate_failed_check_count"],
         "Failed gate check names": summary["failed_quality_gate_check_names"],
+        "Claim trace": summary["claim_trace_status"],
+        "Traced claims": summary["claim_trace_claim_count"],
+        "Traced experiment links": summary["claim_trace_experiment_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1019,6 +1037,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Quality gate failed checks": status.latest_quality_gate_failed_check_count,
         "Latest experiment gate": status.latest_experiment_quality_gate_status,
         "Experiment gate failed checks": status.latest_experiment_quality_gate_failed_check_count,
+        "Claim trace exists": status.claim_trace_exists,
+        "Traced claims": status.claim_trace_claim_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

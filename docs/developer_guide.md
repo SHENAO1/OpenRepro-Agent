@@ -189,6 +189,12 @@ an aggregate `quality_gate_failed` issue and check-specific issue codes such as
 codes to explicit recovery actions, but they must not fabricate metrics,
 snapshots, datasets, or scientific outputs.
 
+v1.6.0 adds `claim_trace.py`. Claim traces should treat formula and parameter
+candidates as traceable claims, then link them to experiment specs, registered
+data, and run evidence. `trace-claims` should write JSON and Markdown under
+`workspace/`. The trace is an audit map only and must not imply that a claim was
+scientifically reproduced.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
