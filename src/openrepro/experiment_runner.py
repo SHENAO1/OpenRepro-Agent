@@ -11,6 +11,7 @@ from typing import Any
 
 from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run_manifest, write_run_manifest
 from .config import load_project_config
+from .data_registry import load_data_index
 from .environment_snapshot import build_environment_snapshot
 from .experiment_inputs import validate_experiment_inputs
 from .experiment_spec import validate_experiment_spec
@@ -162,6 +163,8 @@ status: {status}
     )
     spec = read_json(exp_dir / "experiment_spec.json", default={}) or {}
     write_json(run_dirs.configs / "experiment_spec_snapshot.json", spec if isinstance(spec, dict) else {})
+    data_index = load_data_index(project_dir)
+    write_json(run_dirs.configs / "data_index_snapshot.json", data_index)
     environment_snapshot = build_environment_snapshot(project_dir, exp_dir, run_dirs.root, runner, experiment_id, template)
     write_json(run_dirs.configs / "environment_snapshot.json", environment_snapshot)
     shutil.copy2(runner, run_dirs.code / "runner.py")
@@ -176,6 +179,7 @@ status: {status}
 - experiment_inputs_path: `{experiment_inputs_path if experiment_inputs else None}`
 - experiment_spec_path: `{exp_dir / 'experiment_spec.json'}`
 - experiment_spec_sha256: {spec_validation.get('spec_sha256')}
+- data_index_snapshot: `configs/data_index_snapshot.json`
 - input_completeness: {input_completeness.get('status', 'missing')}
 - missing_required_inputs: {input_completeness.get('missing', [])}
 - input_warning: {input_completeness.get('warning')}
@@ -220,6 +224,10 @@ This report records controlled execution evidence only. It does not claim paper 
             "snapshot": relpath(run_dirs.configs / "experiment_spec_snapshot.json", run_dirs.root),
             "validation": spec_validation,
             "sha256": spec_validation.get("spec_sha256"),
+        },
+        "data_index": {
+            "snapshot": relpath(run_dirs.configs / "data_index_snapshot.json", run_dirs.root),
+            "registered_count": len(data_index.get("sources", [])) if isinstance(data_index.get("sources"), list) else 0,
         },
         "environment_snapshot": {
             "snapshot": relpath(run_dirs.configs / "environment_snapshot.json", run_dirs.root),

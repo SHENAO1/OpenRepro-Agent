@@ -8,6 +8,7 @@ from typing import Any
 
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
+from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
@@ -150,6 +151,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     lineage = _lineage_summary(project_dir)
     scaffolds = inspect_experiment_scaffolds(project_dir)
     spec_summary = inspect_experiment_specs(project_dir)
+    data_summary = data_index_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -184,6 +186,14 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "experiment_spec_invalid_count": spec_summary["invalid_count"],
         "experiment_spec_missing_count": spec_summary["missing_count"],
         "experiment_specs": spec_summary["specs"],
+        "data_registered_count": data_summary["registered_count"],
+        "data_valid_count": data_summary["valid_count"],
+        "data_invalid_count": data_summary["invalid_count"],
+        "data_missing_count": data_summary["missing_count"],
+        "data_hash_mismatch_count": data_summary["hash_mismatch_count"],
+        "data_role_counts": data_summary["role_counts"],
+        "data_status_counts": data_summary["status_counts"],
+        "data_sources": data_summary["sources"],
         "run_count": len(run_dirs),
         "run_command_counts": run_command_counts,
         "experiment_run_count": run_command_counts.get("run-experiment", 0),

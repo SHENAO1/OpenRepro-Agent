@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.2.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.3.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.2.1 workflow is:
+The v1.3.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -199,10 +199,18 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Surface spec status counts in `inspect`, `status`, and evidence packages.
 - Warn when compared experiment runs used different experiment spec hashes.
 
+## What v1.3.0 adds
+
+- Add `openrepro register-data` for local data source provenance.
+- Add `openrepro validate-data` for registered file presence and SHA-256 checks.
+- Snapshot `workspace/data_index.json` into experiment run outputs.
+- Include data registry status in specs, lineage, inspect, status, comparisons, and evidence packages.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
 - It does not verify mathematical formulas automatically.
+- It does not verify dataset semantics, labels, provenance claims, or scientific data quality automatically.
 - It does not generate full simulation code for arbitrary papers.
 - It does not automatically repair failed experiments.
 - It does not apply repair previews automatically; dry-run output is for review.
@@ -256,6 +264,9 @@ openrepro list-templates
 openrepro list-candidates boc_demo
 openrepro review-candidates boc_demo --candidate-id F001 --status needs_more_evidence --reviewer human
 openrepro approve-candidates boc_demo --all --reviewer human
+# Optional: register local data files before scaffolding so specs capture data provenance.
+openrepro register-data boc_demo --path path/to/dataset.csv --role dataset
+openrepro validate-data boc_demo
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
@@ -309,6 +320,7 @@ boc_demo/
   project_config.yaml
   sources/
   workspace/
+  data/
   outputs/
   handoff/
   reports/
@@ -477,6 +489,32 @@ openrepro approve-candidates boc_demo --formula-id F001 --parameter-id P001
 ```
 
 Verified candidates are implementation inputs only. They do not prove that the paper has been reproduced.
+
+### `openrepro register-data <project_name> --path PATH --role ROLE`
+
+Registers a local data file in:
+
+```text
+workspace/data_index.json
+workspace/DATA_INDEX.md
+```
+
+The registry stores role, path, size, SHA-256, source label, and notes. Register
+data before scaffolding an experiment when the experiment spec should capture
+that data contract.
+
+### `openrepro validate-data <project_name>`
+
+Checks registered data files still exist and match their recorded SHA-256 hashes.
+The command writes:
+
+```text
+workspace/data_validation.json
+workspace/DATA_VALIDATION.md
+```
+
+The validation is a file provenance check only; it does not verify the scientific
+meaning, labels, quality, or completeness of the dataset.
 
 ### `openrepro list-candidates <project_name>`
 
@@ -905,12 +943,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.1.0: section-aware candidate provenance, caption indexes, and high-risk candidate visibility.
 - v1.2.0: experiment specs, spec validation, run spec snapshots, and spec hashes.
 - v1.2.1: spec source fingerprints, freshness inspection, strict validation, and comparison warnings.
+- v1.3.0: data registry, data validation, run data snapshots, and data provenance in evidence outputs.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.2.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.3.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

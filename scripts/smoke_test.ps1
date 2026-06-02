@@ -21,6 +21,10 @@ python -m openrepro.cli list-templates
 python -m openrepro.cli list-candidates $Project
 python -m openrepro.cli review-candidates $Project --candidate-id F001 --status needs_more_evidence --reviewer smoke
 python -m openrepro.cli approve-candidates $Project --all --reviewer smoke
+New-Item -ItemType Directory -Force "$Project\data" | Out-Null
+Set-Content -Encoding UTF8 "$Project\data\smoke_dataset.json" '{"samples":[1,2,3]}'
+python -m openrepro.cli register-data $Project --path "$Project\data\smoke_dataset.json" --role dataset --note smoke
+python -m openrepro.cli validate-data $Project
 python -m openrepro.cli scaffold-experiment $Project --experiment-id smoke_exp --template boc-like
 python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name noise_std --value 0.05 --note smoke
 python -m openrepro.cli set-input $Project --experiment-id smoke_exp --name code_length --value 128 --note smoke

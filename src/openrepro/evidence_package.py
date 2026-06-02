@@ -8,6 +8,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
+from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
 from .inspector import inspect_project
@@ -30,6 +31,8 @@ WORKSPACE_ARTIFACTS = [
     "experiment_plan_validation.json",
     "experiment_scaffold_summary.json",
     "experiment_input_validation.json",
+    "data_index.json",
+    "data_validation.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -60,6 +63,8 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "candidate_review_count",
         "experiment_run_count",
         "benchmark_run_count",
+        "registered_count",
+        "invalid_count",
         "all_metrics_equal",
         "action_count",
     ]:
@@ -240,6 +245,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     workspace_artifacts = _workspace_artifacts(project_dir)
     experiments = _experiment_summaries(project_dir)
     spec_summary = inspect_experiment_specs(project_dir)
+    data_summary = data_index_summary(project_dir)
     runs = _run_summaries(project_dir)
     source_fingerprint = evidence_source_fingerprint(project_dir)
     package = {
@@ -260,6 +266,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
         "workspace_artifacts": workspace_artifacts,
         "experiments": experiments,
         "experiment_specs": spec_summary,
+        "data_registry": data_summary,
         "runs": runs,
         "lineage": {
             "schema_version": lineage.get("schema_version"),
@@ -361,6 +368,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - experiment_scaffold_count: {package['status']['experiment_scaffold_count']}
 - experiment_run_count: {package['status']['experiment_run_count']}
 - experiment_spec_status_counts: {package['experiment_specs']['status_counts']}
+- data_registered_count: {package['data_registry']['registered_count']}
+- data_status_counts: {package['data_registry']['status_counts']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

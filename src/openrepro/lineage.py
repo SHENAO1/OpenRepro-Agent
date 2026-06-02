@@ -9,7 +9,7 @@ from typing import Any
 from .artifact_manager import list_run_dirs, sha256_file
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-LINEAGE_SCHEMA_VERSION = "1.2.0"
+LINEAGE_SCHEMA_VERSION = "1.3.0"
 
 
 def _hash_file(path: Path) -> str | None:
@@ -35,6 +35,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
     experiment_config = run_dir / "configs" / "experiment_config_snapshot.json"
     experiment_inputs = run_dir / "configs" / "experiment_inputs_snapshot.json"
     experiment_spec = run_dir / "configs" / "experiment_spec_snapshot.json"
+    data_index = run_dir / "configs" / "data_index_snapshot.json"
     environment_snapshot = run_dir / "configs" / "environment_snapshot.json"
     runner = run_dir / "code" / "runner.py"
     hashes = {
@@ -45,6 +46,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "experiment_config_sha256": _hash_file(experiment_config),
         "experiment_inputs_sha256": _hash_file(experiment_inputs),
         "experiment_spec_sha256": _hash_file(experiment_spec),
+        "data_index_sha256": _hash_file(data_index),
         "environment_snapshot_sha256": _hash_file(environment_snapshot),
         "runner_sha256": _hash_file(runner),
     }
@@ -65,6 +67,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
         "experiment_config_path": str(experiment_config) if experiment_config.exists() else None,
         "experiment_inputs_path": str(experiment_inputs) if experiment_inputs.exists() else None,
         "experiment_spec_path": str(experiment_spec) if experiment_spec.exists() else None,
+        "data_index_path": str(data_index) if data_index.exists() else None,
         "environment_snapshot_path": str(environment_snapshot) if environment_snapshot.exists() else None,
         "runner_path": str(runner) if runner.exists() else None,
         "hashes": hashes,
@@ -76,6 +79,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
                 "experiment_config_sha256",
                 "experiment_inputs_sha256",
                 "experiment_spec_sha256",
+                "data_index_sha256",
                 "environment_snapshot_sha256",
                 "runner_sha256",
             }
@@ -86,6 +90,7 @@ def _lineage_entry(project_dir: Path, run_dir: Path) -> dict[str, Any]:
                 "experiment_config_sha256",
                 "experiment_inputs_sha256",
                 "experiment_spec_sha256",
+                "data_index_sha256",
                 "environment_snapshot_sha256",
                 "runner_sha256",
             ]
@@ -138,8 +143,8 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
         f"- run_count: {lineage['run_count']}",
         f"- project_dir: `{lineage['project_dir']}`",
         "",
-        "| Run | Command | Repeat | Manifest | Config | Inputs | Spec | Environment | Runner | Complete |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Run | Command | Repeat | Manifest | Config | Inputs | Spec | Data | Environment | Runner | Complete |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for run in lineage["runs"]:
         hashes = run["hashes"]
@@ -149,7 +154,7 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
             else ""
         )
         lines.append(
-            "| {run_id} | {parent_command} | {repeat} | {manifest} | {config} | {inputs} | {spec} | {environment} | {runner} | {complete} |".format(
+            "| {run_id} | {parent_command} | {repeat} | {manifest} | {config} | {inputs} | {spec} | {data} | {environment} | {runner} | {complete} |".format(
                 run_id=run["run_id"],
                 parent_command=run["parent_command"],
                 repeat=repeat,
@@ -157,6 +162,7 @@ def _render_lineage_markdown(lineage: dict[str, Any]) -> str:
                 config=_short_hash(hashes.get("config_sha256")),
                 inputs=_short_hash(hashes.get("experiment_inputs_sha256")),
                 spec=_short_hash(hashes.get("experiment_spec_sha256")),
+                data=_short_hash(hashes.get("data_index_sha256")),
                 environment=_short_hash(hashes.get("environment_snapshot_sha256")),
                 runner=_short_hash(hashes.get("runner_sha256")),
                 complete=run.get("experiment_provenance_complete")

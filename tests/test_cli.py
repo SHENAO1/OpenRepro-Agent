@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.2.1" in result.output
+    assert "OpenRepro-Agent v1.3.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -22,6 +22,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         "Formula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 128",
         encoding="utf-8",
     )
+    data_file = tmp_path / "cli_dataset.json"
+    data_file.write_text('{"samples": [1, 2, 3]}', encoding="utf-8")
     task = tmp_path / "task.json"
     task.write_text(
         f"""{{
@@ -62,6 +64,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["list-candidates", "boc_demo"],
         ["review-candidates", "boc_demo", "--candidate-id", "F001", "--status", "needs_more_evidence", "--reviewer", "cli-test"],
         ["approve-candidates", "boc_demo", "--all", "--reviewer", "cli-test"],
+        ["register-data", "boc_demo", "--path", str(data_file), "--role", "dataset", "--note", "CLI fixture data"],
+        ["validate-data", "boc_demo"],
         ["scaffold-experiment", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-inputs", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-experiment-spec", "boc_demo", "--experiment-id", "cli_exp"],
@@ -102,6 +106,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "experiment_scaffold_summary.json").exists()
     assert (project / "workspace" / "verified_candidates.json").exists()
     assert (project / "workspace" / "candidate_reviews.json").exists()
+    assert (project / "workspace" / "data_index.json").exists()
+    assert (project / "workspace" / "data_validation.json").exists()
     assert (project / "workspace" / "repair_dry_run.json").exists()
     assert (project / "workspace" / "repair_plan.json").exists()
     assert (project / "workspace" / "experiment_comparison.json").exists()
@@ -116,6 +122,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "experiments" / "cli_exp" / "experiment_config.json").exists()
     assert (project / "experiments" / "cli_exp" / "experiment_spec.json").exists()
     assert (project / "workspace" / "experiment_spec_validation.json").exists()
+    assert (project / "workspace" / "DATA_INDEX.md").exists()
+    assert (project / "workspace" / "DATA_VALIDATION.md").exists()
     run_dirs = list((project / "outputs").iterdir())
     assert len(run_dirs) == 4
     assert any((run_dir / "figures" / "correlation.png").exists() for run_dir in run_dirs)

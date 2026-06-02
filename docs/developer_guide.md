@@ -160,6 +160,13 @@ timestamps. `validate-experiment-spec --strict` should report stale specs
 without refreshing them, and comparison reports should warn when two experiment
 runs used different spec hashes.
 
+v1.3.0 adds `data_registry.py`. Data registration should record local file path,
+role, size, and SHA-256 under `workspace/data_index.json` without copying or
+inventing datasets. `validate-data` should detect missing files and hash
+mismatches. Experiment specs should include the registered data contract, and
+`run-experiment` should snapshot the data index under
+`configs/data_index_snapshot.json` for lineage and evidence packages.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

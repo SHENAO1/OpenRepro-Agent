@@ -80,6 +80,7 @@ def _run_summary(run_dir: Path) -> dict[str, Any]:
             "runner_sha256": _hash(run_dir / "code" / "runner.py"),
             "inputs_sha256": _hash(run_dir / "configs" / "experiment_inputs_snapshot.json"),
             "spec_sha256": _hash(run_dir / "configs" / "experiment_spec_snapshot.json"),
+            "data_index_sha256": _hash(run_dir / "configs" / "data_index_snapshot.json"),
             "normalized_inputs_sha256": _normalized_json_hash(
                 run_dir / "configs" / "experiment_inputs_snapshot.json",
                 ignored_keys={"created_at", "updated_at"},
@@ -153,6 +154,9 @@ def compare_experiments(
     spec_comparison = hash_comparison.get("spec_sha256")
     if spec_comparison and not spec_comparison.get("equal"):
         warnings.append("Experiment spec hash differs between compared runs.")
+    data_comparison = hash_comparison.get("data_index_sha256")
+    if data_comparison and not data_comparison.get("equal"):
+        warnings.append("Data index hash differs between compared runs.")
     result = {
         "schema_version": EXPERIMENT_COMPARISON_SCHEMA_VERSION,
         "created_at": iso_now(),

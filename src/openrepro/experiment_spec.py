@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .artifact_manager import sha256_file
+from .data_registry import data_contract
 from .experiment_templates import normalize_artifact_paths, template_input_requirements
 from .utils import iso_now, read_json, safe_write_text, write_json
 
@@ -34,6 +35,7 @@ def _spec_source_payload(
     config: dict[str, Any],
     inputs: dict[str, Any],
     expected_artifacts: dict[str, Any],
+    data_sources: dict[str, Any],
 ) -> dict[str, Any]:
     template = str(config.get("template") or inputs.get("template") or expected_artifacts.get("template") or "basic")
     requirements = template_input_requirements(template)
@@ -62,6 +64,7 @@ def _spec_source_payload(
         "metric_contract": {
             "required_metrics": TEMPLATE_METRICS.get(template, []),
         },
+        "data_contract": data_sources,
     }
 
 
@@ -73,11 +76,12 @@ def build_experiment_spec(
     expected_artifacts: dict[str, Any],
 ) -> dict[str, Any]:
     """Build a stable experiment specification contract."""
-    source_payload = _spec_source_payload(experiment_id, config, inputs, expected_artifacts)
+    source_payload = _spec_source_payload(experiment_id, config, inputs, expected_artifacts, data_contract(project_dir))
     template = str(source_payload["template"])
     input_contract = source_payload["input_contract"]
     artifact_contract = source_payload["artifact_contract"]
     metric_contract = source_payload["metric_contract"]
+    data_sources = source_payload["data_contract"]
     return {
         "schema_version": EXPERIMENT_SPEC_SCHEMA_VERSION,
         "created_at": iso_now(),
@@ -103,6 +107,7 @@ def build_experiment_spec(
             "required_metrics": metric_contract["required_metrics"],
             "comparison_policy": "Metrics are compared as engineering evidence only.",
         },
+        "data_contract": data_sources,
         "source_fingerprint": {
             "schema_version": EXPERIMENT_SPEC_SCHEMA_VERSION,
             "sha256": _stable_hash(source_payload),

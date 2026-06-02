@@ -124,6 +124,7 @@ def project_required_dirs(project_dir: Path) -> list[Path]:
     return [
         project_dir / "sources",
         project_dir / "workspace",
+        project_dir / "data",
         project_dir / "outputs",
         project_dir / "handoff",
         project_dir / "reports",

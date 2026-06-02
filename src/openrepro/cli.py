@@ -15,6 +15,7 @@ from .artifact_manager import latest_run_dir, validate_all_run_manifests, valida
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
 from .config import configure_api_provider, provider_status
+from .data_registry import register_data, validate_data_index
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
@@ -380,6 +381,58 @@ def validate_experiment_spec_cmd(
     _success("Experiment spec is valid.")
 
 
+@app.command("register-data")
+def register_data_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    path: Path = typer.Option(..., "--path", help="Local data file to register."),
+    role: str = typer.Option("dataset", "--role", help="Data role, e.g. dataset, labels, split, or config."),
+    source: str = typer.Option("manual", "--source", help="Registration source label."),
+    note: str = typer.Option("", "--note", help="Optional note for the registered data file."),
+) -> None:
+    """Register a local data file with SHA-256 provenance."""
+    project_dir = require_project(project_name)
+    try:
+        record = register_data(project_dir, path=path, role=role, source=source, note=note)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _success(f"Registered data: {record['data_id']}")
+    table = Table(title=f"Registered Data: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["data_id", "role", "path", "size_bytes", "sha256"]:
+        table.add_row(key, str(record[key]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_index.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_INDEX.md'}")
+
+
+@app.command("validate-data")
+def validate_data_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate registered data file presence and hashes."""
+    project_dir = require_project(project_name)
+    result = validate_data_index(project_dir)
+    table = Table(title=f"Data Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    summary = result["summary"]
+    rows = {
+        "valid": result["valid"],
+        "registered_count": summary["registered_count"],
+        "invalid_count": summary["invalid_count"],
+        "status_counts": summary["status_counts"],
+        "errors": result["errors"],
+    }
+    for key, value in rows.items():
+        table.add_row(key, str(value))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Registered data is valid.")
+
+
 @app.command("scaffold-experiment")
 def scaffold_experiment_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -616,6 +669,10 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Stale specs": summary["experiment_spec_stale_count"],
         "Invalid specs": summary["experiment_spec_invalid_count"],
         "Missing specs": summary["experiment_spec_missing_count"],
+        "Registered data": summary["data_registered_count"],
+        "Invalid data": summary["data_invalid_count"],
+        "Missing data": summary["data_missing_count"],
+        "Data hash mismatches": summary["data_hash_mismatch_count"],
         "Experiment runs": summary["experiment_run_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
@@ -889,6 +946,10 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Stale specs": status.experiment_spec_stale_count,
         "Invalid specs": status.experiment_spec_invalid_count,
         "Missing specs": status.experiment_spec_missing_count,
+        "Registered data": status.data_registered_count,
+        "Invalid data": status.data_invalid_count,
+        "Missing data": status.data_missing_count,
+        "Data hash mismatches": status.data_hash_mismatch_count,
         "Experiment runs": status.experiment_run_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
