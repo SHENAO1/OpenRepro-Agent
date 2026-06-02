@@ -152,6 +152,12 @@ must stay evidence-oriented: metric deltas, runner hashes, raw input hashes,
 normalized input hashes, and environment hashes are acceptable; scientific
 reproduction claims are not.
 
+v1.0.0 adds `evidence_package.py`. Evidence packages should reuse existing
+inspect, lineage, manifest validation, experiment, benchmark, report, and
+handoff artifacts rather than recomputing incompatible state. They should write
+both JSON and Markdown under `reports/` and keep policy language explicit that
+workflow evidence is not a scientific reproduction claim.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

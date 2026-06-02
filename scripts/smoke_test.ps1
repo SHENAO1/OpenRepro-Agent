@@ -47,6 +47,7 @@ python -m openrepro.cli benchmark-suite --suite benchmarks/sample_suite.json --p
 python -m openrepro.cli benchmark-index
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
+python -m openrepro.cli evidence-package $Project
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null

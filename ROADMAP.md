@@ -179,6 +179,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Compare metric deltas, runner hashes, raw input hashes, normalized input hashes, and environment hashes.
 - [x] Extend lineage with experiment repeat groups and repeat run indexes.
 
+## v1.0.0 — Project evidence package
+
+- [x] Add `openrepro evidence-package`.
+- [x] Write `reports/evidence_package.json` and `reports/evidence_package.md`.
+- [x] Summarize inspect output, workspace artifacts, experiment scaffolds, run manifests, lineage, benchmark indexes, reports, and handoff completeness.
+- [x] Keep evidence package output limited to engineering evidence and explicit limitations.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -19,6 +19,7 @@ from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_r
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
+from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
 from .experiment_inputs import set_experiment_input, validate_experiment_inputs
@@ -812,6 +813,19 @@ def handoff_cmd(project_name: str = typer.Argument(..., help="Project directory.
         console.print(f"  - {path}")
 
 
+@app.command("evidence-package")
+def evidence_package_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate project-level evidence package JSON and Markdown."""
+    project_dir = require_project(project_name)
+    package = generate_evidence_package(project_dir)
+    _success("Evidence package generated.")
+    console.print(f"Schema: {package['schema_version']}")
+    console.print(f"Runs: {len(package['runs'])}")
+    console.print(f"Experiments: {len(package['experiments'])}")
+    console.print(f"JSON: {project_dir / 'reports' / 'evidence_package.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'evidence_package.md'}")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -835,6 +849,7 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
         "Handoff complete": status.handoff_complete,
+        "Evidence package exists": status.evidence_package_exists,
         "Next step": status.next_step,
     }
     for key, value in rows.items():

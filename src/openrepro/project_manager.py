@@ -40,6 +40,7 @@ class ProjectStatus:
     lineage_exists: bool
     report_exists: bool
     handoff_complete: bool
+    evidence_package_exists: bool
     next_step: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -250,6 +251,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             lineage_exists=False,
             report_exists=False,
             handoff_complete=False,
+            evidence_package_exists=False,
             next_step=f"Run: openrepro init {project_name}",
         )
 
@@ -275,6 +277,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
+    evidence_package_exists = (project_dir / "reports" / "evidence_package.json").exists() and (
+        project_dir / "reports" / "evidence_package.md"
+    ).exists()
 
     if not ingested:
         next_step = f"Run: openrepro ingest {project_dir} --source <markdown_or_txt>"
@@ -300,8 +305,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
+    elif not evidence_package_exists:
+        next_step = f"Run: openrepro evidence-package {project_dir}"
     else:
-        next_step = "Project v0.9.3 workflow is complete. Review experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, candidate reviews, experiment runs, doctor, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v1.0.0 workflow is complete. Review the evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, candidate reviews, experiment runs, doctor, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -321,5 +328,6 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         lineage_exists=lineage_exists,
         report_exists=report_exists,
         handoff_complete=handoff_complete,
+        evidence_package_exists=evidence_package_exists,
         next_step=next_step,
     )
