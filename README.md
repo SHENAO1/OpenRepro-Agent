@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.0.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.0.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.0.0 workflow is:
+The v1.0.1 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
@@ -168,6 +168,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Keep evidence-package policy explicit: workflow evidence is not a scientific reproduction claim.
 - Add v1.0.0 regression tests and smoke coverage for evidence package generation.
 
+## What v1.0.1 adds
+
+- Add evidence package source fingerprints and artifact SHA-256 hashes.
+- Add freshness detection so `status` can report missing, current, or stale evidence packages.
+- Add `openrepro evidence-package --zip` for compact handoff export.
+- Add `handoff/EVIDENCE_PACKAGE.md`.
+- Add stale-package and zip-export regression tests.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -249,7 +257,7 @@ openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix 
 openrepro benchmark-index
 openrepro report boc_demo
 openrepro handoff boc_demo
-openrepro evidence-package boc_demo
+openrepro evidence-package boc_demo --zip
 openrepro status boc_demo
 ```
 
@@ -742,19 +750,22 @@ handoff/NEXT_STEPS.md
 handoff/AGENT_HANDOFF.md
 ```
 
-### `openrepro evidence-package <project_name>`
+### `openrepro evidence-package <project_name> [--zip]`
 
 Generates a project-level evidence bundle:
 
 ```text
 reports/evidence_package.json
 reports/evidence_package.md
+reports/evidence_package.zip
 ```
 
 The package summarizes inspect output, workspace artifacts, experiment
 scaffolds, run manifests, lineage, benchmark indexes, project reports, and
-handoff completeness. It is intended as an auditable handover artifact, not as
-a scientific reproduction claim.
+handoff completeness. It includes source fingerprints and artifact hashes so
+`openrepro status` can report whether the package is current or stale. It is
+intended as an auditable handover artifact, not as a scientific reproduction
+claim.
 
 ### `openrepro status <project_name>`
 
@@ -845,12 +856,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.9.2: input validation, manual input overrides, and missing-input visibility.
 - v0.9.3: repeat experiment execution, same-experiment comparison artifacts, and lineage repeat indexes.
 - v1.0.0: project-level evidence packages for auditable handover.
+- v1.0.1: evidence package freshness, artifact hashes, zip export, and handoff integration.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.0.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.0.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

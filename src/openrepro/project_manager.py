@@ -9,6 +9,7 @@ from typing import Any
 from . import __version__
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .config import create_project_config, load_project_config, save_project_config
+from .evidence_fingerprint import evidence_package_status
 from .experiment_templates import inspect_experiment_scaffolds
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
@@ -41,6 +42,8 @@ class ProjectStatus:
     report_exists: bool
     handoff_complete: bool
     evidence_package_exists: bool
+    evidence_package_status: str
+    evidence_package_stale: bool
     next_step: str
 
     def to_dict(self) -> dict[str, Any]:
@@ -252,6 +255,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             report_exists=False,
             handoff_complete=False,
             evidence_package_exists=False,
+            evidence_package_status="missing",
+            evidence_package_stale=True,
             next_step=f"Run: openrepro init {project_name}",
         )
 
@@ -280,6 +285,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     evidence_package_exists = (project_dir / "reports" / "evidence_package.json").exists() and (
         project_dir / "reports" / "evidence_package.md"
     ).exists()
+    evidence_status = evidence_package_status(project_dir)
 
     if not ingested:
         next_step = f"Run: openrepro ingest {project_dir} --source <markdown_or_txt>"
@@ -307,8 +313,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro handoff {project_dir}"
     elif not evidence_package_exists:
         next_step = f"Run: openrepro evidence-package {project_dir}"
+    elif evidence_status["stale"]:
+        next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.0.0 workflow is complete. Review the evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, candidate reviews, experiment runs, doctor, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v1.0.1 workflow is complete. Review the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, candidate reviews, experiment runs, doctor, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -329,5 +337,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         report_exists=report_exists,
         handoff_complete=handoff_complete,
         evidence_package_exists=evidence_package_exists,
+        evidence_package_status=str(evidence_status["status"]),
+        evidence_package_stale=bool(evidence_status["stale"]),
         next_step=next_step,
     )

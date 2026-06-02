@@ -158,6 +158,11 @@ handoff artifacts rather than recomputing incompatible state. They should write
 both JSON and Markdown under `reports/` and keep policy language explicit that
 workflow evidence is not a scientific reproduction claim.
 
+v1.0.1 adds `evidence_fingerprint.py`. Evidence package freshness should be
+based on source fingerprints that exclude generated evidence package files.
+`evidence-package --zip` should export the package plus referenced workspace
+and handoff artifacts without changing scientific evidence.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

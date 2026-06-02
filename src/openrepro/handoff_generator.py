@@ -105,7 +105,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.0.0 命令入口。
+- `cli.py`：已完成 v1.0.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -215,7 +215,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.0.0 闭环检查
+## v1.0.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -228,6 +228,7 @@ def _next_steps(project_dir: Path) -> str:
 - repair-dry-run: {'已完成' if (project_dir / 'workspace' / 'repair_dry_run.json').exists() else '未完成'}
 - lineage: {'已完成' if (project_dir / 'workspace' / 'run_lineage.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
+- evidence-package: {'已完成' if status.evidence_package_exists else '未完成'}
 
 ## 下一阶段建议
 
@@ -420,6 +421,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "workspace" / "RUN_LINEAGE.md",
             "Run Lineage",
             "尚未运行 lineage，暂无运行谱系。",
+        ),
+        "EVIDENCE_PACKAGE.md": _copy_or_placeholder(
+            project_dir / "reports" / "evidence_package.md",
+            "Evidence Package",
+            "尚未运行 evidence-package，暂无项目级证据包。",
         ),
         "NEXT_STEPS.md": _next_steps(project_dir),
         "AGENT_HANDOFF.md": _agent_handoff(project_dir),

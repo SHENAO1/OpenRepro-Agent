@@ -138,6 +138,7 @@ def required_handoff_files() -> list[str]:
         "ERROR_NOTES.md",
         "REPAIR_DRY_RUN.md",
         "RUN_LINEAGE.md",
+        "EVIDENCE_PACKAGE.md",
         "NEXT_STEPS.md",
         "AGENT_HANDOFF.md",
     ]

@@ -186,6 +186,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Summarize inspect output, workspace artifacts, experiment scaffolds, run manifests, lineage, benchmark indexes, reports, and handoff completeness.
 - [x] Keep evidence package output limited to engineering evidence and explicit limitations.
 
+## v1.0.1 — Evidence package stabilization
+
+- [x] Add source fingerprints and artifact SHA-256 hashes.
+- [x] Surface evidence package freshness in project status.
+- [x] Add `openrepro evidence-package --zip`.
+- [x] Add `handoff/EVIDENCE_PACKAGE.md`.
+- [x] Add stale-package and zip-export tests.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

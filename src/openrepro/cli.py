@@ -814,16 +814,22 @@ def handoff_cmd(project_name: str = typer.Argument(..., help="Project directory.
 
 
 @app.command("evidence-package")
-def evidence_package_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+def evidence_package_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/evidence_package.zip."),
+) -> None:
     """Generate project-level evidence package JSON and Markdown."""
     project_dir = require_project(project_name)
-    package = generate_evidence_package(project_dir)
+    package = generate_evidence_package(project_dir, export_zip=export_zip)
     _success("Evidence package generated.")
     console.print(f"Schema: {package['schema_version']}")
+    console.print(f"Freshness: {package['freshness']['status']}")
     console.print(f"Runs: {len(package['runs'])}")
     console.print(f"Experiments: {len(package['experiments'])}")
     console.print(f"JSON: {project_dir / 'reports' / 'evidence_package.json'}")
     console.print(f"Markdown: {project_dir / 'reports' / 'evidence_package.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'evidence_package.zip'}")
 
 
 @app.command("status")
@@ -850,6 +856,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Report exists": status.report_exists,
         "Handoff complete": status.handoff_complete,
         "Evidence package exists": status.evidence_package_exists,
+        "Evidence package status": status.evidence_package_status,
+        "Evidence package stale": status.evidence_package_stale,
         "Next step": status.next_step,
     }
     for key, value in rows.items():

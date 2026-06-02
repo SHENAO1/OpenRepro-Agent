@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
-from .artifact_manager import list_run_dirs, required_handoff_files, validate_run_manifest
+from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
+from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
-from .utils import iso_now, read_json, safe_write_text, write_json
+from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0.0"
+EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0.1"
 
 WORKSPACE_ARTIFACTS = [
     "source_index.json",
@@ -86,6 +88,8 @@ def _workspace_artifacts(project_dir: Path) -> list[dict[str, Any]]:
                 "name": name,
                 "path": str(path),
                 "present": path.exists(),
+                "size_bytes": path.stat().st_size if path.exists() and path.is_file() else None,
+                "sha256": sha256_file(path) if path.exists() and path.is_file() else None,
                 "summary": _artifact_summary(data) if path.exists() else {},
             }
         )
@@ -148,6 +152,7 @@ def _run_summaries(project_dir: Path) -> list[dict[str, Any]]:
                 "experiment_id": metadata.get("experiment_id"),
                 "template": metadata.get("template"),
                 "metric_files": _run_metric_files(run_dir),
+                "manifest_sha256": sha256_file(run_dir / "manifest.json") if (run_dir / "manifest.json").exists() else None,
             }
         )
     return summaries
@@ -190,7 +195,32 @@ def _handoff_summary(project_dir: Path) -> dict[str, Any]:
     }
 
 
-def generate_evidence_package(project_dir: Path) -> dict[str, Any]:
+def _write_handoff_evidence_summary(project_dir: Path, markdown: str) -> None:
+    handoff = project_dir / "handoff"
+    if handoff.exists():
+        safe_write_text(handoff / "EVIDENCE_PACKAGE.md", markdown)
+
+
+def export_evidence_package_zip(project_dir: Path, package: dict[str, Any]) -> Path:
+    """Export a compact evidence package zip under reports/."""
+    project_dir = Path(project_dir)
+    zip_path = project_dir / "reports" / "evidence_package.zip"
+    json_path = project_dir / "reports" / "evidence_package.json"
+    markdown_path = project_dir / "reports" / "evidence_package.md"
+    files = [json_path, markdown_path]
+    files.extend(
+        Path(item["path"])
+        for item in package.get("workspace_artifacts", [])
+        if item.get("present") and item.get("path")
+    )
+    files.extend(project_dir / "handoff" / item["name"] for item in package.get("handoff", {}).get("files", []) if item.get("present"))
+    with ZipFile(zip_path, "w", ZIP_DEFLATED) as archive:
+        for path in sorted({path for path in files if path.exists() and path.is_file()}, key=lambda item: item.as_posix()):
+            archive.write(path, relpath(path, project_dir).replace("\\", "/"))
+    return zip_path
+
+
+def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
     """Write reports/evidence_package.json and reports/evidence_package.md."""
     project_dir = Path(project_dir)
     if not project_dir.exists():
@@ -203,6 +233,7 @@ def generate_evidence_package(project_dir: Path) -> dict[str, Any]:
     workspace_artifacts = _workspace_artifacts(project_dir)
     experiments = _experiment_summaries(project_dir)
     runs = _run_summaries(project_dir)
+    source_fingerprint = evidence_source_fingerprint(project_dir)
     package = {
         "schema_version": EVIDENCE_PACKAGE_SCHEMA_VERSION,
         "openrepro_version": __version__,
@@ -211,6 +242,13 @@ def generate_evidence_package(project_dir: Path) -> dict[str, Any]:
         "project_dir": str(project_dir),
         "status": status,
         "inspect_summary": inspect_summary,
+        "source_fingerprint": source_fingerprint,
+        "freshness": {
+            "status": "current",
+            "stale": False,
+            "package_sha256": source_fingerprint["sha256"],
+            "current_sha256": source_fingerprint["sha256"],
+        },
         "workspace_artifacts": workspace_artifacts,
         "experiments": experiments,
         "runs": runs,
@@ -227,6 +265,7 @@ def generate_evidence_package(project_dir: Path) -> dict[str, Any]:
             },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
+            "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
         },
         "handoff": _handoff_summary(project_dir),
         "policy": "Evidence package records workflow evidence only; it does not claim paper reproduction success.",
@@ -237,7 +276,14 @@ def generate_evidence_package(project_dir: Path) -> dict[str, Any]:
         ],
     }
     write_json(project_dir / "reports" / "evidence_package.json", package)
-    safe_write_text(project_dir / "reports" / "evidence_package.md", _render_markdown(package))
+    markdown = _render_markdown(package)
+    safe_write_text(project_dir / "reports" / "evidence_package.md", markdown)
+    _write_handoff_evidence_summary(project_dir, markdown)
+    if export_zip:
+        zip_path = export_evidence_package_zip(project_dir, package)
+        package["reports"]["evidence_package_zip"] = str(zip_path)
+        write_json(project_dir / "reports" / "evidence_package.json", package)
+    package["freshness"] = evidence_package_status(project_dir)
     return package
 
 
@@ -247,12 +293,12 @@ def _cell(value: Any) -> str:
 
 def _render_markdown(package: dict[str, Any]) -> str:
     artifact_lines = [
-        "| Artifact | Present | Summary |",
-        "| --- | --- | --- |",
+        "| Artifact | Present | SHA-256 | Summary |",
+        "| --- | --- | --- | --- |",
     ]
     for artifact in package["workspace_artifacts"]:
         artifact_lines.append(
-            f"| {artifact['name']} | {artifact['present']} | {_cell(artifact['summary'])} |"
+            f"| {artifact['name']} | {artifact['present']} | {_cell(artifact.get('sha256'))} | {_cell(artifact['summary'])} |"
         )
 
     experiment_lines = [
@@ -293,6 +339,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - created_at: {package['created_at']}
 - project_name: {package['project_name']}
 - project_dir: `{package['project_dir']}`
+- freshness: {package['freshness']['status']}
+- source_fingerprint: {package['source_fingerprint']['sha256']}
 
 ## Status
 
@@ -304,6 +352,7 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - experiment_run_count: {package['status']['experiment_run_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
+- source_file_count: {package['source_fingerprint']['file_count']}
 
 ## Workspace Artifacts
 
