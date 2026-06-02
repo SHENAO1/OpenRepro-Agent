@@ -2,13 +2,13 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.7.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.8.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v0.7.2 workflow is:
+The v0.8.0 workflow is:
 
 ```text
 init → configure-provider → ingest → analyze → plan → list-candidates → review-candidates → approve-candidates → scaffold-experiment → run-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → status
@@ -106,6 +106,13 @@ init → configure-provider → ingest → analyze → plan → list-candidates 
 - Add candidate review and experiment-run counts to status and inspect output.
 - Expand smoke scripts to cover the v0.7.x command set.
 - Add release tags for recent versions.
+
+## What v0.8.0 adds
+
+- Write `workspace/paper_metadata.json` with title and DOI candidates.
+- Add source path, chunk index, page number, context window, and evidence quality to formula candidates.
+- Add numeric values, normalized units, context window, and evidence quality to parameter candidates.
+- Preserve table/page provenance for PDF table-derived parameter candidates.
 
 ## Current limitations
 
@@ -695,12 +702,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.7.0: confirmed execution of verified experiment scaffolds.
 - v0.7.1: candidate listing and review lifecycle.
 - v0.7.2: status/inspect stabilization, smoke coverage, and release tag cleanup.
+- v0.8.0: paper metadata, DOI candidates, and candidate evidence provenance.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.7.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.8.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

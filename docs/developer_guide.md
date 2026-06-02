@@ -46,6 +46,11 @@ PDF ingestion uses `pdfplumber`. Extracted text and page provenance should stay 
 `workspace/extracted_sources/`, and all generated formulas or parameters must remain
 marked as candidates until a human verifies them.
 
+v0.8.0 candidate extraction should preserve evidence provenance: source path,
+chunk index, page number when available, context windows, and evidence quality
+signals. These fields help review candidates; they are not verification
+results.
+
 ## API provider extensions
 
 Real providers should be opt-in. They must write actual usage records and must not fabricate tokens or costs.

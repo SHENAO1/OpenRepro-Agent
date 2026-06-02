@@ -1,4 +1,4 @@
-"""Rule-based analyzer for OpenRepro-Agent v0.4.0.
+"""Rule-based analyzer for OpenRepro-Agent.
 
 The analyzer deliberately avoids real LLM calls. It scans imported text and
 PDF-extracted sources for keyword evidence, formula candidates, and parameter
@@ -42,6 +42,111 @@ PARAMETER_PATTERN = re.compile(
     r"(?P<name>[A-Za-z][A-Za-z0-9_ /().-]{1,48})\s*(?:=|:)\s*"
     r"(?P<value>[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*(?P<unit>[A-Za-z/%._-]+)?"
 )
+DOI_PATTERN = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+\b")
+
+
+def _source_path_for_doc(doc: dict[str, Any]) -> str:
+    path = doc.get("path")
+    if isinstance(path, Path):
+        return str(path)
+    return str(path or "")
+
+
+def _chunk_documents(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    chunks: list[dict[str, Any]] = []
+    for doc in documents:
+        raw_chunks = [item.strip() for item in re.split(r"\n+|(?<=[。.!?])\s+", doc["text"]) if item.strip()]
+        for index, chunk in enumerate(raw_chunks):
+            chunks.append(
+                {
+                    "doc": doc,
+                    "chunk_index": index,
+                    "text": chunk,
+                    "previous": raw_chunks[index - 1] if index > 0 else "",
+                    "next": raw_chunks[index + 1] if index + 1 < len(raw_chunks) else "",
+                }
+            )
+    return chunks
+
+
+def _page_number_for_evidence(project_dir: Path, source_name: str, evidence: str) -> int | None:
+    if not evidence:
+        return None
+    for page_record in read_pdf_page_records(project_dir):
+        if page_record.get("source_name") != source_name:
+            continue
+        page = page_record.get("page", {})
+        page_text = str(page.get("text") or "")
+        if evidence in page_text:
+            return int(page.get("page_number") or 0) or None
+    return None
+
+
+def _evidence_quality(evidence: str, page_number: int | None, method: str) -> dict[str, Any]:
+    score = 0.35
+    reasons = []
+    if len(evidence) >= 20:
+        score += 0.2
+        reasons.append("sufficient_context")
+    if any(op in evidence for op in ["=", "^", "_", "\\sum", "Σ"]):
+        score += 0.2
+        reasons.append("contains_math_signal")
+    if page_number is not None:
+        score += 0.15
+        reasons.append("page_anchored")
+    if method.startswith("pdf_table"):
+        score += 0.1
+        reasons.append("table_anchored")
+    return {"score": round(min(score, 1.0), 3), "reasons": reasons or ["rule_based_match"]}
+
+
+def _provenance(
+    project_dir: Path,
+    doc: dict[str, Any],
+    chunk_index: int | None,
+    evidence: str,
+    method: str,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    source_name = str(doc.get("name") or "")
+    page_number = _page_number_for_evidence(project_dir, source_name, evidence)
+    data: dict[str, Any] = {
+        "source_name": source_name,
+        "source_path": _source_path_for_doc(doc),
+        "page_number": page_number,
+        "chunk_index": chunk_index,
+        "extraction_method": method,
+    }
+    if extra:
+        data.update(extra)
+    return data
+
+
+def _normalize_unit(unit: str) -> str:
+    normalized = unit.strip()
+    aliases = {"sec": "s", "secs": "s", "second": "s", "seconds": "s", "hz": "Hz", "%": "%"}
+    return aliases.get(normalized.lower(), normalized)
+
+
+def _paper_metadata(project_name: str, documents: list[dict[str, Any]], combined_text: str) -> dict[str, Any]:
+    dois = sorted(set(match.group(0).rstrip(".,;)") for match in DOI_PATTERN.finditer(combined_text)))
+    return {
+        "schema_version": "0.8.0",
+        "created_at": iso_now(),
+        "project_name": project_name,
+        "title_guess": _guess_title(project_name, documents),
+        "doi_candidates": dois,
+        "source_count": len(documents),
+        "sources": [
+            {
+                "source_name": doc["name"],
+                "source_path": _source_path_for_doc(doc),
+                "char_count": len(doc["text"]),
+            }
+            for doc in documents
+        ],
+        "policy": "Paper metadata is extracted heuristically and requires human confirmation.",
+    }
 
 
 def _detect_keywords(text: str) -> list[str]:
@@ -78,36 +183,40 @@ def _looks_like_formula(text: str) -> bool:
     return has_inline_math or (has_math_operator and (has_formula_hint or "=" in stripped))
 
 
-def _extract_formula_candidates(documents: list[dict[str, Any]], limit: int = 30) -> list[dict[str, Any]]:
+def _extract_formula_candidates(project_dir: Path, documents: list[dict[str, Any]], limit: int = 30) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for doc in documents:
-        text = doc["text"]
-        chunks = re.split(r"\n+|(?<=[。.!?])\s+", text)
-        for chunk in chunks:
-            evidence = truncate(chunk.strip(), 500)
-            if not evidence or evidence in seen or not _looks_like_formula(evidence):
-                continue
-            seen.add(evidence)
-            candidates.append(
-                {
-                    "candidate_id": f"F{len(candidates) + 1:03d}",
-                    "source_name": doc["name"],
-                    "evidence": evidence,
-                    "status": "candidate_unverified",
-                    "extraction_method": "rule_formula_pattern",
-                }
-            )
-            if len(candidates) >= limit:
-                return candidates
+    for chunk in _chunk_documents(documents):
+        evidence = truncate(chunk["text"], 500)
+        if not evidence or evidence in seen or not _looks_like_formula(evidence):
+            continue
+        seen.add(evidence)
+        provenance = _provenance(project_dir, chunk["doc"], chunk["chunk_index"], evidence, "rule_formula_pattern")
+        candidates.append(
+            {
+                "candidate_id": f"F{len(candidates) + 1:03d}",
+                "source_name": chunk["doc"]["name"],
+                "evidence": evidence,
+                "context_before": truncate(chunk["previous"], 300),
+                "context_after": truncate(chunk["next"], 300),
+                "context_window": truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900),
+                "provenance": provenance,
+                "evidence_quality": _evidence_quality(evidence, provenance.get("page_number"), "rule_formula_pattern"),
+                "status": "candidate_unverified",
+                "extraction_method": "rule_formula_pattern",
+            }
+        )
+        if len(candidates) >= limit:
+            return candidates
     return candidates
 
 
-def _extract_parameter_candidates_from_text(documents: list[dict[str, Any]], limit: int = 50) -> list[dict[str, Any]]:
+def _extract_parameter_candidates_from_text(project_dir: Path, documents: list[dict[str, Any]], limit: int = 50) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     seen: set[tuple[str, str, str]] = set()
-    for doc in documents:
-        for match in PARAMETER_PATTERN.finditer(doc["text"]):
+    for chunk in _chunk_documents(documents):
+        doc = chunk["doc"]
+        for match in PARAMETER_PATTERN.finditer(chunk["text"]):
             name = " ".join(match.group("name").split())
             value = match.group("value")
             unit = match.group("unit") or ""
@@ -115,14 +224,23 @@ def _extract_parameter_candidates_from_text(documents: list[dict[str, Any]], lim
             if key in seen:
                 continue
             seen.add(key)
+            evidence = truncate(match.group(0), 300)
+            provenance = _provenance(project_dir, doc, chunk["chunk_index"], evidence, "rule_parameter_pattern")
             candidates.append(
                 {
                     "candidate_id": f"P{len(candidates) + 1:03d}",
                     "source_name": doc["name"],
                     "name": name,
                     "value": value,
+                    "value_numeric": float(value),
                     "unit": unit,
-                    "evidence": truncate(match.group(0), 300),
+                    "unit_normalized": _normalize_unit(unit),
+                    "evidence": evidence,
+                    "context_before": truncate(chunk["previous"], 300),
+                    "context_after": truncate(chunk["next"], 300),
+                    "context_window": truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900),
+                    "provenance": provenance,
+                    "evidence_quality": _evidence_quality(evidence, provenance.get("page_number"), "rule_parameter_pattern"),
                     "status": "candidate_unverified",
                     "extraction_method": "rule_parameter_pattern",
                 }
@@ -148,17 +266,39 @@ def _extract_parameter_candidates_from_tables(
                     continue
                 name = cells[0]
                 value = next((cell for cell in cells[1:] if re.search(r"[-+]?\d", cell)), cells[1])
+                evidence = " | ".join(cells)
+                doc = {
+                    "name": page_record.get("source_name"),
+                    "path": project_dir / str((page_record.get("record") or {}).get("copied_path", "")),
+                }
+                provenance = _provenance(
+                    project_dir,
+                    doc,
+                    None,
+                    str(value),
+                    "pdf_table_candidate",
+                    extra={
+                        "page_number": page.get("page_number"),
+                        "table_index": table_index,
+                        "row_index": row_index,
+                        "table_cells": cells,
+                    },
+                )
                 candidates.append(
                     {
                         "candidate_id": f"P{existing_count + len(candidates) + 1:03d}",
                         "source_name": page_record.get("source_name"),
                         "name": name,
                         "value": value,
+                        "value_numeric": float(re.search(r"[-+]?\d+(?:\.\d+)?", value).group(0)) if re.search(r"[-+]?\d+(?:\.\d+)?", value) else None,
                         "unit": "",
-                        "evidence": " | ".join(cells),
+                        "unit_normalized": "",
+                        "evidence": evidence,
                         "page_number": page.get("page_number"),
                         "table_index": table_index,
                         "row_index": row_index,
+                        "provenance": provenance,
+                        "evidence_quality": _evidence_quality(evidence, page.get("page_number"), "pdf_table_candidate"),
                         "status": "candidate_unverified",
                         "extraction_method": "pdf_table_candidate",
                     }
@@ -215,7 +355,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
     config = load_project_config(project_dir)
     project_name = config.get("project_name", project_dir.name)
-    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v0.7.2-rule")
+    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v0.8.0-rule")
     source_index = load_source_index(project_dir)
     documents = read_text_sources(project_dir)
 
@@ -224,10 +364,11 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
     title = _guess_title(project_name, documents)
     source_names = [doc["name"] for doc in documents]
     candidate_paragraphs = _extract_candidate_paragraphs(combined_text)
-    formula_candidates = _extract_formula_candidates(documents)
-    text_parameter_candidates = _extract_parameter_candidates_from_text(documents)
+    formula_candidates = _extract_formula_candidates(project_dir, documents)
+    text_parameter_candidates = _extract_parameter_candidates_from_text(project_dir, documents)
     table_parameter_candidates = _extract_parameter_candidates_from_tables(project_dir, len(text_parameter_candidates))
     parameter_candidates = text_parameter_candidates + table_parameter_candidates
+    metadata = _paper_metadata(project_name, documents, combined_text)
     structured_ledger = _build_structured_model_ledger(
         project_name,
         candidate_paragraphs,
@@ -344,6 +485,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
         "workspace/formula_candidates.json",
         "workspace/parameter_candidates.json",
         "workspace/model_ledger.json",
+        "workspace/paper_metadata.json",
     ]
     safe_write_text(workspace / "paper_summary.md", paper_summary)
     safe_write_text(workspace / "MODEL_LEDGER.md", model_ledger)
@@ -366,6 +508,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
         },
     )
     write_json(workspace / "model_ledger.json", structured_ledger)
+    write_json(workspace / "paper_metadata.json", metadata)
 
     result = {
         "project_name": project_name,
@@ -379,6 +522,8 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
         "formula_candidate_count": len(formula_candidates),
         "parameter_candidate_count": len(parameter_candidates),
         "model_candidate_count": len(structured_ledger["models"]),
+        "paper_metadata": metadata,
+        "doi_candidate_count": len(metadata["doi_candidates"]),
         "limitations": [
             "No real LLM API call was made.",
             "PDF text extraction depends on pdfplumber and may miss scanned or complex layouts.",

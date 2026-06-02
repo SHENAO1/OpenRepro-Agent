@@ -11,7 +11,7 @@ def _prepare_project(tmp_path: Path) -> Path:
     source = tmp_path / "notes.md"
     source.write_text(
         "# BOC Test\n\nA BOC subcarrier and pseudo-random spreading code can be analyzed by autocorrelation.\n\n"
-        "Formula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 128",
+        "Formula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 128\n\nDOI: 10.1234/example.doi",
         encoding="utf-8",
     )
     project = tmp_path / "boc_demo"
@@ -30,10 +30,20 @@ def test_analyze_generates_summary_and_ledger(tmp_path: Path):
     assert (project / "workspace" / "formula_candidates.json").exists()
     assert (project / "workspace" / "parameter_candidates.json").exists()
     assert (project / "workspace" / "model_ledger.json").exists()
+    assert (project / "workspace" / "paper_metadata.json").exists()
     assert result["project_name"] == "boc_demo"
     assert "BOC modulation" in result["detected_keywords"]
     assert result["formula_candidate_count"] >= 1
     assert result["parameter_candidate_count"] >= 1
+    assert result["doi_candidate_count"] == 1
+    formula = (project / "workspace" / "formula_candidates.json").read_text(encoding="utf-8")
+    parameter = (project / "workspace" / "parameter_candidates.json").read_text(encoding="utf-8")
+    metadata = (project / "workspace" / "paper_metadata.json").read_text(encoding="utf-8")
+    assert "provenance" in formula
+    assert "context_window" in formula
+    assert "evidence_quality" in parameter
+    assert "unit_normalized" in parameter
+    assert "10.1234/example.doi" in metadata
 
 
 def test_plan_generates_experiment_plan(tmp_path: Path):

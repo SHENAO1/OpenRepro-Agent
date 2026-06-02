@@ -33,7 +33,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 ```text
 sources/ + project_config.yaml
   → workspace/source_index.json
-  → workspace/paper_summary.md + MODEL_LEDGER.md + analysis_result.json
+  → workspace/paper_summary.md + MODEL_LEDGER.md + analysis_result.json + paper_metadata.json
   → workspace/formula_candidates.json + parameter_candidates.json + model_ledger.json
   → workspace/EXPERIMENT_PLAN.md + experiment_plan_validation.json
   → workspace/candidate_reviews.json + CANDIDATE_REVIEWS.md

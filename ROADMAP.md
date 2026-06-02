@@ -126,6 +126,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Keep smoke scripts aligned with the v0.7.x command set.
 - [x] Add release tags for recent versions.
 
+## v0.8.0 — Paper evidence provenance
+
+- [x] Add `workspace/paper_metadata.json` with title and DOI candidates.
+- [x] Add source path, chunk index, page number, context window, and evidence quality to formula candidates.
+- [x] Add numeric values, normalized units, context window, and evidence quality to parameter candidates.
+- [x] Preserve table/page provenance for PDF table-derived parameter candidates.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
