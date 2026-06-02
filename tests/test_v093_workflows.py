@@ -74,7 +74,7 @@ def test_lineage_marks_experiment_repeat_groups(tmp_path: Path):
     lineage = generate_run_lineage(project)
     experiment_runs = [entry for entry in lineage["runs"] if entry["parent_command"] == "run-experiment"]
 
-    assert lineage["schema_version"] == "0.9.3"
+    assert lineage["schema_version"] == "1.2.0"
     assert [entry["repeat_group_id"] for entry in experiment_runs] == [
         "experiment:repeat_exp",
         "experiment:repeat_exp",

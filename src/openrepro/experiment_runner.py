@@ -13,6 +13,7 @@ from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run
 from .config import load_project_config
 from .environment_snapshot import build_environment_snapshot
 from .experiment_inputs import validate_experiment_inputs
+from .experiment_spec import validate_experiment_spec
 from .experiment_templates import normalize_artifact_paths
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
@@ -76,6 +77,9 @@ def run_experiment(
     template = str(config.get("template") or expected_artifacts.get("template") or "basic")
     experiment_inputs_path = exp_dir / "experiment_inputs.json"
     input_validation = validate_experiment_inputs(project_dir, experiment_id)
+    spec_validation = validate_experiment_spec(project_dir, experiment_id)
+    if not spec_validation["valid"]:
+        raise ValueError(f"Experiment spec validation failed: {spec_validation['errors']}")
     experiment_inputs = read_json(experiment_inputs_path, default={}) or {}
     experiment_inputs = experiment_inputs if isinstance(experiment_inputs, dict) else {}
     input_completeness = experiment_inputs.get("input_completeness", {}) if experiment_inputs else {}
@@ -156,6 +160,8 @@ status: {status}
             "input_completeness": {"status": "missing"},
         },
     )
+    spec = read_json(exp_dir / "experiment_spec.json", default={}) or {}
+    write_json(run_dirs.configs / "experiment_spec_snapshot.json", spec if isinstance(spec, dict) else {})
     environment_snapshot = build_environment_snapshot(project_dir, exp_dir, run_dirs.root, runner, experiment_id, template)
     write_json(run_dirs.configs / "environment_snapshot.json", environment_snapshot)
     shutil.copy2(runner, run_dirs.code / "runner.py")
@@ -168,6 +174,8 @@ status: {status}
 - runner: `{runner}`
 - verified_candidates_path: `{config.get('verified_candidates_path')}`
 - experiment_inputs_path: `{experiment_inputs_path if experiment_inputs else None}`
+- experiment_spec_path: `{exp_dir / 'experiment_spec.json'}`
+- experiment_spec_sha256: {spec_validation.get('spec_sha256')}
 - input_completeness: {input_completeness.get('status', 'missing')}
 - missing_required_inputs: {input_completeness.get('missing', [])}
 - input_warning: {input_completeness.get('warning')}
@@ -207,6 +215,12 @@ This report records controlled execution evidence only. It does not claim paper 
             "input_completeness": input_completeness or {"status": "missing"},
             "validation": input_validation,
         },
+        "experiment_spec": {
+            "path": str(exp_dir / "experiment_spec.json"),
+            "snapshot": relpath(run_dirs.configs / "experiment_spec_snapshot.json", run_dirs.root),
+            "validation": spec_validation,
+            "sha256": spec_validation.get("spec_sha256"),
+        },
         "environment_snapshot": {
             "snapshot": relpath(run_dirs.configs / "environment_snapshot.json", run_dirs.root),
             "random_seed": environment_snapshot.get("random_seed"),
@@ -229,6 +243,7 @@ This report records controlled execution evidence only. It does not claim paper 
             "expected_artifact_count": len(required_artifacts),
             "input_completeness": input_completeness.get("status", "missing"),
             "repeatability_check": environment_snapshot.get("repeatability_check", {}).get("status"),
+            "experiment_spec_sha256": spec_validation.get("spec_sha256"),
         },
     )
     artifact_validation = validate_run_manifest(run_dirs.root, required_artifacts=required_artifacts)

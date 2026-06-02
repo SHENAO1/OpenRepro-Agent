@@ -202,6 +202,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Surface high-risk candidates in `openrepro inspect`.
 - [x] Include caption index evidence in evidence packages.
 
+## v1.2.0 — Experiment spec contract
+
+- [x] Add `experiments/<id>/experiment_spec.json`.
+- [x] Add `openrepro validate-experiment-spec`.
+- [x] Validate experiment specs before `run-experiment`.
+- [x] Snapshot spec contracts into run outputs.
+- [x] Include spec hashes in experiment comparison and lineage.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

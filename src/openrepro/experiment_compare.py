@@ -79,6 +79,7 @@ def _run_summary(run_dir: Path) -> dict[str, Any]:
             "manifest_sha256": _hash(run_dir / "manifest.json"),
             "runner_sha256": _hash(run_dir / "code" / "runner.py"),
             "inputs_sha256": _hash(run_dir / "configs" / "experiment_inputs_snapshot.json"),
+            "spec_sha256": _hash(run_dir / "configs" / "experiment_spec_snapshot.json"),
             "normalized_inputs_sha256": _normalized_json_hash(
                 run_dir / "configs" / "experiment_inputs_snapshot.json",
                 ignored_keys={"created_at", "updated_at"},

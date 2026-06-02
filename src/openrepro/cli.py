@@ -24,6 +24,7 @@ from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
 from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
+from .experiment_spec import validate_experiment_spec
 from .experiment_templates import list_experiment_templates
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
@@ -349,6 +350,31 @@ def set_input_cmd(
     console.print(f"Status: {result['status']}")
     console.print(f"Missing: {result['missing']}")
     console.print(f"Inputs: {result['experiment_inputs_path']}")
+
+
+@app.command("validate-experiment-spec")
+def validate_experiment_spec_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+) -> None:
+    """Validate an experiment specification contract."""
+    project_dir = require_project(project_name)
+    try:
+        result = validate_experiment_spec(project_dir, experiment_id)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Experiment Spec: {experiment_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["valid", "spec_sha256", "errors", "warnings"]:
+        table.add_row(key, str(result[key]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_spec_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_SPEC_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Experiment spec is valid.")
 
 
 @app.command("scaffold-experiment")

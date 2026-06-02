@@ -64,7 +64,8 @@ def test_lineage_records_experiment_environment_hashes(tmp_path: Path):
     entry = lineage["runs"][0]
     hashes = entry["hashes"]
 
-    assert lineage["schema_version"] == "0.9.3"
+    assert lineage["schema_version"] == "1.2.0"
+    assert hashes["experiment_spec_sha256"]
     assert entry["parent_command"] == "run-experiment"
     assert entry["repeat_group_id"] == "experiment:env_exp"
     assert entry["repeat_run_index"] == 1

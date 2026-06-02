@@ -149,6 +149,11 @@ refresh completeness and write workspace validation artifacts. `set-input`
 should record input sources, preserve manual overrides, and keep generated
 runner behavior tied to `experiment_inputs.json`.
 
+v1.2.0 adds `experiment_spec.py`. Scaffold generation should create
+`experiment_spec.json`; `run-experiment` should validate and snapshot it before
+execution. Spec validation is an engineering contract check and must not be
+presented as scientific correctness.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -106,7 +106,9 @@ def _experiment_summaries(project_dir: Path) -> list[dict[str, Any]]:
         config = read_json(exp_dir / "experiment_config.json", default={}) or {}
         inputs = read_json(exp_dir / "experiment_inputs.json", default={}) or {}
         expected = read_json(exp_dir / "expected_artifacts.json", default={}) or {}
+        spec = read_json(exp_dir / "experiment_spec.json", default={}) or {}
         input_completeness = inputs.get("input_completeness", {}) if isinstance(inputs, dict) else {}
+        spec_path = exp_dir / "experiment_spec.json"
         summaries.append(
             {
                 "experiment_id": exp_dir.name,
@@ -117,6 +119,9 @@ def _experiment_summaries(project_dir: Path) -> list[dict[str, Any]]:
                 "input_completeness": input_completeness.get("status") if isinstance(input_completeness, dict) else None,
                 "missing_required_inputs": input_completeness.get("missing", []) if isinstance(input_completeness, dict) else [],
                 "required_artifact_count": len(expected.get("required", [])) if isinstance(expected, dict) else 0,
+                "has_spec": spec_path.exists(),
+                "spec_schema_version": spec.get("schema_version") if isinstance(spec, dict) else None,
+                "spec_sha256": sha256_file(spec_path) if spec_path.exists() else None,
                 "has_runner": (exp_dir / "runner.py").exists(),
                 "has_runner_stub": (exp_dir / "runner_stub.py").exists(),
             }
@@ -303,17 +308,18 @@ def _render_markdown(package: dict[str, Any]) -> str:
         )
 
     experiment_lines = [
-        "| Experiment | Template | Status | Inputs | Missing Inputs | Runner |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| Experiment | Template | Status | Inputs | Missing Inputs | Spec | Runner |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for experiment in package["experiments"]:
         experiment_lines.append(
-            "| {experiment_id} | {template} | {status} | {inputs} | {missing} | {runner} |".format(
+            "| {experiment_id} | {template} | {status} | {inputs} | {missing} | {spec} | {runner} |".format(
                 experiment_id=_cell(experiment["experiment_id"]),
                 template=_cell(experiment["template"]),
                 status=_cell(experiment["status"]),
                 inputs=_cell(experiment["input_completeness"]),
                 missing=_cell(experiment["missing_required_inputs"]),
+                spec=_cell(experiment.get("has_spec")),
                 runner=_cell(experiment["has_runner"]),
             )
         )

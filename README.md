@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.1.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.2.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.1.0 workflow is:
+The v1.2.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -184,6 +184,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Surface candidate risk levels in `openrepro inspect`.
 - Include caption evidence in evidence packages.
 
+## What v1.2.0 adds
+
+- Add `experiments/<id>/experiment_spec.json` as an execution contract.
+- Add `openrepro validate-experiment-spec`.
+- Validate experiment specs before `run-experiment`.
+- Snapshot specs into run outputs and required run manifests.
+- Compare and lineage experiment spec hashes across runs.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -245,6 +253,7 @@ openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --templ
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
 openrepro validate-inputs boc_demo --experiment-id boc_candidate_exp
+openrepro validate-experiment-spec boc_demo --experiment-id boc_candidate_exp
 openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro rerun-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro compare-experiments boc_demo --experiment-id boc_candidate_exp
@@ -388,6 +397,7 @@ experiments/<experiment_id>/
   README.md
   APPROVAL_REQUIRED.md
   experiment_config.json
+  experiment_spec.json
   expected_artifacts.json
   experiment_inputs.json
   runner.py
@@ -412,6 +422,19 @@ are marked as `manual_override` and validation artifacts are written under
 
 Checks whether the scaffold has all inputs required by its template. The command
 exits non-zero when required inputs are missing.
+
+### `openrepro validate-experiment-spec <project_name> --experiment-id ID`
+
+Validates the experiment contract and writes:
+
+```text
+workspace/experiment_spec_validation.json
+workspace/EXPERIMENT_SPEC_VALIDATION.md
+```
+
+The contract records template, input, runner, artifact, and metric expectations.
+Validation checks engineering consistency only; it does not verify scientific
+correctness.
 
 ### `openrepro set-input <project_name> --experiment-id ID --name NAME --value VALUE`
 
@@ -490,6 +513,7 @@ data/execution_result.json
 reports/experiment_report.md
 configs/experiment_config_snapshot.json
 configs/experiment_inputs_snapshot.json
+configs/experiment_spec_snapshot.json
 configs/environment_snapshot.json
 code/runner.py
 metadata.json
@@ -523,8 +547,8 @@ workspace/EXPERIMENT_COMPARISON.md
 ```
 
 The comparison reports metric equality, metric deltas, runner hashes, raw input
-hashes, normalized input hashes, and environment hashes. It is repeatability
-evidence only; it does not claim paper reproduction success.
+hashes, normalized input hashes, spec hashes, and environment hashes. It is
+repeatability evidence only; it does not claim paper reproduction success.
 
 ### `openrepro run-demo <project_name>`
 
@@ -871,12 +895,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.0.0: project-level evidence packages for auditable handover.
 - v1.0.1: evidence package freshness, artifact hashes, zip export, and handoff integration.
 - v1.1.0: section-aware candidate provenance, caption indexes, and high-risk candidate visibility.
+- v1.2.0: experiment specs, spec validation, run spec snapshots, and spec hashes.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.1.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.2.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
