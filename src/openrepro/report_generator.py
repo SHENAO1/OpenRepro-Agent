@@ -36,6 +36,40 @@ def _latest_run_summary(project_dir: Path) -> tuple[str, dict[str, Any] | None, 
     return summary, metrics, api_summary
 
 
+def _verified_candidates_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 verified candidate 记录。运行 `openrepro approve-candidates <project> --all --reviewer <name>` 后会生成审批摘要。"
+    formula_ids = ", ".join(str(item) for item in data.get("formula_candidate_ids", [])) or "none"
+    parameter_ids = ", ".join(str(item) for item in data.get("parameter_candidate_ids", [])) or "none"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- reviewer: {data.get('reviewer')}",
+            f"- formula_candidate_count: {data.get('formula_candidate_count', 0)}",
+            f"- parameter_candidate_count: {data.get('parameter_candidate_count', 0)}",
+            f"- formula_candidate_ids: {formula_ids}",
+            f"- parameter_candidate_ids: {parameter_ids}",
+            f"- note: {data.get('verification_note')}",
+        ]
+    )
+
+
+def _repair_dry_run_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 repair dry-run 记录。需要预览修复时运行 `openrepro repair <project> --dry-run`。"
+    return "\n".join(
+        [
+            f"- created_at: {data.get('created_at')}",
+            f"- healthy: {data.get('healthy')}",
+            f"- action_count: {data.get('action_count', 0)}",
+            f"- run_dir: `{data.get('run_dir')}`",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def generate_report(project_dir: Path) -> Path:
     """Generate reports/report.md."""
     project_dir = Path(project_dir)
@@ -52,6 +86,8 @@ def generate_report(project_dir: Path) -> Path:
     ledger_summary = _section_from_file(project_dir / "workspace" / "MODEL_LEDGER.md", "尚未生成 MODEL_LEDGER.md。")
     plan_summary = _section_from_file(project_dir / "workspace" / "EXPERIMENT_PLAN.md", "尚未生成 EXPERIMENT_PLAN.md。")
     run_summary, metrics, api_summary = _latest_run_summary(project_dir)
+    verified_block = _verified_candidates_block(project_dir)
+    repair_block = _repair_dry_run_block(project_dir)
 
     metrics_block = "无"
     if metrics is not None:
@@ -125,22 +161,30 @@ OpenRepro-Agent v{__version__}
 
 {api_block}
 
-说明：v0.4.0 默认使用 mock provider；真实 provider 需要显式 opt-in。mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
+说明：v0.5.1 默认使用 mock provider；真实 provider 需要显式 opt-in。mock 与 cached 事件不计为真实调用，也不会虚构 Token 消耗或成本。
 
-## 10. 当前局限
+## 10. Verified Candidate 审批摘要
+
+{verified_block}
+
+## 11. Repair Dry-Run 摘要
+
+{repair_block}
+
+## 12. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 11. 下一阶段建议
+## 13. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
 - 使用 scaffold-experiment 生成需人工确认的实验代码起点。
 - 使用 manifest 和 `openrepro validate` 校验运行产物。
-- 使用 v0.4.0 benchmark runner、benchmark suite 和 benchmark index 记录 workflow-compliance evidence。
+- 使用 benchmark runner、benchmark suite 和 benchmark index 记录 workflow-compliance evidence。
 - 在后续版本中加入真实 Provider、缓存统计与更完整的可复现实验 benchmark。
 """
     path = project_dir / "reports" / "report.md"

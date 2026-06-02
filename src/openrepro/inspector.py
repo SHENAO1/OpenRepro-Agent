@@ -23,6 +23,31 @@ def _candidate_count(project_dir: Path, filename: str) -> int:
     return len(data.get("candidates", [])) if isinstance(data, dict) else 0
 
 
+def _verified_summary(project_dir: Path) -> dict[str, Any]:
+    data = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    if not isinstance(data, dict):
+        data = {}
+    return {
+        "status": data.get("status", "missing"),
+        "formula_candidate_count": int(data.get("formula_candidate_count", 0) or 0),
+        "parameter_candidate_count": int(data.get("parameter_candidate_count", 0) or 0),
+        "path": str(project_dir / "workspace" / "verified_candidates.json") if data else None,
+    }
+
+
+def _repair_dry_run_summary(project_dir: Path) -> dict[str, Any]:
+    data = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
+    if not isinstance(data, dict):
+        data = {}
+    return {
+        "status": "present" if data else "missing",
+        "created_at": data.get("created_at"),
+        "healthy": data.get("healthy"),
+        "action_count": int(data.get("action_count", 0) or 0),
+        "path": str(project_dir / "workspace" / "repair_dry_run.json") if data else None,
+    }
+
+
 def _benchmark_runs_for_project(project_dir: Path) -> list[dict[str, Any]]:
     runs_dirs = [Path.cwd() / "benchmarks" / "runs", _repo_root() / "benchmarks" / "runs"]
     seen: set[str] = set()
@@ -58,9 +83,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         latest_manifest_status = "valid" if latest_validation.get("valid") else "invalid"
     diagnosis = diagnose_project(project_dir, latest)
     benchmark_runs = _benchmark_runs_for_project(project_dir)
+    verified = _verified_summary(project_dir)
+    repair_dry_run = _repair_dry_run_summary(project_dir)
 
     summary = {
-        "schema_version": "0.4.0",
+        "schema_version": "0.5.1",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),
@@ -69,6 +96,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "pdf_extraction_statuses": dict(pdf_status_counts),
         "formula_candidate_count": _candidate_count(project_dir, "formula_candidates.json"),
         "parameter_candidate_count": _candidate_count(project_dir, "parameter_candidates.json"),
+        "verified_formula_candidate_count": verified["formula_candidate_count"],
+        "verified_parameter_candidate_count": verified["parameter_candidate_count"],
+        "verified_candidates_status": verified["status"],
         "run_count": len(run_dirs),
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
@@ -76,6 +106,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "benchmark_run_count": len(benchmark_runs),
         "diagnosis_healthy": diagnosis.get("healthy"),
         "diagnosis_issue_count": len(diagnosis.get("issues", [])),
+        "latest_repair_dry_run_status": repair_dry_run["status"],
+        "latest_repair_dry_run_action_count": repair_dry_run["action_count"],
+        "latest_repair_dry_run_healthy": repair_dry_run["healthy"],
         "next_step": status.next_step,
     }
     write_json(project_dir / "workspace" / "inspect_summary.json", summary)

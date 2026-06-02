@@ -68,6 +68,14 @@ Released in v0.4.0 with opt-in provider readiness, paper-to-code guardrails, ben
 Implemented in v0.5.0 with `openrepro approve-candidates`, `workspace/verified_candidates.json`,
 verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 
+## v0.5.1 — Status visibility layer
+
+- [x] Surface verified candidate counts and approval status in `openrepro inspect`.
+- [x] Surface latest repair dry-run status in `openrepro inspect`.
+- [x] Include verified candidate and repair dry-run summaries in reports.
+- [x] Include verified candidate and repair dry-run handoff files.
+- [x] Suggest `approve-candidates` from project status after analysis/planning when candidates remain unapproved.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

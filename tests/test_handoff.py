@@ -31,6 +31,8 @@ def test_report_generates_report_md(tmp_path: Path):
     text = path.read_text(encoding="utf-8")
     assert "API 使用统计摘要" in text
     assert "最近一次 Demo" in text
+    assert "Verified Candidate 审批摘要" in text
+    assert "Repair Dry-Run 摘要" in text
 
 
 def test_handoff_generates_all_files(tmp_path: Path):
@@ -43,3 +45,5 @@ def test_handoff_generates_all_files(tmp_path: Path):
         path = project / "handoff" / name
         assert path.exists()
         assert path.read_text(encoding="utf-8").strip()
+    assert (project / "handoff" / "VERIFIED_CANDIDATES.md").exists()
+    assert (project / "handoff" / "REPAIR_DRY_RUN.md").exists()

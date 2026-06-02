@@ -318,11 +318,16 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "PDF extraction": summary["pdf_extraction_statuses"],
         "Formula candidates": summary["formula_candidate_count"],
         "Parameter candidates": summary["parameter_candidate_count"],
+        "Verified formulas": summary["verified_formula_candidate_count"],
+        "Verified parameters": summary["verified_parameter_candidate_count"],
+        "Verified status": summary["verified_candidates_status"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
         "Diagnosis healthy": summary["diagnosis_healthy"],
         "Diagnosis issues": summary["diagnosis_issue_count"],
+        "Repair dry-run": summary["latest_repair_dry_run_status"],
+        "Repair dry-run actions": summary["latest_repair_dry_run_action_count"],
         "Next step": summary["next_step"],
     }
     for key, value in rows.items():

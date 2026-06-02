@@ -182,6 +182,18 @@ def require_project(project_name: str | Path) -> Path:
     return project_dir
 
 
+def _candidate_count(project_dir: Path, filename: str) -> int:
+    data = read_json(project_dir / "workspace" / filename, default={}) or {}
+    return len(data.get("candidates", [])) if isinstance(data, dict) else 0
+
+
+def _verified_candidate_count(project_dir: Path) -> int:
+    data = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    if not isinstance(data, dict):
+        return 0
+    return int(data.get("formula_candidate_count", 0) or 0) + int(data.get("parameter_candidate_count", 0) or 0)
+
+
 def get_status(project_name: str | Path) -> ProjectStatus:
     """Inspect a project's current workflow state."""
     project_dir = Path(project_name)
@@ -212,6 +224,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         project_dir / "workspace" / "MODEL_LEDGER.md"
     ).exists()
     planned = (project_dir / "workspace" / "EXPERIMENT_PLAN.md").exists()
+    candidate_count = _candidate_count(project_dir, "formula_candidates.json") + _candidate_count(
+        project_dir,
+        "parameter_candidates.json",
+    )
+    verified_candidate_count = _verified_candidate_count(project_dir)
     latest = latest_run_dir(project_dir)
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -222,6 +239,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro analyze {project_dir}"
     elif not planned:
         next_step = f"Run: openrepro plan {project_dir}"
+    elif candidate_count > 0 and verified_candidate_count == 0:
+        next_step = f"Run: openrepro approve-candidates {project_dir} --all --reviewer <name>"
     elif latest is None:
         next_step = f"Run: openrepro run-demo {project_dir}"
     elif not report_exists:
@@ -229,7 +248,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.4.0 workflow is complete. Review inspect summary, manifests, reports, benchmarks, and handoff files."
+        next_step = "Project v0.5.1 workflow is complete. Review inspect summary, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,

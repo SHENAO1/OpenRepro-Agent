@@ -63,18 +63,22 @@ def _run_log_summary(project_dir: Path) -> str:
 
 def _code_status(project_dir: Path) -> str:
     status = get_status(project_dir).to_dict()
+    verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     return f"""# Code Status
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v0.4.0 命令入口。
+- `cli.py`：已完成 v0.5.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
+- `approval.py`：已完成 verified candidate 审批产物。
 - `planner.py`：已完成实验计划模板与校验文件。
 - `demo_runner.py`：已完成 lightweight BOC-like Demo 和参数扫掠。
 - `benchmark_runner.py`：已完成 workflow-compliance benchmark runner。
 - `diagnostics.py`：已完成失败分类与修复建议。
+- `repair.py`：已完成 repair-plan 和 repair dry-run 预览。
 - `report_generator.py`：已完成项目报告。
 - `handoff_generator.py`：已完成多 Agent 交接文件生成。
 - `api_usage.py`：已完成零 Token mock usage 统计。
@@ -83,6 +87,18 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {status}
+```
+
+## Verified Candidate 状态
+
+```json
+{verified}
+```
+
+## Repair Dry-Run 状态
+
+```json
+{repair}
 ```
 
 ## 已完成
@@ -123,11 +139,12 @@ def _error_notes(project_dir: Path) -> str:
 - 如果 CLI 找不到命令，确认已运行 `pip install -e \".[dev]\"`。
 - 如果图表无法生成，确认 matplotlib 可用并使用非交互后端。
 - 如果 analyze 输出为空，确认已导入 Markdown/txt，或 PDF 具有可抽取文本层。
+- 如果 repair dry-run 没有 diff，确认诊断问题是否为 manifest_mismatch 或 missing_manifest。
 
 ## 状态
 
 - 已完成：错误记录模板创建。
-- 部分完成：仅记录 v0.4.0 常见问题。
+- 部分完成：仅记录 v0.5.1 常见问题。
 - 待确认：后续真实实验中的错误类型。
 """
 
@@ -140,21 +157,25 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v0.4.0 闭环检查
+## v0.5.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
 - plan: {'已完成' if status.planned else '未完成'}
+- approve-candidates: {'已完成' if (project_dir / 'workspace' / 'verified_candidates.json').exists() else '未完成'}
 - run-demo: {'已完成' if status.latest_run_dir else '未完成'}
 - report: {'已完成' if status.report_exists else '未完成'}
+- repair-dry-run: {'已完成' if (project_dir / 'workspace' / 'repair_dry_run.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
 
 ## 下一阶段建议
 
 1. 人工核对 `workspace/MODEL_LEDGER.md` 中的模型变量和方程占位。
 2. 将论文真实参数填入 `workspace/EXPERIMENT_PLAN.md`。
-3. 使用 `openrepro validate` 校验最新运行 manifest。
-4. 使用 `openrepro benchmark --task benchmarks/sample_task.json` 记录 workflow-compliance evidence。
+3. 使用 `openrepro approve-candidates <project> --all --reviewer <name>` 记录审批产物。
+4. 使用 `openrepro validate` 校验最新运行 manifest。
+5. 使用 `openrepro repair <project> --dry-run` 预览可控修复。
+6. 使用 `openrepro benchmark --task benchmarks/sample_task.json` 记录 workflow-compliance evidence。
 """
 
 
@@ -200,6 +221,8 @@ def _project_context(project_dir: Path) -> str:
 def _agent_handoff(project_dir: Path) -> str:
     status = get_status(project_dir)
     latest = latest_run_dir(project_dir)
+    verified = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
+    repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     return f"""# Agent Handoff
 
 ## 给 Claude Code / Codex / GitHub Copilot 的接续说明
@@ -216,13 +239,26 @@ def _agent_handoff(project_dir: Path) -> str:
 
 {f'`{latest}`' if latest else '暂无'}
 
+## Verified Candidate 摘要
+
+```json
+{verified}
+```
+
+## Repair Dry-Run 摘要
+
+```json
+{repair}
+```
+
 ## 接续开发重点
 
 1. 先阅读 `handoff/PROJECT_CONTEXT.md`。
 2. 核对 `handoff/PAPER_SUMMARY.md` 和 `handoff/MODEL_LEDGER.md`，不要把规则分析结果当作已验证事实。
 3. 检查 `handoff/EXPERIMENT_PLAN.md` 中的 Demo 与后续真实复现实验差异。
-4. 若要接入真实 LLM Provider，请扩展 `api_usage.py`，保留零 Token mock 统计原则。
-5. 所有新增实验结果必须来自实际运行产物，不得虚构 benchmark 或 Token 消耗。
+4. 检查 `handoff/VERIFIED_CANDIDATES.md` 和 `handoff/REPAIR_DRY_RUN.md`，确认审批与修复预览状态。
+5. 若要接入真实 LLM Provider，请扩展 `api_usage.py`，保留零 Token mock 统计原则。
+6. 所有新增实验结果必须来自实际运行产物，不得虚构 benchmark 或 Token 消耗。
 
 ## 已完成
 
@@ -273,6 +309,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             "Model Ledger",
             "尚未运行 analyze，无法提供模型账本。",
         ),
+        "VERIFIED_CANDIDATES.md": _copy_or_placeholder(
+            project_dir / "workspace" / "VERIFIED_CANDIDATES.md",
+            "Verified Candidates",
+            "尚未运行 approve-candidates，暂无人工审批候选。",
+        ),
         "EXPERIMENT_PLAN.md": _copy_or_placeholder(
             project_dir / "workspace" / "EXPERIMENT_PLAN.md",
             "Experiment Plan",
@@ -281,6 +322,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
         "CODE_STATUS.md": _code_status(project_dir),
         "RUN_LOG_SUMMARY.md": _run_log_summary(project_dir),
         "ERROR_NOTES.md": _error_notes(project_dir),
+        "REPAIR_DRY_RUN.md": _copy_or_placeholder(
+            project_dir / "workspace" / "REPAIR_DRY_RUN.md",
+            "Repair Dry Run",
+            "尚未运行 repair --dry-run，暂无修复预览。",
+        ),
         "NEXT_STEPS.md": _next_steps(project_dir),
         "AGENT_HANDOFF.md": _agent_handoff(project_dir),
     }

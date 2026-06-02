@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.5.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.5.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -49,6 +49,14 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Preview controlled repair actions with `openrepro repair --dry-run`.
 - Generate repair previews in `workspace/repair_dry_run.json` and `workspace/REPAIR_DRY_RUN.md`.
 - Include manifest regeneration diffs in dry-run previews for manifest mismatch or missing-manifest cases.
+
+## What v0.5.1 adds
+
+- Surface verified candidate counts and approval status in `openrepro inspect`.
+- Surface latest repair dry-run status and action counts in `openrepro inspect`.
+- Include verified candidate and repair dry-run summaries in project reports.
+- Include verified candidate and repair dry-run handoff files.
+- Suggest `approve-candidates` from `openrepro status` when analysis and planning are complete but candidates are not approved.
 
 ## What v0.4.0 does not support
 
@@ -535,12 +543,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.3.1: project inspection, `validate --all`, benchmark indexing, and compatible benchmark schema hardening.
 - v0.4.0: opt-in OpenAI-compatible provider path, human-gated experiment scaffolds, benchmark suites, repair plans, and run comparison.
 - v0.5.0: candidate approval artifacts, verified-input scaffolds, and controlled repair dry-run previews.
+- v0.5.1: verified candidate and repair dry-run status surfaced through inspect, report, handoff, and status.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.5.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.5.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
