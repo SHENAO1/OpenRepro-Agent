@@ -283,6 +283,8 @@ def compare_experiments_cmd(
     console.print(f"All metrics equal: {comparison['all_metrics_equal']}")
     console.print(f"JSON: {project_dir / 'workspace' / 'experiment_comparison.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_COMPARISON.md'}")
+    for warning in comparison.get("warnings", []):
+        _warn(str(warning))
 
 
 @app.command("list-templates")
@@ -356,18 +358,19 @@ def set_input_cmd(
 def validate_experiment_spec_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
     experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment scaffold id under experiments/."),
+    strict: bool = typer.Option(False, "--strict", help="Fail on stale specs or warnings without refreshing the spec."),
 ) -> None:
     """Validate an experiment specification contract."""
     project_dir = require_project(project_name)
     try:
-        result = validate_experiment_spec(project_dir, experiment_id)
+        result = validate_experiment_spec(project_dir, experiment_id, strict=strict)
     except Exception as exc:
         _warn(str(exc))
         raise typer.Exit(1) from exc
     table = Table(title=f"Experiment Spec: {experiment_id}")
     table.add_column("Item", style="bold")
     table.add_column("Value")
-    for key in ["valid", "spec_sha256", "errors", "warnings"]:
+    for key in ["valid", "strict", "freshness_status", "spec_sha256", "errors", "warnings"]:
         table.add_row(key, str(result[key]))
     console.print(table)
     console.print(f"JSON: {project_dir / 'workspace' / 'experiment_spec_validation.json'}")
@@ -609,6 +612,10 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Input completeness": summary["experiment_input_completeness_counts"],
         "Missing required inputs": summary["experiment_missing_required_input_count"],
         "Expected artifacts attention": summary["experiment_expected_artifacts_attention_count"],
+        "Spec status counts": summary["experiment_spec_status_counts"],
+        "Stale specs": summary["experiment_spec_stale_count"],
+        "Invalid specs": summary["experiment_spec_invalid_count"],
+        "Missing specs": summary["experiment_spec_missing_count"],
         "Experiment runs": summary["experiment_run_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
@@ -878,6 +885,10 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Experiment templates": status.experiment_template_counts,
         "Missing required inputs": status.experiment_missing_required_input_count,
         "Expected artifacts attention": status.experiment_expected_artifacts_attention_count,
+        "Spec status counts": status.experiment_spec_status_counts,
+        "Stale specs": status.experiment_spec_stale_count,
+        "Invalid specs": status.experiment_spec_invalid_count,
+        "Missing specs": status.experiment_spec_missing_count,
         "Experiment runs": status.experiment_run_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,

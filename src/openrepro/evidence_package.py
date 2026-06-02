@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from . import __version__
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
+from .experiment_spec import inspect_experiment_specs
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
@@ -238,6 +239,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     status["evidence_package_exists"] = True
     workspace_artifacts = _workspace_artifacts(project_dir)
     experiments = _experiment_summaries(project_dir)
+    spec_summary = inspect_experiment_specs(project_dir)
     runs = _run_summaries(project_dir)
     source_fingerprint = evidence_source_fingerprint(project_dir)
     package = {
@@ -257,6 +259,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
         },
         "workspace_artifacts": workspace_artifacts,
         "experiments": experiments,
+        "experiment_specs": spec_summary,
         "runs": runs,
         "lineage": {
             "schema_version": lineage.get("schema_version"),
@@ -357,6 +360,7 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - planned: {package['status']['planned']}
 - experiment_scaffold_count: {package['status']['experiment_scaffold_count']}
 - experiment_run_count: {package['status']['experiment_run_count']}
+- experiment_spec_status_counts: {package['experiment_specs']['status_counts']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

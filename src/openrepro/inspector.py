@@ -10,6 +10,7 @@ from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manife
 from .benchmark_runner import collect_benchmark_results
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
+from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .project_manager import get_status
 from .utils import iso_now, read_json, write_json
@@ -148,6 +149,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     repair_dry_run = _repair_dry_run_summary(project_dir)
     lineage = _lineage_summary(project_dir)
     scaffolds = inspect_experiment_scaffolds(project_dir)
+    spec_summary = inspect_experiment_specs(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -177,6 +179,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "experiment_expected_artifacts_attention_count": scaffolds["expected_artifacts_attention_count"],
         "experiment_scaffold_issue_counts": scaffolds["issue_counts"],
         "experiment_scaffolds": scaffolds["scaffolds"],
+        "experiment_spec_status_counts": spec_summary["status_counts"],
+        "experiment_spec_stale_count": spec_summary["stale_count"],
+        "experiment_spec_invalid_count": spec_summary["invalid_count"],
+        "experiment_spec_missing_count": spec_summary["missing_count"],
+        "experiment_specs": spec_summary["specs"],
         "run_count": len(run_dirs),
         "run_command_counts": run_command_counts,
         "experiment_run_count": run_command_counts.get("run-experiment", 0),

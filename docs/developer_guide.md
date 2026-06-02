@@ -154,6 +154,12 @@ v1.2.0 adds `experiment_spec.py`. Scaffold generation should create
 execution. Spec validation is an engineering contract check and must not be
 presented as scientific correctness.
 
+v1.2.1 makes specs freshness-aware. Spec source fingerprints should be stable
+over config, input, expected artifact, and metric contracts, while ignoring
+timestamps. `validate-experiment-spec --strict` should report stale specs
+without refreshing them, and comparison reports should warn when two experiment
+runs used different spec hashes.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

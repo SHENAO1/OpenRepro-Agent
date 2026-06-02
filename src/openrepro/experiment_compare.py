@@ -149,6 +149,10 @@ def compare_experiments(
         for key in sorted(set(left_summary["hashes"]) | set(right_summary["hashes"]))
     }
     metric_deltas = _metric_deltas(left_summary, right_summary)
+    warnings: list[str] = []
+    spec_comparison = hash_comparison.get("spec_sha256")
+    if spec_comparison and not spec_comparison.get("equal"):
+        warnings.append("Experiment spec hash differs between compared runs.")
     result = {
         "schema_version": EXPERIMENT_COMPARISON_SCHEMA_VERSION,
         "created_at": iso_now(),
@@ -159,6 +163,7 @@ def compare_experiments(
         "metric_deltas": metric_deltas,
         "all_metrics_equal": all(item["equal"] for item in metric_deltas),
         "hash_comparison": hash_comparison,
+        "warnings": warnings,
         "policy": "Experiment comparisons report engineering evidence only; they do not claim scientific reproduction success.",
     }
     workspace = project_dir / "workspace"
@@ -188,6 +193,7 @@ def _render_comparison_markdown(result: dict[str, Any]) -> str:
 - left_run: `{result['left']['run_dir']}`
 - right_run: `{result['right']['run_dir']}`
 - all_metrics_equal: {result['all_metrics_equal']}
+- warnings: {result['warnings']}
 
 ## Metric Deltas
 

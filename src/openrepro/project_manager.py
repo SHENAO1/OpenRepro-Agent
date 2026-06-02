@@ -10,6 +10,7 @@ from . import __version__
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .config import create_project_config, load_project_config, save_project_config
 from .evidence_fingerprint import evidence_package_status
+from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
@@ -36,6 +37,10 @@ class ProjectStatus:
     experiment_template_counts: dict[str, int]
     experiment_missing_required_input_count: int
     experiment_expected_artifacts_attention_count: int
+    experiment_spec_status_counts: dict[str, int]
+    experiment_spec_stale_count: int
+    experiment_spec_invalid_count: int
+    experiment_spec_missing_count: int
     experiment_run_count: int
     latest_run_dir: str | None
     lineage_exists: bool
@@ -249,6 +254,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             experiment_template_counts={},
             experiment_missing_required_input_count=0,
             experiment_expected_artifacts_attention_count=0,
+            experiment_spec_status_counts={},
+            experiment_spec_stale_count=0,
+            experiment_spec_invalid_count=0,
+            experiment_spec_missing_count=0,
             experiment_run_count=0,
             latest_run_dir=None,
             lineage_exists=False,
@@ -276,6 +285,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     verified_candidate_count = _verified_candidate_count(project_dir)
     candidate_review_count = _candidate_review_count(project_dir)
     scaffold_summary = inspect_experiment_scaffolds(project_dir)
+    spec_summary = inspect_experiment_specs(project_dir)
     experiment_run_count = _experiment_run_count(project_dir)
     has_experiment_scaffold = _has_experiment_scaffold(project_dir)
     latest = latest_run_dir(project_dir)
@@ -301,6 +311,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro scaffold-experiment {project_dir} --experiment-id <id>"
     elif scaffold_summary["expected_artifacts_attention_count"] > 0:
         next_step = f"Run: openrepro inspect {project_dir}"
+    elif spec_summary["invalid_count"] > 0 or spec_summary["missing_count"] > 0:
+        next_step = f"Run: openrepro validate-experiment-spec {project_dir} --experiment-id <id>"
+    elif spec_summary["stale_count"] > 0:
+        next_step = f"Run: openrepro validate-experiment-spec {project_dir} --experiment-id <id>"
     elif experiment_run_count == 0:
         next_step = f"Run: openrepro run-experiment {project_dir} --experiment-id <id> --confirm"
     elif latest is None:
@@ -316,7 +330,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.2.0 workflow is complete. Review experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.2.1 workflow is complete. Review fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -331,6 +345,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         experiment_template_counts=scaffold_summary["template_counts"],
         experiment_missing_required_input_count=scaffold_summary["missing_required_input_count"],
         experiment_expected_artifacts_attention_count=scaffold_summary["expected_artifacts_attention_count"],
+        experiment_spec_status_counts=spec_summary["status_counts"],
+        experiment_spec_stale_count=spec_summary["stale_count"],
+        experiment_spec_invalid_count=spec_summary["invalid_count"],
+        experiment_spec_missing_count=spec_summary["missing_count"],
         experiment_run_count=experiment_run_count,
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
