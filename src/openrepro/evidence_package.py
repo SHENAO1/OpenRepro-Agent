@@ -23,6 +23,7 @@ WORKSPACE_ARTIFACTS = [
     "formula_candidates.json",
     "parameter_candidates.json",
     "model_ledger.json",
+    "caption_index.json",
     "verified_candidates.json",
     "candidate_reviews.json",
     "experiment_plan_validation.json",

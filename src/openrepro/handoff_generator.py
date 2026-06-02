@@ -105,7 +105,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.0.1 命令入口。
+- `cli.py`：已完成 v1.1.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -215,7 +215,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.0.1 闭环检查
+## v1.1.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}

@@ -51,6 +51,10 @@ chunk index, page number when available, context windows, and evidence quality
 signals. These fields help review candidates; they are not verification
 results.
 
+v1.1.0 candidate extraction should also preserve section labels, caption
+anchors, and risk flags. Risk flags are triage hints for human review, not
+validation results or automated rejection decisions.
+
 ## API provider extensions
 
 Real providers should be opt-in. They must write actual usage records and must not fabricate tokens or costs.

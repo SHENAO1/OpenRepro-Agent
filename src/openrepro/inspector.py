@@ -24,6 +24,25 @@ def _candidate_count(project_dir: Path, filename: str) -> int:
     return len(data.get("candidates", [])) if isinstance(data, dict) else 0
 
 
+def _candidate_risk_summary(project_dir: Path) -> dict[str, Any]:
+    level_counts: Counter[str] = Counter()
+    flag_counts: Counter[str] = Counter()
+    for filename in ["formula_candidates.json", "parameter_candidates.json"]:
+        data = read_json(project_dir / "workspace" / filename, default={}) or {}
+        candidates = data.get("candidates", []) if isinstance(data, dict) else []
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                continue
+            level_counts[str(candidate.get("risk_level") or "unknown")] += 1
+            for flag in candidate.get("risk_flags", []):
+                flag_counts[str(flag)] += 1
+    return {
+        "level_counts": dict(level_counts),
+        "flag_counts": dict(flag_counts),
+        "high_risk_count": int(level_counts.get("high", 0)),
+    }
+
+
 def _verified_summary(project_dir: Path) -> dict[str, Any]:
     data = read_json(project_dir / "workspace" / "verified_candidates.json", default={}) or {}
     if not isinstance(data, dict):
@@ -124,6 +143,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     diagnosis = diagnose_project(project_dir, latest)
     benchmark_runs = _benchmark_runs_for_project(project_dir)
     verified = _verified_summary(project_dir)
+    candidate_risk = _candidate_risk_summary(project_dir)
     reviews = _candidate_review_summary(project_dir)
     repair_dry_run = _repair_dry_run_summary(project_dir)
     lineage = _lineage_summary(project_dir)
@@ -140,6 +160,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "pdf_extraction_statuses": dict(pdf_status_counts),
         "formula_candidate_count": _candidate_count(project_dir, "formula_candidates.json"),
         "parameter_candidate_count": _candidate_count(project_dir, "parameter_candidates.json"),
+        "candidate_high_risk_count": candidate_risk["high_risk_count"],
+        "candidate_risk_level_counts": candidate_risk["level_counts"],
+        "candidate_risk_flag_counts": candidate_risk["flag_counts"],
         "verified_formula_candidate_count": verified["formula_candidate_count"],
         "verified_parameter_candidate_count": verified["parameter_candidate_count"],
         "verified_candidates_status": verified["status"],

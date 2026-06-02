@@ -43,6 +43,19 @@ PARAMETER_PATTERN = re.compile(
     r"(?P<value>[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*(?P<unit>[A-Za-z/%._-]+)?"
 )
 DOI_PATTERN = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Za-z0-9]+\b")
+CAPTION_PATTERN = re.compile(
+    r"^\s*(?P<kind>fig(?:ure)?|table)\s*(?P<label>[A-Za-z0-9.:-]*)\s*[:.\-]?\s+(?P<text>.+)$",
+    re.IGNORECASE,
+)
+SECTION_HINTS: dict[str, list[str]] = {
+    "abstract": ["abstract", "摘要"],
+    "introduction": ["introduction", "background", "引言", "背景"],
+    "methods": ["method", "methods", "methodology", "algorithm", "材料", "方法", "算法"],
+    "experiments": ["experiment", "experiments", "evaluation", "实验", "评估"],
+    "results": ["result", "results", "结果"],
+    "discussion": ["discussion", "分析", "讨论"],
+    "conclusion": ["conclusion", "结论"],
+}
 
 
 def _source_path_for_doc(doc: dict[str, Any]) -> str:
@@ -56,7 +69,11 @@ def _chunk_documents(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     chunks: list[dict[str, Any]] = []
     for doc in documents:
         raw_chunks = [item.strip() for item in re.split(r"\n+|(?<=[。.!?])\s+", doc["text"]) if item.strip()]
+        current_section = "unknown"
         for index, chunk in enumerate(raw_chunks):
+            section = _section_label(chunk) or current_section
+            if _section_label(chunk):
+                current_section = section
             chunks.append(
                 {
                     "doc": doc,
@@ -64,9 +81,55 @@ def _chunk_documents(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "text": chunk,
                     "previous": raw_chunks[index - 1] if index > 0 else "",
                     "next": raw_chunks[index + 1] if index + 1 < len(raw_chunks) else "",
+                    "section": section,
                 }
             )
     return chunks
+
+
+def _section_label(text: str) -> str | None:
+    stripped = text.strip().strip("#").strip().lower()
+    stripped = re.sub(r"^\d+(?:\.\d+)*\s+", "", stripped)
+    for label, hints in SECTION_HINTS.items():
+        if any(stripped == hint or stripped.startswith(f"{hint}:") or stripped.startswith(f"{hint} ") for hint in hints):
+            return label
+    return None
+
+
+def _caption_index(documents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    captions: list[dict[str, Any]] = []
+    for doc in documents:
+        current_section = "unknown"
+        for line_index, line in enumerate(doc["text"].splitlines(), start=1):
+            section = _section_label(line)
+            if section:
+                current_section = section
+            match = CAPTION_PATTERN.match(line)
+            if not match:
+                continue
+            kind = "table" if match.group("kind").lower().startswith("table") else "figure"
+            captions.append(
+                {
+                    "caption_id": f"C{len(captions) + 1:03d}",
+                    "source_name": doc["name"],
+                    "source_path": _source_path_for_doc(doc),
+                    "line_index": line_index,
+                    "kind": kind,
+                    "label": match.group("label").strip() or None,
+                    "section": current_section,
+                    "text": truncate(match.group("text").strip(), 700),
+                    "status": "caption_unverified",
+                }
+            )
+    return captions
+
+
+def _section_counts(chunks: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for chunk in chunks:
+        section = str(chunk.get("section") or "unknown")
+        counts[section] = counts.get(section, 0) + 1
+    return counts
 
 
 def _page_number_for_evidence(project_dir: Path, source_name: str, evidence: str) -> int | None:
@@ -98,6 +161,26 @@ def _evidence_quality(evidence: str, page_number: int | None, method: str) -> di
         score += 0.1
         reasons.append("table_anchored")
     return {"score": round(min(score, 1.0), 3), "reasons": reasons or ["rule_based_match"]}
+
+
+def _candidate_risk(evidence_quality: dict[str, Any], provenance: dict[str, Any], context_window: str) -> dict[str, Any]:
+    flags: list[str] = []
+    if provenance.get("page_number") is None:
+        flags.append("no_page_anchor")
+    if provenance.get("section") in {None, "", "unknown"}:
+        flags.append("unknown_section")
+    if len(context_window.strip()) < 40:
+        flags.append("thin_context")
+    if float(evidence_quality.get("score", 0.0) or 0.0) < 0.55:
+        flags.append("low_evidence_quality")
+    flags.append("needs_human_review")
+    if "low_evidence_quality" in flags or len(flags) >= 4:
+        level = "high"
+    elif len(flags) >= 2:
+        level = "medium"
+    else:
+        level = "low"
+    return {"risk_level": level, "risk_flags": flags}
 
 
 def _provenance(
@@ -191,7 +274,17 @@ def _extract_formula_candidates(project_dir: Path, documents: list[dict[str, Any
         if not evidence or evidence in seen or not _looks_like_formula(evidence):
             continue
         seen.add(evidence)
-        provenance = _provenance(project_dir, chunk["doc"], chunk["chunk_index"], evidence, "rule_formula_pattern")
+        context_window = truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900)
+        provenance = _provenance(
+            project_dir,
+            chunk["doc"],
+            chunk["chunk_index"],
+            evidence,
+            "rule_formula_pattern",
+            extra={"section": chunk.get("section")},
+        )
+        evidence_quality = _evidence_quality(evidence, provenance.get("page_number"), "rule_formula_pattern")
+        risk = _candidate_risk(evidence_quality, provenance, context_window)
         candidates.append(
             {
                 "candidate_id": f"F{len(candidates) + 1:03d}",
@@ -199,9 +292,12 @@ def _extract_formula_candidates(project_dir: Path, documents: list[dict[str, Any
                 "evidence": evidence,
                 "context_before": truncate(chunk["previous"], 300),
                 "context_after": truncate(chunk["next"], 300),
-                "context_window": truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900),
+                "context_window": context_window,
+                "section": chunk.get("section"),
                 "provenance": provenance,
-                "evidence_quality": _evidence_quality(evidence, provenance.get("page_number"), "rule_formula_pattern"),
+                "evidence_quality": evidence_quality,
+                "risk_level": risk["risk_level"],
+                "risk_flags": risk["risk_flags"],
                 "status": "candidate_unverified",
                 "extraction_method": "rule_formula_pattern",
             }
@@ -225,7 +321,17 @@ def _extract_parameter_candidates_from_text(project_dir: Path, documents: list[d
                 continue
             seen.add(key)
             evidence = truncate(match.group(0), 300)
-            provenance = _provenance(project_dir, doc, chunk["chunk_index"], evidence, "rule_parameter_pattern")
+            context_window = truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900)
+            provenance = _provenance(
+                project_dir,
+                doc,
+                chunk["chunk_index"],
+                evidence,
+                "rule_parameter_pattern",
+                extra={"section": chunk.get("section")},
+            )
+            evidence_quality = _evidence_quality(evidence, provenance.get("page_number"), "rule_parameter_pattern")
+            risk = _candidate_risk(evidence_quality, provenance, context_window)
             candidates.append(
                 {
                     "candidate_id": f"P{len(candidates) + 1:03d}",
@@ -238,9 +344,12 @@ def _extract_parameter_candidates_from_text(project_dir: Path, documents: list[d
                     "evidence": evidence,
                     "context_before": truncate(chunk["previous"], 300),
                     "context_after": truncate(chunk["next"], 300),
-                    "context_window": truncate("\n".join(part for part in [chunk["previous"], evidence, chunk["next"]] if part), 900),
+                    "context_window": context_window,
+                    "section": chunk.get("section"),
                     "provenance": provenance,
-                    "evidence_quality": _evidence_quality(evidence, provenance.get("page_number"), "rule_parameter_pattern"),
+                    "evidence_quality": evidence_quality,
+                    "risk_level": risk["risk_level"],
+                    "risk_flags": risk["risk_flags"],
                     "status": "candidate_unverified",
                     "extraction_method": "rule_parameter_pattern",
                 }
@@ -279,11 +388,14 @@ def _extract_parameter_candidates_from_tables(
                     "pdf_table_candidate",
                     extra={
                         "page_number": page.get("page_number"),
+                        "section": "tables",
                         "table_index": table_index,
                         "row_index": row_index,
                         "table_cells": cells,
                     },
                 )
+                evidence_quality = _evidence_quality(evidence, page.get("page_number"), "pdf_table_candidate")
+                risk = _candidate_risk(evidence_quality, provenance, evidence)
                 candidates.append(
                     {
                         "candidate_id": f"P{existing_count + len(candidates) + 1:03d}",
@@ -297,8 +409,11 @@ def _extract_parameter_candidates_from_tables(
                         "page_number": page.get("page_number"),
                         "table_index": table_index,
                         "row_index": row_index,
+                        "section": "tables",
                         "provenance": provenance,
-                        "evidence_quality": _evidence_quality(evidence, page.get("page_number"), "pdf_table_candidate"),
+                        "evidence_quality": evidence_quality,
+                        "risk_level": risk["risk_level"],
+                        "risk_flags": risk["risk_flags"],
                         "status": "candidate_unverified",
                         "extraction_method": "pdf_table_candidate",
                     }
@@ -339,6 +454,42 @@ def _build_structured_model_ledger(
     }
 
 
+def _candidate_risk_counts(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    risk_levels: dict[str, int] = {}
+    risk_flags: dict[str, int] = {}
+    for candidate in candidates:
+        level = str(candidate.get("risk_level") or "unknown")
+        risk_levels[level] = risk_levels.get(level, 0) + 1
+        for flag in candidate.get("risk_flags", []):
+            label = str(flag)
+            risk_flags[label] = risk_flags.get(label, 0) + 1
+    return {"risk_levels": risk_levels, "risk_flags": risk_flags}
+
+
+def _render_caption_index(captions: list[dict[str, Any]]) -> str:
+    lines = [
+        "# Caption Index",
+        "",
+        "| ID | Kind | Source | Section | Text |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for caption in captions:
+        text = str(caption.get("text") or "").replace("|", "/")
+        lines.append(
+            f"| {caption['caption_id']} | {caption['kind']} | {caption['source_name']} | {caption['section']} | {text} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Policy",
+            "",
+            "Captions are rule-extracted evidence anchors and require human review.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def _guess_title(project_name: str, documents: list[dict[str, Any]]) -> str:
     for doc in documents:
         heading = first_markdown_heading(doc["text"])
@@ -355,9 +506,10 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
     config = load_project_config(project_dir)
     project_name = config.get("project_name", project_dir.name)
-    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v1.0.1-rule")
+    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v1.1.0-rule")
     source_index = load_source_index(project_dir)
     documents = read_text_sources(project_dir)
+    chunks = _chunk_documents(documents)
 
     combined_text = "\n\n".join(doc["text"] for doc in documents)
     detected_keywords = sorted(set(_detect_keywords(combined_text))) if combined_text else []
@@ -368,7 +520,14 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
     text_parameter_candidates = _extract_parameter_candidates_from_text(project_dir, documents)
     table_parameter_candidates = _extract_parameter_candidates_from_tables(project_dir, len(text_parameter_candidates))
     parameter_candidates = text_parameter_candidates + table_parameter_candidates
+    all_candidates = formula_candidates + parameter_candidates
+    risk_counts = _candidate_risk_counts(all_candidates)
+    captions = _caption_index(documents)
+    section_counts = _section_counts(chunks)
     metadata = _paper_metadata(project_name, documents, combined_text)
+    metadata["schema_version"] = "1.1.0"
+    metadata["section_counts"] = section_counts
+    metadata["caption_count"] = len(captions)
     structured_ledger = _build_structured_model_ledger(
         project_name,
         candidate_paragraphs,
@@ -486,6 +645,8 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
         "workspace/parameter_candidates.json",
         "workspace/model_ledger.json",
         "workspace/paper_metadata.json",
+        "workspace/caption_index.json",
+        "workspace/CAPTION_INDEX.md",
     ]
     safe_write_text(workspace / "paper_summary.md", paper_summary)
     safe_write_text(workspace / "MODEL_LEDGER.md", model_ledger)
@@ -495,6 +656,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
             "schema_version": "0.4.0",
             "created_at": iso_now(),
             "status": "candidate_unverified",
+            "risk_summary": _candidate_risk_counts(formula_candidates),
             "candidates": formula_candidates,
         },
     )
@@ -504,11 +666,23 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
             "schema_version": "0.4.0",
             "created_at": iso_now(),
             "status": "candidate_unverified",
+            "risk_summary": _candidate_risk_counts(parameter_candidates),
             "candidates": parameter_candidates,
         },
     )
     write_json(workspace / "model_ledger.json", structured_ledger)
     write_json(workspace / "paper_metadata.json", metadata)
+    write_json(
+        workspace / "caption_index.json",
+        {
+            "schema_version": "1.1.0",
+            "created_at": iso_now(),
+            "caption_count": len(captions),
+            "captions": captions,
+            "policy": "Captions are rule-extracted evidence anchors and require human review.",
+        },
+    )
+    safe_write_text(workspace / "CAPTION_INDEX.md", _render_caption_index(captions))
 
     result = {
         "project_name": project_name,
@@ -524,6 +698,10 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
         "model_candidate_count": len(structured_ledger["models"]),
         "paper_metadata": metadata,
         "doi_candidate_count": len(metadata["doi_candidates"]),
+        "section_counts": section_counts,
+        "caption_count": len(captions),
+        "candidate_risk_counts": risk_counts,
+        "high_risk_candidate_count": risk_counts["risk_levels"].get("high", 0),
         "limitations": [
             "No real LLM API call was made.",
             "PDF text extraction depends on pdfplumber and may miss scanned or complex layouts.",

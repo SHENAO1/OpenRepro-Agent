@@ -194,6 +194,14 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Add `handoff/EVIDENCE_PACKAGE.md`.
 - [x] Add stale-package and zip-export tests.
 
+## v1.1.0 — Paper evidence extraction upgrade
+
+- [x] Add section-aware provenance for formula and parameter candidates.
+- [x] Add caption indexing artifacts.
+- [x] Add candidate risk flags and risk-level counts.
+- [x] Surface high-risk candidates in `openrepro inspect`.
+- [x] Include caption index evidence in evidence packages.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

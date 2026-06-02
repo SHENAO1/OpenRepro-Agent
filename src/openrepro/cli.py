@@ -571,6 +571,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "PDF extraction": summary["pdf_extraction_statuses"],
         "Formula candidates": summary["formula_candidate_count"],
         "Parameter candidates": summary["parameter_candidate_count"],
+        "High-risk candidates": summary["candidate_high_risk_count"],
+        "Candidate risk levels": summary["candidate_risk_level_counts"],
         "Verified formulas": summary["verified_formula_candidate_count"],
         "Verified parameters": summary["verified_parameter_candidate_count"],
         "Verified status": summary["verified_candidates_status"],
