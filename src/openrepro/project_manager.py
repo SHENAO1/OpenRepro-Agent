@@ -9,6 +9,7 @@ from typing import Any
 from . import __version__
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .config import create_project_config, load_project_config, save_project_config
+from .experiment_templates import inspect_experiment_scaffolds
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
 
@@ -30,6 +31,9 @@ class ProjectStatus:
     analyzed: bool
     planned: bool
     candidate_review_count: int
+    experiment_scaffold_count: int
+    experiment_template_counts: dict[str, int]
+    experiment_expected_artifacts_attention_count: int
     experiment_run_count: int
     latest_run_dir: str | None
     lineage_exists: bool
@@ -236,6 +240,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             analyzed=False,
             planned=False,
             candidate_review_count=0,
+            experiment_scaffold_count=0,
+            experiment_template_counts={},
+            experiment_expected_artifacts_attention_count=0,
             experiment_run_count=0,
             latest_run_dir=None,
             lineage_exists=False,
@@ -259,6 +266,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     )
     verified_candidate_count = _verified_candidate_count(project_dir)
     candidate_review_count = _candidate_review_count(project_dir)
+    scaffold_summary = inspect_experiment_scaffolds(project_dir)
     experiment_run_count = _experiment_run_count(project_dir)
     has_experiment_scaffold = _has_experiment_scaffold(project_dir)
     latest = latest_run_dir(project_dir)
@@ -278,6 +286,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro review-candidates {project_dir} --candidate-id <id> --status verified_by_human --reviewer <name>"
     elif not has_experiment_scaffold:
         next_step = f"Run: openrepro scaffold-experiment {project_dir} --experiment-id <id>"
+    elif scaffold_summary["expected_artifacts_attention_count"] > 0:
+        next_step = f"Run: openrepro inspect {project_dir}"
     elif experiment_run_count == 0:
         next_step = f"Run: openrepro run-experiment {project_dir} --experiment-id <id> --confirm"
     elif latest is None:
@@ -289,7 +299,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif not handoff_complete:
         next_step = f"Run: openrepro handoff {project_dir}"
     else:
-        next_step = "Project v0.8.1 workflow is complete. Review candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
+        next_step = "Project v0.8.2 workflow is complete. Review templates, candidate reviews, experiment runs, doctor, lineage, manifests, reports, benchmarks, repair previews, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -300,6 +310,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         analyzed=analyzed,
         planned=planned,
         candidate_review_count=candidate_review_count,
+        experiment_scaffold_count=scaffold_summary["scaffold_count"],
+        experiment_template_counts=scaffold_summary["template_counts"],
+        experiment_expected_artifacts_attention_count=scaffold_summary["expected_artifacts_attention_count"],
         experiment_run_count=experiment_run_count,
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,

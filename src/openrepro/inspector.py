@@ -10,6 +10,7 @@ from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manife
 from .benchmark_runner import collect_benchmark_results
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
+from .experiment_templates import inspect_experiment_scaffolds
 from .project_manager import get_status
 from .utils import iso_now, read_json, write_json
 
@@ -126,10 +127,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     reviews = _candidate_review_summary(project_dir)
     repair_dry_run = _repair_dry_run_summary(project_dir)
     lineage = _lineage_summary(project_dir)
+    scaffolds = inspect_experiment_scaffolds(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
-        "schema_version": "0.7.2",
+        "schema_version": "0.8.2",
         "created_at": iso_now(),
         "project_name": status.project_name,
         "project_dir": str(project_dir),
@@ -144,6 +146,12 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "candidate_review_status": reviews["status"],
         "candidate_review_count": reviews["review_count"],
         "candidate_review_status_counts": reviews["status_counts"],
+        "experiment_scaffold_count": scaffolds["scaffold_count"],
+        "experiment_template_counts": scaffolds["template_counts"],
+        "experiment_expected_artifacts_valid_count": scaffolds["expected_artifacts_valid_count"],
+        "experiment_expected_artifacts_attention_count": scaffolds["expected_artifacts_attention_count"],
+        "experiment_scaffold_issue_counts": scaffolds["issue_counts"],
+        "experiment_scaffolds": scaffolds["scaffolds"],
         "run_count": len(run_dirs),
         "run_command_counts": run_command_counts,
         "experiment_run_count": run_command_counts.get("run-experiment", 0),

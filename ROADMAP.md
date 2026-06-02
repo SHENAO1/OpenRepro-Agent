@@ -140,6 +140,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Align scaffold `expected_artifacts.json` with current `run-experiment` outputs.
 - [x] Include template-required artifacts in `run-experiment` manifests.
 
+## v0.8.2 — Template discovery and scaffold diagnostics
+
+- [x] Add `openrepro list-templates`.
+- [x] Centralize template metadata and artifact expectations.
+- [x] Surface scaffold template counts and expected-artifact attention counts in `inspect` and `status`.
+- [x] Diagnose legacy, missing, mismatched, or tampered `expected_artifacts.json` files.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

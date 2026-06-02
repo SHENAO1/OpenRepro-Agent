@@ -11,9 +11,10 @@ from typing import Any
 
 from .artifact_manager import REQUIRED_RUN_ARTIFACTS, RunDirectory, validate_run_manifest, write_run_manifest
 from .config import load_project_config
+from .experiment_templates import normalize_artifact_paths
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-EXPERIMENT_RUN_SCHEMA_VERSION = "0.8.1"
+EXPERIMENT_RUN_SCHEMA_VERSION = "0.8.2"
 
 
 def _experiment_dir(project_dir: Path, experiment_id: str) -> Path:
@@ -27,20 +28,6 @@ def _select_runner(exp_dir: Path) -> Path:
     return exp_dir / "runner_stub.py"
 
 
-def _normalize_artifact_paths(paths: Any) -> list[str]:
-    if not isinstance(paths, list):
-        return []
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for path in paths:
-        item = str(path).strip().replace("\\", "/")
-        if not item or item == "manifest.json" or item in seen:
-            continue
-        seen.add(item)
-        normalized.append(item)
-    return normalized
-
-
 def _load_expected_artifacts(exp_dir: Path) -> dict[str, Any]:
     expected = read_json(exp_dir / "expected_artifacts.json", default={}) or {}
     return expected if isinstance(expected, dict) else {}
@@ -51,11 +38,11 @@ def _required_artifacts_for_run(expected_artifacts: dict[str, Any]) -> list[str]
     is_template_schema = expected_artifacts.get("schema_version") == EXPERIMENT_RUN_SCHEMA_VERSION
     is_template_scaffold = bool(expected_artifacts.get("template"))
     declared = (
-        _normalize_artifact_paths(expected_artifacts.get("required"))
+        normalize_artifact_paths(expected_artifacts.get("required"))
         if is_template_schema or is_template_scaffold
         else []
     )
-    return _normalize_artifact_paths(list(base) + declared)
+    return normalize_artifact_paths(list(base) + declared)
 
 
 def run_experiment(
@@ -139,7 +126,7 @@ status: {status}
         "expected_artifacts": {
             "path": str(exp_dir / "expected_artifacts.json") if expected_artifacts else None,
             "required": required_artifacts,
-            "optional": _normalize_artifact_paths(expected_artifacts.get("optional")),
+            "optional": normalize_artifact_paths(expected_artifacts.get("optional")),
         },
         "policy": "Controlled experiment execution records evidence only; it does not claim paper reproduction success.",
     }
@@ -179,7 +166,7 @@ This report records controlled execution evidence only. It does not claim paper 
         "expected_artifacts": {
             "path": str(exp_dir / "expected_artifacts.json") if expected_artifacts else None,
             "required": required_artifacts,
-            "optional": _normalize_artifact_paths(expected_artifacts.get("optional")),
+            "optional": normalize_artifact_paths(expected_artifacts.get("optional")),
         },
         "policy": "Run artifacts are execution evidence, not scientific reproduction claims.",
     }

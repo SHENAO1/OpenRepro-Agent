@@ -122,6 +122,11 @@ run manifest. If a completed runner omits a required template artifact,
 `run-experiment` should fail instead of leaving the issue for a later
 validation step.
 
+v0.8.2 centralizes template metadata in `experiment_templates.py`.
+New templates should be added there first, then exercised through
+`openrepro list-templates`, scaffold generation, inspect/status summaries, and
+expected-artifact diagnostics.
+
 ## Run lineage
 
 `openrepro lineage <project_name>` writes `workspace/run_lineage.json` and

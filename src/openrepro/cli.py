@@ -21,6 +21,7 @@ from .document_loader import ingest_source
 from .doctor import run_doctor
 from .experiment_scaffold import scaffold_experiment
 from .experiment_runner import run_experiment
+from .experiment_templates import list_experiment_templates
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -226,6 +227,25 @@ def run_experiment_cmd(
         _warn("Experiment run completed with runner failure.")
     console.print(f"Run directory: {metadata['run_dir']}")
     console.print(f"Exit code: {metadata['exit_code']}")
+
+
+@app.command("list-templates")
+def list_templates_cmd() -> None:
+    """List available experiment scaffold templates."""
+    table = Table(title="OpenRepro Experiment Templates")
+    table.add_column("Template", style="bold")
+    table.add_column("Purpose")
+    table.add_column("Required")
+    table.add_column("Inputs")
+    for template in list_experiment_templates():
+        table.add_row(
+            str(template["name"]),
+            str(template["purpose"]),
+            str(len(template["required"])),
+            ", ".join(template["input_hints"]) or "none",
+        )
+    console.print(table)
+    _success("Listed experiment templates.")
 
 
 @app.command("scaffold-experiment")
@@ -453,6 +473,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Verified status": summary["verified_candidates_status"],
         "Candidate reviews": summary["candidate_review_count"],
         "Review status counts": summary["candidate_review_status_counts"],
+        "Experiment scaffolds": summary["experiment_scaffold_count"],
+        "Experiment templates": summary["experiment_template_counts"],
+        "Expected artifacts attention": summary["experiment_expected_artifacts_attention_count"],
         "Experiment runs": summary["experiment_run_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
@@ -699,6 +722,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Analyzed": status.analyzed,
         "Planned": status.planned,
         "Candidate reviews": status.candidate_review_count,
+        "Experiment scaffolds": status.experiment_scaffold_count,
+        "Experiment templates": status.experiment_template_counts,
+        "Expected artifacts attention": status.experiment_expected_artifacts_attention_count,
         "Experiment runs": status.experiment_run_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
