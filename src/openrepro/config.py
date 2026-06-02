@@ -47,7 +47,7 @@ class APIConfig:
 class AnalysisConfig:
     """Rule/mock analyzer configuration."""
 
-    analyzer_version: str = "v0.5.2-rule"
+    analyzer_version: str = "v0.6.0-rule"
     max_source_preview_chars: int = 4000
 
 

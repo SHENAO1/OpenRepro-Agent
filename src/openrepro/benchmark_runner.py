@@ -19,8 +19,9 @@ from .provider import ProviderRequest, complete_with_cache, get_provider
 from .utils import iso_now, local_timestamp_for_path, read_json, safe_write_text, slugify, write_json
 
 
-BENCHMARK_SCHEMA_VERSION = "0.4.0"
+BENCHMARK_SCHEMA_VERSION = "0.6.0"
 REQUIRED_TASK_FIELDS = ["task_id", "paper_title", "source_files"]
+PROVENANCE_FIELDS = ["dataset", "environment", "dependencies", "paper_source", "expected_runtime_notes"]
 
 
 def _repo_root() -> Path:
@@ -78,6 +79,14 @@ def load_benchmark_task(task_path: Path) -> dict[str, Any]:
     task["pass_criteria"] = {
         "require_manifest_valid": bool(pass_criteria.get("require_manifest_valid", True)),
     }
+    task["provenance"] = {
+        "dataset": task.get("dataset"),
+        "environment": task.get("environment"),
+        "dependencies": task.get("dependencies"),
+        "paper_source": task.get("paper_source"),
+        "expected_runtime_notes": task.get("expected_runtime_notes"),
+    }
+    task["provenance_complete"] = all(bool(task["provenance"].get(field)) for field in PROVENANCE_FIELDS)
     task.setdefault("schema_version", BENCHMARK_SCHEMA_VERSION)
     return task
 
@@ -183,6 +192,13 @@ def _write_benchmark_report(run_dir: Path, result: dict[str, Any]) -> Path:
 - manifest_valid: {result['manifest_validation'].get('valid')}
 - expected_artifacts_passed: {artifact_passed}/{len(result['artifact_checks'])}
 - expected_metrics_available: {metric_passed}/{len(result['metric_checks'])}
+- provenance_complete: {result.get('provenance_complete')}
+
+## Provenance
+
+```json
+{result.get('provenance')}
+```
 
 ## Diagnosis
 
@@ -282,6 +298,8 @@ def run_benchmark(task_path: Path, project_name: str | None = None) -> dict[str,
         "metric_checks": metric_checks,
         "workflow": task["workflow"],
         "pass_criteria": task["pass_criteria"],
+        "provenance": task["provenance"],
+        "provenance_complete": task["provenance_complete"],
         "provider_response": provider_response.to_dict(),
         "diagnosis": diagnosis,
         "policy": "Workflow-compliance evidence only; no paper reproduction success or benchmark score is claimed.",
@@ -346,6 +364,7 @@ def generate_benchmark_index(runs_dir: Path | None = None) -> dict[str, Any]:
                 "artifact_pass_count": _artifact_pass_count(result),
                 "metric_pass_count": _metric_pass_count(result),
                 "manifest_valid": (result.get("manifest_validation") or {}).get("valid"),
+                "provenance_complete": bool(result.get("provenance_complete")),
                 "diagnosis_count": len(result.get("diagnosis", [])),
             }
         )
@@ -360,12 +379,12 @@ def generate_benchmark_index(runs_dir: Path | None = None) -> dict[str, Any]:
     lines = [
         "# Benchmark Index",
         "",
-        "| Task | Status | Created | Artifacts | Metrics | Manifest | Diagnosis | Directory |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Task | Status | Created | Artifacts | Metrics | Manifest | Provenance | Diagnosis | Directory |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for entry in entries:
         lines.append(
-            "| {task_id} | {status} | {created_at} | {artifact_pass_count} | {metric_pass_count} | {manifest_valid} | {diagnosis_count} | `{benchmark_dir}` |".format(
+            "| {task_id} | {status} | {created_at} | {artifact_pass_count} | {metric_pass_count} | {manifest_valid} | {provenance_complete} | {diagnosis_count} | `{benchmark_dir}` |".format(
                 **entry
             )
         )
@@ -418,12 +437,12 @@ def _write_suite_report(suite_dir: Path, result: dict[str, Any]) -> Path:
         "",
         "## Tasks",
         "",
-        "| Task | Status | Benchmark Dir | Project Dir |",
-        "| --- | --- | --- | --- |",
+        "| Task | Status | Provenance | Benchmark Dir | Project Dir |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for item in result["task_results"]:
         lines.append(
-            f"| {item.get('task_id')} | {item.get('status')} | `{item.get('benchmark_dir')}` | `{item.get('project_dir')}` |"
+            f"| {item.get('task_id')} | {item.get('status')} | {item.get('provenance_complete')} | `{item.get('benchmark_dir')}` | `{item.get('project_dir')}` |"
         )
     lines.extend(
         [
@@ -461,6 +480,7 @@ def run_benchmark_suite(suite_path: Path, project_prefix: str | None = None) -> 
                     "status": result.get("status"),
                     "benchmark_dir": result.get("benchmark_dir"),
                     "project_dir": result.get("project_dir"),
+                    "provenance_complete": bool(result.get("provenance_complete")),
                     "diagnosis_count": len(result.get("diagnosis", [])),
                 }
             )

@@ -20,6 +20,7 @@ from .document_loader import ingest_source
 from .experiment_scaffold import scaffold_experiment
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
+from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .project_manager import get_status, init_project, require_project
 from .repair import create_repair_plan, preview_repair_actions
@@ -452,6 +453,16 @@ def compare_runs_cmd(
     for item in comparison["metric_deltas"]:
         table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["delta"]))
     console.print(table)
+
+
+@app.command("lineage")
+def lineage_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate run lineage hashes for project runs."""
+    project_dir = require_project(project_name)
+    lineage = generate_run_lineage(project_dir)
+    _success(f"Run lineage written with {lineage['run_count']} runs.")
+    console.print(f"JSON: {project_dir / 'workspace' / 'run_lineage.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'RUN_LINEAGE.md'}")
 
 
 @app.command("benchmark")

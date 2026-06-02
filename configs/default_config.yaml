@@ -1,5 +1,5 @@
 project_name: openrepro_project
-version: 0.5.2
+version: 0.6.0
 description: Default OpenRepro-Agent configuration template.
 demo:
   seed: 42
@@ -18,5 +18,5 @@ api:
   cache_ttl_seconds:
   redact_prompts: true
 analysis:
-  analyzer_version: v0.5.2-rule
+  analyzer_version: v0.6.0-rule
   max_source_preview_chars: 4000

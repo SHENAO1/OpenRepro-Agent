@@ -20,6 +20,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `diagnostics.py`: failure classification and repair suggestions.
 - `repair.py`: advisory repair plan generation.
 - `run_compare.py`: run metric and manifest comparison.
+- `lineage.py`: run lineage hashes for manifests, configs, source index, and verified candidates.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
 - `config.py`: dataclass-based configuration defaults and YAML IO.
@@ -40,6 +41,7 @@ sources/ + project_config.yaml
   → workspace/inspect_summary.json
   → workspace/repair_plan.json + run_comparison.json
   → workspace/repair_dry_run.json + REPAIR_DRY_RUN.md
+  → workspace/run_lineage.json + RUN_LINEAGE.md
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md

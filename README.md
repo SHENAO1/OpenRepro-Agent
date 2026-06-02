@@ -2,7 +2,7 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files.
 
-Current version: **v0.5.2**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v0.6.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
@@ -11,7 +11,7 @@ Research-paper reproduction often fails because notes, assumptions, formulas, ex
 The v0.5.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → benchmark → benchmark-suite → benchmark-index → report → handoff → status
+init → configure-provider → ingest → analyze → plan → approve-candidates → scaffold-experiment → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → compare-runs → lineage → benchmark → benchmark-suite → benchmark-index → report → handoff → status
 ```
 
 ## What v0.4.0 supports
@@ -65,6 +65,13 @@ init → configure-provider → ingest → analyze → plan → approve-candidat
 - Add provider cache policy fields: `cache_enabled`, `cache_ttl_seconds`, and `redact_prompts`.
 - Allow `configure-provider` to update cache and redaction policy without storing secrets.
 - Include redacted prompt/response previews and cache namespace metadata in usage records.
+
+## What v0.6.0 adds
+
+- Generate run lineage artifacts with `openrepro lineage`.
+- Record manifest, config, source index, and verified candidate hashes for every run.
+- Add benchmark provenance fields for dataset, environment, dependencies, paper source, and runtime notes.
+- Surface benchmark provenance completeness in benchmark reports, suites, and indexes.
 
 ## What v0.4.0 does not support
 
@@ -131,6 +138,7 @@ openrepro repair boc_demo --dry-run
 openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
+openrepro lineage boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
 openrepro benchmark-index
@@ -395,6 +403,20 @@ workspace/RUN_COMPARISON.md
 
 The comparison reports observed manifest status and metric differences only.
 
+### `openrepro lineage <project_name>`
+
+Writes project run lineage artifacts:
+
+```text
+workspace/run_lineage.json
+workspace/RUN_LINEAGE.md
+```
+
+Each run entry records the parent command and SHA-256 hashes for the run
+manifest, config snapshot, project source index, and verified candidates when
+available. The lineage report is provenance evidence only; it does not claim
+scientific reproduction success.
+
 ### `openrepro benchmark --task <task.json> [--project <project_name>]`
 
 Runs a workflow-compliance benchmark task. If `--project` is omitted, the task id becomes the project name. If the project does not exist, it is initialized automatically.
@@ -559,12 +581,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v0.5.0: candidate approval artifacts, verified-input scaffolds, and controlled repair dry-run previews.
 - v0.5.1: verified candidate and repair dry-run status surfaced through inspect, report, handoff, and status.
 - v0.5.2: provider prompt/response preview redaction, cache namespace, and cache policy controls.
+- v0.6.0: benchmark provenance fields and project run lineage artifacts.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v0.5.2 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v0.6.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

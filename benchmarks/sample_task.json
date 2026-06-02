@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.4.0",
+  "schema_version": "0.6.0",
   "task_id": "sample_boc_like_demo",
   "paper_title": "Sample BOC-like notes task",
   "source_files": ["examples/boc_notes.md"],
@@ -34,5 +34,27 @@
   "pass_criteria": {
     "require_manifest_valid": true
   },
+  "dataset": {
+    "name": "examples/boc_notes.md",
+    "type": "markdown_notes",
+    "path": "examples/boc_notes.md"
+  },
+  "environment": {
+    "python": ">=3.10",
+    "runner": "OpenRepro-Agent CLI"
+  },
+  "dependencies": [
+    "numpy",
+    "matplotlib",
+    "pdfplumber",
+    "pyyaml",
+    "typer"
+  ],
+  "paper_source": {
+    "title": "Sample BOC-like notes task",
+    "source_type": "example_notes",
+    "claim_policy": "workflow evidence only"
+  },
+  "expected_runtime_notes": "Runs the built-in lightweight BOC-like demo; no scientific reproduction score is claimed.",
   "notes": "This task checks workflow evidence only. It is not a benchmark score or a paper reproduction claim."
 }

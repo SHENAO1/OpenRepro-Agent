@@ -62,8 +62,8 @@ Released in v0.4.0 with opt-in provider readiness, paper-to-code guardrails, ben
 - [x] Prompt/response redaction and stronger cache controls.
 - [x] Human approval gates that can promote verified candidates into implementation-ready experiment scaffolds.
 - [x] Controlled repair dry-run previews with manifest regeneration diffs.
-- Richer benchmark tasks with dataset/environment provenance.
-- Run lineage graphs and cross-run metric dashboards.
+- [x] Richer benchmark tasks with dataset/environment provenance.
+- [x] Run lineage graphs and cross-run metric dashboards.
 
 Implemented in v0.5.0 with `openrepro approve-candidates`, `workspace/verified_candidates.json`,
 verified-input experiment scaffolds, and `openrepro repair --dry-run`.
@@ -82,6 +82,13 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Store provider cache entries under provider/model/task namespaces.
 - [x] Add cache policy fields: `cache_enabled`, `cache_ttl_seconds`, and `redact_prompts`.
 - [x] Allow `configure-provider` to update cache and redaction policy.
+
+## v0.6.0 — Provenance and run lineage
+
+- [x] Add benchmark provenance fields for dataset, environment, dependencies, paper source, and runtime notes.
+- [x] Include provenance completeness in benchmark reports, suite task results, and benchmark indexes.
+- [x] Add `openrepro lineage` with `workspace/run_lineage.json` and `workspace/RUN_LINEAGE.md`.
+- [x] Record run manifest, config, source index, and verified candidate hashes.
 
 ## Long-term ideas
 

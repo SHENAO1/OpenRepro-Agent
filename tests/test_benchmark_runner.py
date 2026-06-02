@@ -33,12 +33,14 @@ def _write_legacy_task(tmp_path: Path, source: Path) -> Path:
 def test_benchmark_task_schema_accepts_sample():
     task = load_benchmark_task(Path("benchmarks/sample_task.json"))
 
-    assert task["schema_version"] == "0.4.0"
+    assert task["schema_version"] == "0.6.0"
     assert task["task_id"] == "sample_boc_like_demo"
     assert task["artifacts"]["required"]
     assert task["metrics"]["required"]
     assert task["workflow"] == {"run_demo": True, "run_sweep": False}
     assert task["pass_criteria"] == {"require_manifest_valid": True}
+    assert task["provenance_complete"] is True
+    assert task["provenance"]["dataset"]["name"] == "examples/boc_notes.md"
 
 
 def test_v030_style_benchmark_task_still_loads(tmp_path: Path):
@@ -51,6 +53,7 @@ def test_v030_style_benchmark_task_still_loads(tmp_path: Path):
     assert task["artifacts"]["optional"] == []
     assert task["metrics"]["required"] == ["signal_length", "correlation_peak"]
     assert task["metrics"]["optional"] == []
+    assert task["provenance_complete"] is False
 
 
 def test_benchmark_task_schema_rejects_missing_fields(tmp_path: Path):
@@ -96,6 +99,7 @@ def test_run_benchmark_creates_evidence_bundle(tmp_path: Path, monkeypatch):
     assert all(item["exists"] for item in result["artifact_checks"])
     assert all(item["available"] for item in result["metric_checks"])
     assert result["policy"].startswith("Workflow-compliance evidence only")
+    assert result["provenance_complete"] is False
     assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.json").exists()
     assert (tmp_path / "benchmarks" / "runs" / "benchmark_index.md").exists()
 
@@ -153,5 +157,6 @@ def test_benchmark_index_can_be_rebuilt(tmp_path: Path, monkeypatch):
     assert index["run_count"] == 1
     assert index["entries"][0]["task_id"] == "sample_task"
     assert index["entries"][0]["manifest_valid"] is True
+    assert index["entries"][0]["provenance_complete"] is False
     assert read_json(runs_dir / "benchmark_index.json")["run_count"] == 1
     assert (runs_dir / "benchmark_index.md").exists()

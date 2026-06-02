@@ -70,6 +70,11 @@ v0.4.0 benchmark tasks may use either legacy `expected_artifacts` and
 `artifacts.optional`, `metrics.required`, and `metrics.optional` fields.
 Optional checks should be reported without failing the benchmark status.
 
+v0.6.0 benchmark tasks may include dataset, environment, dependencies,
+paper_source, and expected_runtime_notes fields. These fields are provenance
+evidence only. They must be surfaced in benchmark outputs and indexes without
+turning them into scientific scores.
+
 ## Project inspection
 
 `openrepro inspect <project_name>` should print a concise human-facing table and
@@ -88,6 +93,13 @@ v0.5.0 adds `openrepro approve-candidates`, which writes
 Experiment scaffolds may use that artifact to mark inputs as
 `verified_inputs_ready`, but this still does not claim paper reproduction
 success.
+
+## Run lineage
+
+`openrepro lineage <project_name>` writes `workspace/run_lineage.json` and
+`workspace/RUN_LINEAGE.md`. Entries should include parent command, manifest
+hash, config hash, source index hash, and verified candidate hash when present.
+Lineage artifacts are provenance evidence only.
 
 ## Repair and run comparison
 
