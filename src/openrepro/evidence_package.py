@@ -16,6 +16,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
 from .quality_gate import quality_gate_summaries
+from .scorecard import generate_reproduction_scorecard
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
 EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0.1"
@@ -38,6 +39,7 @@ WORKSPACE_ARTIFACTS = [
     "quality_gate_summary.json",
     "claim_trace.json",
     "claim_trace_validation.json",
+    "reproduction_scorecard.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -253,6 +255,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
 
     claim_trace = generate_claim_trace(project_dir)
     claim_trace_validation = validate_claim_trace(project_dir)
+    scorecard = generate_reproduction_scorecard(project_dir)
     inspect_summary = inspect_project(project_dir)
     lineage = generate_run_lineage(project_dir)
     status = get_status(project_dir).to_dict()
@@ -295,6 +298,14 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "validation_warning_count": claim_trace_validation.get("warning_count"),
             "path": str(project_dir / "workspace" / "claim_trace.json"),
             "validation_path": str(project_dir / "workspace" / "claim_trace_validation.json"),
+        },
+        "scorecard": {
+            "schema_version": scorecard.get("schema_version"),
+            "overall_score": scorecard.get("overall_score"),
+            "overall_status": scorecard.get("overall_status"),
+            "blocking_dimension_count": scorecard.get("blocking_dimension_count"),
+            "partial_dimension_count": scorecard.get("partial_dimension_count"),
+            "path": str(project_dir / "workspace" / "reproduction_scorecard.json"),
         },
         "runs": runs,
         "lineage": {
@@ -408,6 +419,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_trace_experiment_count: {package['claim_trace']['experiment_trace_count']}
 - claim_trace_validation_status: {package['claim_trace']['validation_status']}
 - claim_trace_validation_issue_count: {package['claim_trace']['validation_issue_count']}
+- scorecard_overall_score: {package['scorecard']['overall_score']}
+- scorecard_status: {package['scorecard']['overall_status']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

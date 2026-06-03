@@ -37,6 +37,7 @@ from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .run_compare import compare_runs
+from .scorecard import generate_reproduction_scorecard
 
 app = typer.Typer(
     name="openrepro",
@@ -397,6 +398,26 @@ def validate_claims_cmd(project_name: str = typer.Argument(..., help="Project di
     if not validation["valid"]:
         raise typer.Exit(1)
     _success("Claim trace validation passed.")
+
+
+@app.command("scorecard")
+def scorecard_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a workflow readiness scorecard."""
+    project_dir = require_project(project_name)
+    scorecard = generate_reproduction_scorecard(project_dir)
+    table = Table(title=f"Reproduction Readiness Scorecard: {project_name}")
+    table.add_column("Dimension")
+    table.add_column("Score")
+    table.add_column("Status")
+    for item in scorecard["dimensions"]:
+        table.add_row(str(item["label"]), str(item["score"]), str(item["status"]))
+    console.print(table)
+    console.print(f"Overall score: {scorecard['overall_score']}")
+    console.print(f"Overall status: {scorecard['overall_status']}")
+    console.print(f"Recommended actions: {len(scorecard['recommended_actions'])}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'reproduction_scorecard.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPRODUCTION_SCORECARD.md'}")
+    _success("Reproduction readiness scorecard generated.")
 
 
 @app.command("list-templates")
@@ -795,6 +816,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Traced experiment links": summary["claim_trace_experiment_count"],
         "Claim trace validation": summary["claim_trace_validation_status"],
         "Claim trace validation issues": summary["claim_trace_validation_issue_count"],
+        "Readiness score": summary["scorecard_overall_score"],
+        "Scorecard status": summary["scorecard_status"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1080,6 +1103,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Traced claims": status.claim_trace_claim_count,
         "Claim trace validation": status.claim_trace_validation_status,
         "Claim trace validation issues": status.claim_trace_validation_issue_count,
+        "Readiness score": status.scorecard_overall_score,
+        "Scorecard status": status.scorecard_status,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

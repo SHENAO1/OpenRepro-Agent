@@ -33,6 +33,7 @@ def test_report_generates_report_md(tmp_path: Path):
     assert "最近一次 Demo" in text
     assert "Verified Candidate 审批摘要" in text
     assert "Repair Dry-Run 摘要" in text
+    assert "Reproduction Readiness Scorecard 摘要" in text
 
 
 def test_handoff_generates_all_files(tmp_path: Path):

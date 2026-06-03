@@ -16,6 +16,7 @@ from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .project_manager import get_status
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
+from .scorecard import scorecard_summary
 from .utils import iso_now, read_json, write_json
 
 
@@ -158,6 +159,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     latest_quality_gate = latest_quality_gate_summary(project_dir)
     latest_experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
     trace_summary = claim_trace_summary(project_dir)
+    scorecard = scorecard_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -219,6 +221,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "claim_trace_validation_status": trace_summary["validation_status"],
         "claim_trace_validation_issue_count": trace_summary["validation_issue_count"],
         "claim_trace_validation_warning_count": trace_summary["validation_warning_count"],
+        "scorecard_status": scorecard["overall_status"],
+        "scorecard_overall_score": scorecard["overall_score"],
+        "scorecard_blocking_dimension_count": scorecard["blocking_dimension_count"],
+        "scorecard_partial_dimension_count": scorecard["partial_dimension_count"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

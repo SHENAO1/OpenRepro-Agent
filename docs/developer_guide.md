@@ -202,6 +202,12 @@ data, and experiment runs that no longer point to known scaffolds. These checks
 are engineering audit checks only; they must not verify formulas, datasets, or
 scientific correctness.
 
+v1.7.0 adds `scorecard.py`. Readiness scorecards should aggregate workflow
+evidence completeness across paper evidence, candidate review, data provenance,
+experiment specs, run evidence, quality gates, repeatability evidence, and claim
+trace health. Scores are for triage and handoff only. They must not be described
+as scientific reproduction scores or proof that a paper result was reproduced.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

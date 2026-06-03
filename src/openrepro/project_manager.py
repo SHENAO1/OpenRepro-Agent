@@ -15,6 +15,7 @@ from .evidence_fingerprint import evidence_package_status
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
+from .scorecard import scorecard_summary
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
 
@@ -57,6 +58,9 @@ class ProjectStatus:
     claim_trace_claim_count: int
     claim_trace_validation_status: str
     claim_trace_validation_issue_count: int
+    scorecard_exists: bool
+    scorecard_overall_score: float
+    scorecard_status: str
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -286,6 +290,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             claim_trace_claim_count=0,
             claim_trace_validation_status="missing",
             claim_trace_validation_issue_count=0,
+            scorecard_exists=False,
+            scorecard_overall_score=0.0,
+            scorecard_status="missing",
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -320,6 +327,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     quality_gate = latest_quality_gate_summary(project_dir)
     experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
     trace_summary = claim_trace_summary(project_dir)
+    scorecard = scorecard_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -363,6 +371,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro trace-claims {project_dir}"
     elif trace_summary["validation_status"] != "passed":
         next_step = f"Run: openrepro validate-claims {project_dir}"
+    elif not scorecard["present"]:
+        next_step = f"Run: openrepro scorecard {project_dir}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -372,7 +382,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.6.1 workflow is complete. Review validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.7.0 workflow is complete. Review the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -404,6 +414,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         claim_trace_claim_count=trace_summary["claim_count"],
         claim_trace_validation_status=str(trace_summary["validation_status"]),
         claim_trace_validation_issue_count=trace_summary["validation_issue_count"],
+        scorecard_exists=bool(scorecard["present"]),
+        scorecard_overall_score=float(scorecard["overall_score"]),
+        scorecard_status=str(scorecard["overall_status"]),
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

@@ -220,9 +220,18 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 
 Released in v1.6.1 with claim trace freshness and link-integrity validation.
 
+## v1.7.0 — Reproduction readiness scorecard
+
+- [x] Add `openrepro scorecard`.
+- [x] Write `workspace/reproduction_scorecard.json` and `workspace/REPRODUCTION_SCORECARD.md`.
+- [x] Score workflow readiness across paper evidence, candidate review, data provenance, experiment specs, run evidence, quality gates, repeatability evidence, and claim trace health.
+- [x] Surface scorecard summaries in status, inspect, handoff, and evidence packages.
+- [x] Keep readiness scores limited to workflow evidence completeness rather than scientific reproduction success.
+
+Released in v1.7.0 with project-level readiness scorecards.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
 - Multi-agent task orchestration.
-- Reproduction scorecards.
 - Dataset and environment provenance tracking.

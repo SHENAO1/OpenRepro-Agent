@@ -131,7 +131,7 @@ def latest_run_dir(project_dir: Path) -> Path | None:
 
 
 def required_handoff_files() -> list[str]:
-    """Return all project-level handoff files required by v0.4.0."""
+    """Return all project-level handoff files required by the current workflow."""
     return [
         "PROJECT_CONTEXT.md",
         "PAPER_SUMMARY.md",
@@ -144,6 +144,7 @@ def required_handoff_files() -> list[str]:
         "ERROR_NOTES.md",
         "REPAIR_DRY_RUN.md",
         "RUN_LINEAGE.md",
+        "REPRODUCTION_SCORECARD.md",
         "EVIDENCE_PACKAGE.md",
         "NEXT_STEPS.md",
         "AGENT_HANDOFF.md",

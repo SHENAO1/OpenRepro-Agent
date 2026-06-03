@@ -70,6 +70,21 @@ def _repair_dry_run_block(project_dir: Path) -> str:
     )
 
 
+def _scorecard_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 readiness scorecard。运行 `openrepro scorecard <project>` 后会生成工程准备度摘要。"
+    return "\n".join(
+        [
+            f"- overall_score: {data.get('overall_score')}",
+            f"- overall_status: {data.get('overall_status')}",
+            f"- blocking_dimension_count: {data.get('blocking_dimension_count', 0)}",
+            f"- partial_dimension_count: {data.get('partial_dimension_count', 0)}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def generate_report(project_dir: Path) -> Path:
     """Generate reports/report.md."""
     project_dir = Path(project_dir)
@@ -88,6 +103,7 @@ def generate_report(project_dir: Path) -> Path:
     run_summary, metrics, api_summary = _latest_run_summary(project_dir)
     verified_block = _verified_candidates_block(project_dir)
     repair_block = _repair_dry_run_block(project_dir)
+    scorecard_block = _scorecard_block(project_dir)
 
     metrics_block = "无"
     if metrics is not None:
@@ -171,14 +187,18 @@ OpenRepro-Agent v{__version__}
 
 {repair_block}
 
-## 12. 当前局限
+## 12. Reproduction Readiness Scorecard 摘要
+
+{scorecard_block}
+
+## 13. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 13. 下一阶段建议
+## 14. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
