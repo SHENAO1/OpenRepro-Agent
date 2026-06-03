@@ -35,6 +35,7 @@ from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
+from .protocol_coverage import generate_protocol_coverage
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
@@ -596,6 +597,35 @@ def protocol_cmd(project_name: str = typer.Argument(..., help="Project directory
     _success("Reproduction protocol generated.")
 
 
+@app.command("protocol-coverage")
+def protocol_coverage_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate protocol coverage checks."""
+    project_dir = require_project(project_name)
+    coverage = generate_protocol_coverage(project_dir)
+    table = Table(title=f"Protocol Coverage: {project_name}")
+    table.add_column("Dimension")
+    table.add_column("Status")
+    table.add_column("Covered")
+    table.add_column("Total")
+    table.add_column("Coverage")
+    for item in coverage["dimensions"]:
+        table.add_row(
+            str(item["label"]),
+            str(item["status"]),
+            str(item["covered_count"]),
+            str(item["total_count"]),
+            str(item["coverage_percent"]),
+        )
+    console.print(table)
+    console.print(f"Status: {coverage['status']}")
+    console.print(f"Coverage score: {coverage['coverage_score']}")
+    console.print(f"Uncovered: {coverage['uncovered_count']}")
+    console.print(f"Top command: {coverage['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'protocol_coverage.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROTOCOL_COVERAGE.md'}")
+    _success("Protocol coverage generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1006,6 +1036,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Review unresolved": summary["review_decision_unresolved_item_count"],
         "Protocol": summary["protocol_status"],
         "Protocol blockers": summary["protocol_blocking_criterion_count"],
+        "Protocol coverage": summary["protocol_coverage_status"],
+        "Protocol uncovered": summary["protocol_coverage_uncovered_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1305,6 +1337,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Review unresolved": status.review_decision_unresolved_item_count,
         "Protocol": status.protocol_status,
         "Protocol blockers": status.protocol_blocking_criterion_count,
+        "Protocol coverage": status.protocol_coverage_status,
+        "Protocol uncovered": status.protocol_coverage_uncovered_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

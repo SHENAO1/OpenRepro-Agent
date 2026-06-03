@@ -18,6 +18,7 @@ from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .gaps import gaps_summary
 from .project_manager import get_status
+from .protocol_coverage import protocol_coverage_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
@@ -172,6 +173,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     review_board = review_board_summary(project_dir)
     review_decisions = review_decision_summary(project_dir)
     protocol = protocol_summary(project_dir)
+    protocol_coverage = protocol_coverage_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -267,6 +269,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "protocol_criterion_count": protocol["criterion_count"],
         "protocol_blocking_criterion_count": protocol["blocking_criterion_count"],
         "protocol_top_command": protocol["top_command"],
+        "protocol_coverage_status": protocol_coverage["status"],
+        "protocol_coverage_score": protocol_coverage["coverage_score"],
+        "protocol_coverage_uncovered_count": protocol_coverage["uncovered_count"],
+        "protocol_coverage_top_command": protocol_coverage["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

@@ -246,6 +246,11 @@ criteria from existing artifacts. They may say whether workflow criteria are
 blocked or ready, but they must not claim that the protocol has been executed
 successfully or that the paper has been scientifically reproduced.
 
+v1.10.1 adds `protocol_coverage.py`. Coverage should check whether protocol
+claims, data, experiments, runs, and acceptance criteria are linked to current
+workflow evidence. Coverage scores are engineering completeness signals only;
+they must not be framed as scientific reproduction scores.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

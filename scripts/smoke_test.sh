@@ -55,6 +55,7 @@ python -m openrepro.cli checkpoints "$PROJECT"
 python -m openrepro.cli advance "$PROJECT" --dry-run
 python -m openrepro.cli review-board "$PROJECT"
 python -m openrepro.cli protocol "$PROJECT"
+python -m openrepro.cli protocol-coverage "$PROJECT"
 python -m openrepro.cli report "$PROJECT"
 python -m openrepro.cli handoff "$PROJECT"
 python -m openrepro.cli evidence-package "$PROJECT" --zip

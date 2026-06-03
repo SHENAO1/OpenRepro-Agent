@@ -18,6 +18,7 @@ from .gaps import generate_reproduction_gaps
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
+from .protocol_coverage import generate_protocol_coverage
 from .quality_gate import quality_gate_summaries
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
@@ -52,6 +53,7 @@ WORKSPACE_ARTIFACTS = [
     "review_board.json",
     "review_decisions.json",
     "reproduction_protocol.json",
+    "protocol_coverage.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -95,6 +97,8 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "unresolved_item_count",
         "criterion_count",
         "blocking_criterion_count",
+        "coverage_score",
+        "uncovered_count",
     ]:
         if key in data:
             summary[key] = data.get(key)
@@ -284,6 +288,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     review_board = generate_review_board(project_dir)
     review_decisions = generate_review_decisions(project_dir)
     protocol = generate_reproduction_protocol(project_dir)
+    protocol_coverage = generate_protocol_coverage(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -391,6 +396,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "top_command": protocol.get("top_command"),
             "target_claim_count": len(protocol.get("target_claims", [])) if isinstance(protocol.get("target_claims"), list) else 0,
             "path": str(project_dir / "workspace" / "reproduction_protocol.json"),
+        },
+        "protocol_coverage": {
+            "schema_version": protocol_coverage.get("schema_version"),
+            "status": protocol_coverage.get("status"),
+            "coverage_score": protocol_coverage.get("coverage_score"),
+            "dimension_count": protocol_coverage.get("dimension_count"),
+            "uncovered_count": protocol_coverage.get("uncovered_count"),
+            "top_command": protocol_coverage.get("top_command"),
+            "path": str(project_dir / "workspace" / "protocol_coverage.json"),
         },
         "runs": runs,
         "lineage": {
@@ -518,6 +532,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - review_decision_unresolved_item_count: {package['review_decisions']['unresolved_item_count']}
 - protocol_status: {package['protocol']['status']}
 - protocol_blocking_criterion_count: {package['protocol']['blocking_criterion_count']}
+- protocol_coverage_status: {package['protocol_coverage']['status']}
+- protocol_coverage_uncovered_count: {package['protocol_coverage']['uncovered_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

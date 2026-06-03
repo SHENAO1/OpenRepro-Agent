@@ -290,6 +290,16 @@ Released in v1.9.1 with human review decision records.
 
 Released in v1.10.0 with workflow-level reproduction protocols.
 
+## v1.10.1 — Protocol coverage
+
+- [x] Add `openrepro protocol-coverage`.
+- [x] Write `workspace/protocol_coverage.json` and `workspace/PROTOCOL_COVERAGE.md`.
+- [x] Check target claim, data, experiment, run, and acceptance-criteria coverage.
+- [x] Surface protocol coverage status in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep coverage scores limited to workflow evidence completeness.
+
+Released in v1.10.1 with protocol coverage checks.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
