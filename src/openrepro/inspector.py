@@ -19,6 +19,7 @@ from .experiment_templates import inspect_experiment_scaffolds
 from .gaps import gaps_summary
 from .project_manager import get_status
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
+from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
 from .review_decisions import review_decision_summary
 from .scorecard import scorecard_summary
@@ -170,6 +171,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     advance = advance_summary(project_dir)
     review_board = review_board_summary(project_dir)
     review_decisions = review_decision_summary(project_dir)
+    protocol = protocol_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -261,6 +263,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "review_decision_closed_count": review_decisions["closed_count"],
         "review_decision_unresolved_item_count": review_decisions["unresolved_item_count"],
         "review_decision_top_command": review_decisions["top_command"],
+        "protocol_status": protocol["status"],
+        "protocol_criterion_count": protocol["criterion_count"],
+        "protocol_blocking_criterion_count": protocol["blocking_criterion_count"],
+        "protocol_top_command": protocol["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

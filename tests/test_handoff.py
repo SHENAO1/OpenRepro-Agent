@@ -37,6 +37,7 @@ def test_report_generates_report_md(tmp_path: Path):
     assert "Advance Plan 摘要" in text
     assert "Review Board 摘要" in text
     assert "Review Decisions 摘要" in text
+    assert "Reproduction Protocol 摘要" in text
     assert "Reproduction Readiness Scorecard 摘要" in text
     assert "Reproduction Gaps 摘要" in text
 
@@ -57,4 +58,5 @@ def test_handoff_generates_all_files(tmp_path: Path):
     assert (project / "handoff" / "ADVANCE_PLAN.md").exists()
     assert (project / "handoff" / "REVIEW_BOARD.md").exists()
     assert (project / "handoff" / "REVIEW_DECISIONS.md").exists()
+    assert (project / "handoff" / "REPRODUCTION_PROTOCOL.md").exists()
     assert (project / "handoff" / "REPRODUCTION_GAPS.md").exists()

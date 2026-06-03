@@ -148,6 +148,7 @@ def required_handoff_files() -> list[str]:
         "ADVANCE_PLAN.md",
         "REVIEW_BOARD.md",
         "REVIEW_DECISIONS.md",
+        "REPRODUCTION_PROTOCOL.md",
         "REPRODUCTION_SCORECARD.md",
         "REPRODUCTION_GAPS.md",
         "EVIDENCE_PACKAGE.md",

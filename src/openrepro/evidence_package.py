@@ -19,6 +19,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
 from .quality_gate import quality_gate_summaries
+from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import generate_review_decisions
 from .scorecard import generate_reproduction_scorecard
@@ -50,6 +51,7 @@ WORKSPACE_ARTIFACTS = [
     "advance_plan.json",
     "review_board.json",
     "review_decisions.json",
+    "reproduction_protocol.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -91,6 +93,8 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "decision_count",
         "closed_count",
         "unresolved_item_count",
+        "criterion_count",
+        "blocking_criterion_count",
     ]:
         if key in data:
             summary[key] = data.get(key)
@@ -279,6 +283,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     advance = generate_advance_plan(project_dir, dry_run=True)
     review_board = generate_review_board(project_dir)
     review_decisions = generate_review_decisions(project_dir)
+    protocol = generate_reproduction_protocol(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -377,6 +382,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "unresolved_item_count": review_decisions.get("unresolved_item_count"),
             "top_command": review_decisions.get("top_command"),
             "path": str(project_dir / "workspace" / "review_decisions.json"),
+        },
+        "protocol": {
+            "schema_version": protocol.get("schema_version"),
+            "status": protocol.get("status"),
+            "criterion_count": protocol.get("criterion_count"),
+            "blocking_criterion_count": protocol.get("blocking_criterion_count"),
+            "top_command": protocol.get("top_command"),
+            "target_claim_count": len(protocol.get("target_claims", [])) if isinstance(protocol.get("target_claims"), list) else 0,
+            "path": str(project_dir / "workspace" / "reproduction_protocol.json"),
         },
         "runs": runs,
         "lineage": {
@@ -502,6 +516,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - review_board_item_count: {package['review_board']['item_count']}
 - review_decision_status: {package['review_decisions']['status']}
 - review_decision_unresolved_item_count: {package['review_decisions']['unresolved_item_count']}
+- protocol_status: {package['protocol']['status']}
+- protocol_blocking_criterion_count: {package['protocol']['blocking_criterion_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

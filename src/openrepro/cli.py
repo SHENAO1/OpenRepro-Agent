@@ -39,6 +39,7 @@ from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
+from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
 from .run_compare import compare_runs
@@ -575,6 +576,26 @@ def review_decision_cmd(
     _success("Review decision recorded.")
 
 
+@app.command("protocol")
+def protocol_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a reproduction protocol."""
+    project_dir = require_project(project_name)
+    protocol = generate_reproduction_protocol(project_dir)
+    table = Table(title=f"Reproduction Protocol: {project_name}")
+    table.add_column("Criterion")
+    table.add_column("Status")
+    table.add_column("Suggested")
+    for item in protocol["acceptance_criteria"]:
+        table.add_row(str(item["label"]), str(item["status"]), str(item["suggested_command"]))
+    console.print(table)
+    console.print(f"Status: {protocol['status']}")
+    console.print(f"Blocking criteria: {protocol['blocking_criterion_count']}")
+    console.print(f"Top command: {protocol['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'reproduction_protocol.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPRODUCTION_PROTOCOL.md'}")
+    _success("Reproduction protocol generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -983,6 +1004,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Review items": summary["review_board_item_count"],
         "Review decisions": summary["review_decision_status"],
         "Review unresolved": summary["review_decision_unresolved_item_count"],
+        "Protocol": summary["protocol_status"],
+        "Protocol blockers": summary["protocol_blocking_criterion_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1280,6 +1303,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Review items": status.review_board_item_count,
         "Review decisions": status.review_decision_status,
         "Review unresolved": status.review_decision_unresolved_item_count,
+        "Protocol": status.protocol_status,
+        "Protocol blockers": status.protocol_blocking_criterion_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -61,6 +61,7 @@ python -m openrepro.cli todo $Project
 python -m openrepro.cli checkpoints $Project
 python -m openrepro.cli advance $Project --dry-run
 python -m openrepro.cli review-board $Project
+python -m openrepro.cli protocol $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip

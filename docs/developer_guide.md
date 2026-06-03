@@ -240,6 +240,12 @@ closed item means the review prompt was handled or rejected; it must not be
 treated as formula validation, data validation, code correctness, or scientific
 reproduction evidence.
 
+v1.10.0 adds `reproduction_protocol.py`. Protocols should synthesize target
+claims, required data, required experiments, required runs, and acceptance
+criteria from existing artifacts. They may say whether workflow criteria are
+blocked or ready, but they must not claim that the protocol has been executed
+successfully or that the paper has been scientifically reproduced.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

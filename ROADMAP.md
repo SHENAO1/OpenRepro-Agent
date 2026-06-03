@@ -280,6 +280,16 @@ Released in v1.9.0 with a consolidated human review board.
 
 Released in v1.9.1 with human review decision records.
 
+## v1.10.0 — Reproduction protocol
+
+- [x] Add `openrepro protocol`.
+- [x] Write `workspace/reproduction_protocol.json` and `workspace/REPRODUCTION_PROTOCOL.md`.
+- [x] Summarize target claims, required data, required experiments, and required runs.
+- [x] Define acceptance criteria from claim trace, data, specs, runs, quality gates, scorecard, gaps, and review workflow state.
+- [x] Surface protocol status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.10.0 with workflow-level reproduction protocols.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
