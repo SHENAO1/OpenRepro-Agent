@@ -40,6 +40,7 @@ from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .review_board import generate_review_board
+from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
 
@@ -533,6 +534,47 @@ def review_board_cmd(project_name: str = typer.Argument(..., help="Project direc
     _success("Review board generated.")
 
 
+@app.command("review-decision")
+def review_decision_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    item_id: str = typer.Option(..., "--item-id", help="Review board item id to decide."),
+    decision: str = typer.Option(..., "--decision", help="Decision: resolved, deferred, rejected, or needs_followup."),
+    reviewer: str = typer.Option(..., "--reviewer", help="Human reviewer name or role."),
+    note: str = typer.Option("", "--note", help="Decision note."),
+    followup_command: str | None = typer.Option(None, "--followup-command", help="Optional follow-up command."),
+) -> None:
+    """Record a human decision for a review board item."""
+    project_dir = require_project(project_name)
+    try:
+        result = record_review_decision(
+            project_dir,
+            item_id=item_id,
+            decision=decision,
+            reviewer=reviewer,
+            note=note,
+            followup_command=followup_command,
+        )
+    except Exception as exc:
+        allowed = ", ".join(sorted(ALLOWED_REVIEW_DECISIONS))
+        _warn(f"{exc} Allowed decisions: {allowed}")
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Review Decisions: {project_name}")
+    table.add_column("Item")
+    table.add_column("Decision")
+    table.add_column("Reviewer")
+    table.add_column("Closes")
+    for item in result["latest_decisions"]:
+        table.add_row(str(item["item_id"]), str(item["decision"]), str(item["reviewer"]), str(item["closes_item"]))
+    console.print(table)
+    console.print(f"Status: {result['status']}")
+    console.print(f"Decisions: {result['decision_count']}")
+    console.print(f"Unresolved items: {result['unresolved_item_count']}")
+    console.print(f"Top command: {result['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'review_decisions.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REVIEW_DECISIONS.md'}")
+    _success("Review decision recorded.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -939,6 +981,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Advance actions": summary["advance_action_count"],
         "Review board": summary["review_board_status"],
         "Review items": summary["review_board_item_count"],
+        "Review decisions": summary["review_decision_status"],
+        "Review unresolved": summary["review_decision_unresolved_item_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1234,6 +1278,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Advance actions": status.advance_action_count,
         "Review board": status.review_board_status,
         "Review items": status.review_board_item_count,
+        "Review decisions": status.review_decision_status,
+        "Review unresolved": status.review_decision_unresolved_item_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

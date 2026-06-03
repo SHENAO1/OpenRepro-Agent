@@ -19,6 +19,7 @@ from .experiment_templates import inspect_experiment_scaffolds
 from .gaps import gaps_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
 from .review_board import review_board_summary
+from .review_decisions import review_decision_summary
 from .scorecard import scorecard_summary
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
@@ -79,6 +80,12 @@ class ProjectStatus:
     review_board_status: str
     review_board_item_count: int
     review_board_top_command: str | None
+    review_decisions_exists: bool
+    review_decision_status: str
+    review_decision_count: int
+    review_decision_closed_count: int
+    review_decision_unresolved_item_count: int
+    review_decision_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -325,6 +332,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             review_board_status="missing",
             review_board_item_count=0,
             review_board_top_command=None,
+            review_decisions_exists=False,
+            review_decision_status="missing",
+            review_decision_count=0,
+            review_decision_closed_count=0,
+            review_decision_unresolved_item_count=0,
+            review_decision_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -364,6 +377,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     checkpoints = checkpoint_summary(project_dir)
     advance = advance_summary(project_dir)
     review_board = review_board_summary(project_dir)
+    review_decisions = review_decision_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -420,8 +434,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro advance {project_dir} --dry-run"
     elif not review_board["present"]:
         next_step = f"Run: openrepro review-board {project_dir}"
-    elif review_board["item_count"] > 0:
-        command = str(review_board["top_command"] or f"openrepro review-board {project_dir}")
+    elif review_board["item_count"] > 0 and review_decisions["unresolved_item_count"] > 0:
+        command = str(review_decisions["top_command"] or f"openrepro review-decision {project_dir} --item-id <item_id> --decision needs_followup --reviewer <name>")
         next_step = f"Run: {command}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
@@ -432,7 +446,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.9.0 workflow is complete. Review the human review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.9.1 workflow is complete. Review the human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -481,6 +495,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         review_board_status=str(review_board["status"]),
         review_board_item_count=review_board["item_count"],
         review_board_top_command=review_board["top_command"],
+        review_decisions_exists=bool(review_decisions["present"]),
+        review_decision_status=str(review_decisions["status"]),
+        review_decision_count=review_decisions["decision_count"],
+        review_decision_closed_count=review_decisions["closed_count"],
+        review_decision_unresolved_item_count=review_decisions["unresolved_item_count"],
+        review_decision_top_command=review_decisions["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

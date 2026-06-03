@@ -20,6 +20,7 @@ from .gaps import gaps_summary
 from .project_manager import get_status
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .review_board import review_board_summary
+from .review_decisions import review_decision_summary
 from .scorecard import scorecard_summary
 from .utils import iso_now, read_json, write_json
 
@@ -168,6 +169,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     checkpoints = checkpoint_summary(project_dir)
     advance = advance_summary(project_dir)
     review_board = review_board_summary(project_dir)
+    review_decisions = review_decision_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -254,6 +256,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "review_board_high_count": review_board["high_count"],
         "review_board_top_item": review_board["top_item"],
         "review_board_top_command": review_board["top_command"],
+        "review_decision_status": review_decisions["status"],
+        "review_decision_count": review_decisions["decision_count"],
+        "review_decision_closed_count": review_decisions["closed_count"],
+        "review_decision_unresolved_item_count": review_decisions["unresolved_item_count"],
+        "review_decision_top_command": review_decisions["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

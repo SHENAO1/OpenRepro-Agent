@@ -270,6 +270,16 @@ Released in v1.8.1 with guided dry-run advance plans.
 
 Released in v1.9.0 with a consolidated human review board.
 
+## v1.9.1 — Review decision loop
+
+- [x] Add `openrepro review-decision`.
+- [x] Write `workspace/review_decisions.json` and `workspace/REVIEW_DECISIONS.md`.
+- [x] Support `resolved`, `rejected`, `deferred`, and `needs_followup` decisions.
+- [x] Track unresolved review board items after the latest human decision.
+- [x] Surface review decision status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.9.1 with human review decision records.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

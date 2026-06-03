@@ -20,6 +20,7 @@ from .lineage import generate_run_lineage
 from .project_manager import get_status
 from .quality_gate import quality_gate_summaries
 from .review_board import generate_review_board
+from .review_decisions import generate_review_decisions
 from .scorecard import generate_reproduction_scorecard
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
@@ -48,6 +49,7 @@ WORKSPACE_ARTIFACTS = [
     "workflow_checkpoints.json",
     "advance_plan.json",
     "review_board.json",
+    "review_decisions.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -86,6 +88,9 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "critical_count",
         "high_count",
         "top_command",
+        "decision_count",
+        "closed_count",
+        "unresolved_item_count",
     ]:
         if key in data:
             summary[key] = data.get(key)
@@ -273,6 +278,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     checkpoints = generate_workflow_checkpoints(project_dir)
     advance = generate_advance_plan(project_dir, dry_run=True)
     review_board = generate_review_board(project_dir)
+    review_decisions = generate_review_decisions(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -360,6 +366,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "high_count": review_board.get("high_count"),
             "top_command": review_board.get("top_command"),
             "path": str(project_dir / "workspace" / "review_board.json"),
+        },
+        "review_decisions": {
+            "schema_version": review_decisions.get("schema_version"),
+            "status": review_decisions.get("status"),
+            "decision_count": review_decisions.get("decision_count"),
+            "closed_count": review_decisions.get("closed_count"),
+            "followup_count": review_decisions.get("followup_count"),
+            "deferred_count": review_decisions.get("deferred_count"),
+            "unresolved_item_count": review_decisions.get("unresolved_item_count"),
+            "top_command": review_decisions.get("top_command"),
+            "path": str(project_dir / "workspace" / "review_decisions.json"),
         },
         "runs": runs,
         "lineage": {
@@ -483,6 +500,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - advance_plan_action_count: {package['advance_plan']['action_count']}
 - review_board_status: {package['review_board']['status']}
 - review_board_item_count: {package['review_board']['item_count']}
+- review_decision_status: {package['review_decisions']['status']}
+- review_decision_unresolved_item_count: {package['review_decisions']['unresolved_item_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

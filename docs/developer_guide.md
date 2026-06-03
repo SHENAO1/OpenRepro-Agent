@@ -234,6 +234,12 @@ must not mark formulas, data, code, or scientific outputs as validated. A clear
 board means no open workflow prompts were detected, not that the paper was
 reproduced.
 
+v1.9.1 adds `review_decisions.py`. Review decisions should record human
+handling of review board items with reviewer notes and explicit status. A
+closed item means the review prompt was handled or rejected; it must not be
+treated as formula validation, data validation, code correctness, or scientific
+reproduction evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
