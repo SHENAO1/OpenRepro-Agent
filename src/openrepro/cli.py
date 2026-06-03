@@ -39,6 +39,7 @@ from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
+from .review_board import generate_review_board
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
 
@@ -508,6 +509,30 @@ def advance_cmd(
     _success("Advance dry-run plan generated.")
 
 
+@app.command("review-board")
+def review_board_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a human review board."""
+    project_dir = require_project(project_name)
+    board = generate_review_board(project_dir)
+    table = Table(title=f"Review Board: {project_name}")
+    table.add_column("Priority")
+    table.add_column("Source")
+    table.add_column("Item")
+    table.add_column("Suggested")
+    if board["items"]:
+        for item in board["items"]:
+            table.add_row(str(item["priority"]), str(item["source"]), str(item["title"]), str(item["suggested_command"]))
+    else:
+        table.add_row("none", "workflow", "No open human review items found.", "")
+    console.print(table)
+    console.print(f"Status: {board['status']}")
+    console.print(f"Items: {board['item_count']}")
+    console.print(f"Top command: {board['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'review_board.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REVIEW_BOARD.md'}")
+    _success("Review board generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -912,6 +937,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Next checkpoint": summary["checkpoint_next_checkpoint"],
         "Advance plan": summary["advance_status"],
         "Advance actions": summary["advance_action_count"],
+        "Review board": summary["review_board_status"],
+        "Review items": summary["review_board_item_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1205,6 +1232,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Next checkpoint": status.checkpoint_next_checkpoint,
         "Advance plan": status.advance_status,
         "Advance actions": status.advance_action_count,
+        "Review board": status.review_board_status,
+        "Review items": status.review_board_item_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

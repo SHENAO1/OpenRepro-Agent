@@ -260,6 +260,16 @@ Released in v1.8.0 with normalized workflow checkpoint status.
 
 Released in v1.8.1 with guided dry-run advance plans.
 
+## v1.9.0 — Human review board
+
+- [x] Add `openrepro review-board`.
+- [x] Write `workspace/review_board.json` and `workspace/REVIEW_BOARD.md`.
+- [x] Consolidate candidate, data, spec, claim trace, scorecard, gap, and advance review prompts.
+- [x] Surface review board status in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep review board output advisory; it does not prove scientific reproduction success.
+
+Released in v1.9.0 with a consolidated human review board.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

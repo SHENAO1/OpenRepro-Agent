@@ -227,6 +227,13 @@ must not execute commands, fill placeholder values, run experiments, repair
 artifacts, or generate scientific results. The CLI should require
 `advance --dry-run` until an explicitly reviewed apply mode exists.
 
+v1.9.0 adds `review_board.py`. Review boards should aggregate existing human
+review prompts into a single queue. They may point to candidate review, data,
+experiment spec, claim trace, scorecard, gap, or advance-plan commands, but they
+must not mark formulas, data, code, or scientific outputs as validated. A clear
+board means no open workflow prompts were detected, not that the paper was
+reproduced.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -18,6 +18,7 @@ from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .gaps import gaps_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
+from .review_board import review_board_summary
 from .scorecard import scorecard_summary
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
 
@@ -74,6 +75,10 @@ class ProjectStatus:
     advance_status: str
     advance_action_count: int
     advance_top_command: str | None
+    review_board_exists: bool
+    review_board_status: str
+    review_board_item_count: int
+    review_board_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -316,6 +321,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             advance_status="missing",
             advance_action_count=0,
             advance_top_command=None,
+            review_board_exists=False,
+            review_board_status="missing",
+            review_board_item_count=0,
+            review_board_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -354,6 +363,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     gaps = gaps_summary(project_dir)
     checkpoints = checkpoint_summary(project_dir)
     advance = advance_summary(project_dir)
+    review_board = review_board_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -408,6 +418,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro checkpoints {project_dir}"
     elif not advance["present"]:
         next_step = f"Run: openrepro advance {project_dir} --dry-run"
+    elif not review_board["present"]:
+        next_step = f"Run: openrepro review-board {project_dir}"
+    elif review_board["item_count"] > 0:
+        command = str(review_board["top_command"] or f"openrepro review-board {project_dir}")
+        next_step = f"Run: {command}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -417,7 +432,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.8.1 workflow is complete. Review the advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.9.0 workflow is complete. Review the human review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -462,6 +477,10 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         advance_status=str(advance["status"]),
         advance_action_count=advance["action_count"],
         advance_top_command=advance["top_command"],
+        review_board_exists=bool(review_board["present"]),
+        review_board_status=str(review_board["status"]),
+        review_board_item_count=review_board["item_count"],
+        review_board_top_command=review_board["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

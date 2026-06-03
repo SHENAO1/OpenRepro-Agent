@@ -19,6 +19,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
 from .quality_gate import quality_gate_summaries
+from .review_board import generate_review_board
 from .scorecard import generate_reproduction_scorecard
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
@@ -46,6 +47,7 @@ WORKSPACE_ARTIFACTS = [
     "reproduction_gaps.json",
     "workflow_checkpoints.json",
     "advance_plan.json",
+    "review_board.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -80,6 +82,10 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "invalid_count",
         "all_metrics_equal",
         "action_count",
+        "item_count",
+        "critical_count",
+        "high_count",
+        "top_command",
     ]:
         if key in data:
             summary[key] = data.get(key)
@@ -266,6 +272,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     gaps = generate_reproduction_gaps(project_dir)
     checkpoints = generate_workflow_checkpoints(project_dir)
     advance = generate_advance_plan(project_dir, dry_run=True)
+    review_board = generate_review_board(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -344,6 +351,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "top_command": advance.get("top_command"),
             "source": advance.get("source"),
             "path": str(project_dir / "workspace" / "advance_plan.json"),
+        },
+        "review_board": {
+            "schema_version": review_board.get("schema_version"),
+            "status": review_board.get("status"),
+            "item_count": review_board.get("item_count"),
+            "critical_count": review_board.get("critical_count"),
+            "high_count": review_board.get("high_count"),
+            "top_command": review_board.get("top_command"),
+            "path": str(project_dir / "workspace" / "review_board.json"),
         },
         "runs": runs,
         "lineage": {
@@ -465,6 +481,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - checkpoint_next_checkpoint: {package['checkpoints']['next_checkpoint']}
 - advance_plan_status: {package['advance_plan']['status']}
 - advance_plan_action_count: {package['advance_plan']['action_count']}
+- review_board_status: {package['review_board']['status']}
+- review_board_item_count: {package['review_board']['item_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

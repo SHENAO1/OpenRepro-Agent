@@ -146,6 +146,7 @@ def required_handoff_files() -> list[str]:
         "RUN_LINEAGE.md",
         "WORKFLOW_CHECKPOINTS.md",
         "ADVANCE_PLAN.md",
+        "REVIEW_BOARD.md",
         "REPRODUCTION_SCORECARD.md",
         "REPRODUCTION_GAPS.md",
         "EVIDENCE_PACKAGE.md",
