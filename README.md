@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.8.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.8.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.8.0 workflow is:
+The v1.8.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -264,6 +264,13 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Normalize source, analysis, planning, reviews, data, specs, runs, gates, lineage, claim trace, scorecard, and gaps into `complete`, `partial`, `blocked`, or `missing`.
 - Surface checkpoint status and next checkpoint in `inspect`, `status`, reports, handoff, and evidence packages.
 
+## What v1.8.1 adds
+
+- Add `openrepro advance --dry-run` for guided next-step previews.
+- Write `workspace/advance_plan.json` and `workspace/ADVANCE_PLAN.md`.
+- Select the top next command from open gaps or the next incomplete checkpoint.
+- Keep advance plans as dry-run previews only; they do not execute commands or create scientific evidence.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -353,6 +360,7 @@ openrepro scorecard boc_demo
 openrepro gaps boc_demo
 openrepro todo boc_demo
 openrepro checkpoints boc_demo
+openrepro advance boc_demo --dry-run
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -741,6 +749,19 @@ Checkpoints map the major reproduction workflow stages to `complete`,
 command. They are workflow progress markers only, not proof of scientific
 reproduction.
 
+### `openrepro advance <project_name> --dry-run`
+
+Generates a guided advance plan and writes:
+
+```text
+workspace/advance_plan.json
+workspace/ADVANCE_PLAN.md
+```
+
+The plan previews the next command selected from open gaps or the next
+incomplete checkpoint. It never executes the command; commands with placeholders
+such as `<id>` still require human input.
+
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
 Runs the same verified experiment scaffold again and records another normal
@@ -1118,12 +1139,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.7.0: workflow readiness scorecards across reproduction evidence dimensions.
 - v1.7.1: actionable reproduction gaps and todo artifacts.
 - v1.8.0: workflow checkpoint engine for normalized stage status.
+- v1.8.1: guided advance dry-run plans.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.8.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.8.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__
+from .advance import generate_advance_plan
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
@@ -478,6 +479,35 @@ def checkpoints_cmd(project_name: str = typer.Argument(..., help="Project direct
     _success("Workflow checkpoints generated.")
 
 
+@app.command("advance")
+def advance_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview the next workflow command without executing it."),
+) -> None:
+    """Preview the next workflow advance command."""
+    if not dry_run:
+        _warn("Use --dry-run to preview the next workflow command.")
+        raise typer.Exit(1)
+    project_dir = require_project(project_name)
+    plan = generate_advance_plan(project_dir, dry_run=True)
+    table = Table(title=f"Advance Plan: {project_name}")
+    table.add_column("Action")
+    table.add_column("Source")
+    table.add_column("Command")
+    table.add_column("Will Execute")
+    if plan["actions"]:
+        for item in plan["actions"]:
+            table.add_row(str(item["action_id"]), str(item["source"]), str(item["command"]), str(item["will_execute"]))
+    else:
+        table.add_row("none", "workflow", "", "False")
+    console.print(table)
+    console.print(f"Status: {plan['status']}")
+    console.print(f"Top command: {plan['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'advance_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ADVANCE_PLAN.md'}")
+    _success("Advance dry-run plan generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -880,6 +910,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Gap status": summary["gaps_status"],
         "Checkpoint status": summary["checkpoint_status"],
         "Next checkpoint": summary["checkpoint_next_checkpoint"],
+        "Advance plan": summary["advance_status"],
+        "Advance actions": summary["advance_action_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1171,6 +1203,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Gap status": status.gaps_status,
         "Checkpoint status": status.checkpoint_status,
         "Next checkpoint": status.checkpoint_next_checkpoint,
+        "Advance plan": status.advance_status,
+        "Advance actions": status.advance_action_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

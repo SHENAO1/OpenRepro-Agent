@@ -7,6 +7,7 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
+from .advance import generate_advance_plan
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
 from .claim_trace import generate_claim_trace, validate_claim_trace
@@ -44,6 +45,7 @@ WORKSPACE_ARTIFACTS = [
     "reproduction_scorecard.json",
     "reproduction_gaps.json",
     "workflow_checkpoints.json",
+    "advance_plan.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -263,6 +265,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     scorecard = generate_reproduction_scorecard(project_dir)
     gaps = generate_reproduction_gaps(project_dir)
     checkpoints = generate_workflow_checkpoints(project_dir)
+    advance = generate_advance_plan(project_dir, dry_run=True)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -332,6 +335,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "next_checkpoint": checkpoints.get("next_checkpoint"),
             "next_command": checkpoints.get("next_command"),
             "path": str(project_dir / "workspace" / "workflow_checkpoints.json"),
+        },
+        "advance_plan": {
+            "schema_version": advance.get("schema_version"),
+            "status": advance.get("status"),
+            "dry_run": advance.get("dry_run"),
+            "action_count": advance.get("action_count"),
+            "top_command": advance.get("top_command"),
+            "source": advance.get("source"),
+            "path": str(project_dir / "workspace" / "advance_plan.json"),
         },
         "runs": runs,
         "lineage": {
@@ -451,6 +463,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - gaps_open_count: {package['gaps']['open_count']}
 - checkpoint_status: {package['checkpoints']['status']}
 - checkpoint_next_checkpoint: {package['checkpoints']['next_checkpoint']}
+- advance_plan_status: {package['advance_plan']['status']}
+- advance_plan_action_count: {package['advance_plan']['action_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

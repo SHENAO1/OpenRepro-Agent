@@ -250,6 +250,16 @@ Released in v1.7.1 with actionable workflow gap artifacts.
 
 Released in v1.8.0 with normalized workflow checkpoint status.
 
+## v1.8.1 — Guided advance dry-run
+
+- [x] Add `openrepro advance --dry-run`.
+- [x] Write `workspace/advance_plan.json` and `workspace/ADVANCE_PLAN.md`.
+- [x] Select the next command from open gaps or the next incomplete checkpoint.
+- [x] Keep advance mode non-executing and explicit about placeholder commands.
+- [x] Surface advance plan status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.8.1 with guided dry-run advance plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

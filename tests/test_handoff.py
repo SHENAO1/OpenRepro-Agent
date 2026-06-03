@@ -34,6 +34,7 @@ def test_report_generates_report_md(tmp_path: Path):
     assert "Verified Candidate 审批摘要" in text
     assert "Repair Dry-Run 摘要" in text
     assert "Workflow Checkpoints 摘要" in text
+    assert "Advance Plan 摘要" in text
     assert "Reproduction Readiness Scorecard 摘要" in text
     assert "Reproduction Gaps 摘要" in text
 
@@ -51,4 +52,5 @@ def test_handoff_generates_all_files(tmp_path: Path):
     assert (project / "handoff" / "VERIFIED_CANDIDATES.md").exists()
     assert (project / "handoff" / "REPAIR_DRY_RUN.md").exists()
     assert (project / "handoff" / "WORKFLOW_CHECKPOINTS.md").exists()
+    assert (project / "handoff" / "ADVANCE_PLAN.md").exists()
     assert (project / "handoff" / "REPRODUCTION_GAPS.md").exists()

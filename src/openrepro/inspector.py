@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .advance import advance_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
@@ -164,6 +165,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     scorecard = scorecard_summary(project_dir)
     gaps = gaps_summary(project_dir)
     checkpoints = checkpoint_summary(project_dir)
+    advance = advance_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -241,6 +243,9 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "checkpoint_missing_count": checkpoints["missing_count"],
         "checkpoint_next_checkpoint": checkpoints["next_checkpoint"],
         "checkpoint_next_command": checkpoints["next_command"],
+        "advance_status": advance["status"],
+        "advance_action_count": advance["action_count"],
+        "advance_top_command": advance["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

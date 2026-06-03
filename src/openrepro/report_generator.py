@@ -103,6 +103,22 @@ def _checkpoint_block(project_dir: Path) -> str:
     )
 
 
+def _advance_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "advance_plan.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 advance plan。运行 `openrepro advance <project> --dry-run` 后会生成推进计划。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- dry_run: {data.get('dry_run')}",
+            f"- action_count: {data.get('action_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- source: {data.get('source')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -138,6 +154,7 @@ def generate_report(project_dir: Path) -> Path:
     verified_block = _verified_candidates_block(project_dir)
     repair_block = _repair_dry_run_block(project_dir)
     checkpoint_block = _checkpoint_block(project_dir)
+    advance_block = _advance_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -227,22 +244,26 @@ OpenRepro-Agent v{__version__}
 
 {checkpoint_block}
 
-## 13. Reproduction Readiness Scorecard 摘要
+## 13. Advance Plan 摘要
+
+{advance_block}
+
+## 14. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 14. Reproduction Gaps 摘要
+## 15. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 15. 当前局限
+## 16. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 16. 下一阶段建议
+## 17. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

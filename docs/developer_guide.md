@@ -221,6 +221,12 @@ point to a single next checkpoint plus command. Checkpoints are allowed to read
 existing summaries, but they should not generate scientific evidence, run
 experiments, or imply that checkpoint completion equals paper reproduction.
 
+v1.8.1 adds `advance.py`. Advance plans should be dry-run previews only. They
+may select a command from open gaps or the next incomplete checkpoint, but they
+must not execute commands, fill placeholder values, run experiments, repair
+artifacts, or generate scientific results. The CLI should require
+`advance --dry-run` until an explicitly reviewed apply mode exists.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
