@@ -215,6 +215,12 @@ but should avoid evaluating generated evidence packages directly to prevent
 self-referential freshness loops. Closing gaps is workflow housekeeping, not a
 scientific reproduction claim.
 
+v1.8.0 adds `checkpoints.py`. Workflow checkpoints should normalize major
+project stages into `complete`, `partial`, `blocked`, or `missing`, and should
+point to a single next checkpoint plus command. Checkpoints are allowed to read
+existing summaries, but they should not generate scientific evidence, run
+experiments, or imply that checkpoint completion equals paper reproduction.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -58,6 +58,7 @@ python -m openrepro.cli benchmark-suite --suite benchmarks/sample_suite.json --p
 python -m openrepro.cli benchmark-index
 python -m openrepro.cli gaps $Project
 python -m openrepro.cli todo $Project
+python -m openrepro.cli checkpoints $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip

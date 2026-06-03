@@ -240,6 +240,16 @@ Released in v1.7.0 with project-level readiness scorecards.
 
 Released in v1.7.1 with actionable workflow gap artifacts.
 
+## v1.8.0 — Workflow checkpoint engine
+
+- [x] Add `openrepro checkpoints`.
+- [x] Write `workspace/workflow_checkpoints.json` and `workspace/WORKFLOW_CHECKPOINTS.md`.
+- [x] Normalize major workflow stages into `complete`, `partial`, `blocked`, or `missing`.
+- [x] Expose the next checkpoint and suggested command.
+- [x] Surface checkpoint status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.8.0 with normalized workflow checkpoint status.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

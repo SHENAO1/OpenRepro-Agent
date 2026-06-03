@@ -8,6 +8,7 @@ from typing import Any
 
 from . import __version__
 from .artifact_manager import latest_run_dir, required_handoff_files
+from .checkpoints import checkpoint_summary
 from .claim_trace import claim_trace_summary
 from .config import create_project_config, load_project_config, save_project_config
 from .data_registry import data_index_summary
@@ -65,6 +66,9 @@ class ProjectStatus:
     gaps_exists: bool
     gaps_open_count: int
     gaps_status: str
+    checkpoint_exists: bool
+    checkpoint_status: str
+    checkpoint_next_checkpoint: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -300,6 +304,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             gaps_exists=False,
             gaps_open_count=0,
             gaps_status="missing",
+            checkpoint_exists=False,
+            checkpoint_status="missing",
+            checkpoint_next_checkpoint=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -336,6 +343,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     trace_summary = claim_trace_summary(project_dir)
     scorecard = scorecard_summary(project_dir)
     gaps = gaps_summary(project_dir)
+    checkpoints = checkpoint_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -381,6 +389,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro validate-claims {project_dir}"
     elif not scorecard["present"]:
         next_step = f"Run: openrepro scorecard {project_dir}"
+    elif not gaps["present"]:
+        next_step = f"Run: openrepro gaps {project_dir}"
+    elif gaps["open_count"] > 0:
+        command = str(gaps["top_suggested_command"] or f"openrepro gaps {project_dir}")
+        next_step = f"Run: {command}"
+    elif not checkpoints["present"]:
+        next_step = f"Run: openrepro checkpoints {project_dir}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -389,13 +404,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro evidence-package {project_dir}"
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
-    elif not gaps["present"]:
-        next_step = f"Run: openrepro gaps {project_dir}"
-    elif gaps["open_count"] > 0:
-        command = str(gaps["top_suggested_command"] or f"openrepro gaps {project_dir}")
-        next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.7.1 workflow is complete. Review reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.8.0 workflow is complete. Review workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -433,6 +443,9 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         gaps_exists=bool(gaps["present"]),
         gaps_open_count=gaps["open_count"],
         gaps_status=str(gaps["status"]),
+        checkpoint_exists=bool(checkpoints["present"]),
+        checkpoint_status=str(checkpoints["status"]),
+        checkpoint_next_checkpoint=checkpoints["next_checkpoint"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

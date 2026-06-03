@@ -14,6 +14,7 @@ from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
+from .checkpoints import generate_workflow_checkpoints
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
@@ -457,6 +458,26 @@ def todo_cmd(project_name: str = typer.Argument(..., help="Project directory."))
     _success("Reproduction to-dos generated.")
 
 
+@app.command("checkpoints")
+def checkpoints_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate normalized workflow checkpoints."""
+    project_dir = require_project(project_name)
+    checkpoints = generate_workflow_checkpoints(project_dir)
+    table = Table(title=f"Workflow Checkpoints: {project_name}")
+    table.add_column("Checkpoint")
+    table.add_column("Status")
+    table.add_column("Next")
+    for item in checkpoints["checkpoints"]:
+        table.add_row(str(item["label"]), str(item["status"]), str(item.get("next_command") or ""))
+    console.print(table)
+    console.print(f"Status: {checkpoints['status']}")
+    console.print(f"Next checkpoint: {checkpoints['next_checkpoint']}")
+    console.print(f"Next command: {checkpoints['next_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'workflow_checkpoints.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'WORKFLOW_CHECKPOINTS.md'}")
+    _success("Workflow checkpoints generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -857,6 +878,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Scorecard status": summary["scorecard_status"],
         "Open gaps": summary["gaps_open_count"],
         "Gap status": summary["gaps_status"],
+        "Checkpoint status": summary["checkpoint_status"],
+        "Next checkpoint": summary["checkpoint_next_checkpoint"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1146,6 +1169,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Scorecard status": status.scorecard_status,
         "Open gaps": status.gaps_open_count,
         "Gap status": status.gaps_status,
+        "Checkpoint status": status.checkpoint_status,
+        "Next checkpoint": status.checkpoint_next_checkpoint,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

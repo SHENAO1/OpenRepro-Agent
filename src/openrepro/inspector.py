@@ -8,6 +8,7 @@ from typing import Any
 
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
+from .checkpoints import checkpoint_summary
 from .claim_trace import claim_trace_summary
 from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
@@ -162,6 +163,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     trace_summary = claim_trace_summary(project_dir)
     scorecard = scorecard_summary(project_dir)
     gaps = gaps_summary(project_dir)
+    checkpoints = checkpoint_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -232,6 +234,13 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "gaps_critical_count": gaps["critical_count"],
         "gaps_high_count": gaps["high_count"],
         "gaps_top_suggested_command": gaps["top_suggested_command"],
+        "checkpoint_status": checkpoints["status"],
+        "checkpoint_complete_count": checkpoints["complete_count"],
+        "checkpoint_blocked_count": checkpoints["blocked_count"],
+        "checkpoint_partial_count": checkpoints["partial_count"],
+        "checkpoint_missing_count": checkpoints["missing_count"],
+        "checkpoint_next_checkpoint": checkpoints["next_checkpoint"],
+        "checkpoint_next_command": checkpoints["next_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

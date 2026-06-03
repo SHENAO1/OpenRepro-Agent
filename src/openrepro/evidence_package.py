@@ -8,6 +8,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
+from .checkpoints import generate_workflow_checkpoints
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
@@ -42,6 +43,7 @@ WORKSPACE_ARTIFACTS = [
     "claim_trace_validation.json",
     "reproduction_scorecard.json",
     "reproduction_gaps.json",
+    "workflow_checkpoints.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -257,10 +259,11 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
 
     claim_trace = generate_claim_trace(project_dir)
     claim_trace_validation = validate_claim_trace(project_dir)
+    lineage = generate_run_lineage(project_dir)
     scorecard = generate_reproduction_scorecard(project_dir)
     gaps = generate_reproduction_gaps(project_dir)
+    checkpoints = generate_workflow_checkpoints(project_dir)
     inspect_summary = inspect_project(project_dir)
-    lineage = generate_run_lineage(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
     workspace_artifacts = _workspace_artifacts(project_dir)
@@ -318,6 +321,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "high_count": gaps.get("high_count"),
             "top_suggested_command": gaps.get("top_suggested_command"),
             "path": str(project_dir / "workspace" / "reproduction_gaps.json"),
+        },
+        "checkpoints": {
+            "schema_version": checkpoints.get("schema_version"),
+            "status": checkpoints.get("status"),
+            "complete_count": checkpoints.get("complete_count"),
+            "blocked_count": checkpoints.get("blocked_count"),
+            "partial_count": checkpoints.get("partial_count"),
+            "missing_count": checkpoints.get("missing_count"),
+            "next_checkpoint": checkpoints.get("next_checkpoint"),
+            "next_command": checkpoints.get("next_command"),
+            "path": str(project_dir / "workspace" / "workflow_checkpoints.json"),
         },
         "runs": runs,
         "lineage": {
@@ -435,6 +449,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}
 - gaps_open_count: {package['gaps']['open_count']}
+- checkpoint_status: {package['checkpoints']['status']}
+- checkpoint_next_checkpoint: {package['checkpoints']['next_checkpoint']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}
