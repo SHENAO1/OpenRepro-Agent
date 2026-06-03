@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.7.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.7.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.7.0 workflow is:
+The v1.7.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -250,6 +250,13 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Score paper evidence, candidate review, data provenance, experiment specs, run evidence, quality gates, repeatability evidence, and claim trace health.
 - Surface readiness scorecard summaries in `inspect`, `status`, handoff, and evidence packages.
 
+## What v1.7.1 adds
+
+- Add `openrepro gaps` and `openrepro todo` for actionable reproduction workflow gaps.
+- Write `workspace/reproduction_gaps.json` and `workspace/REPRODUCTION_GAPS.md`.
+- Convert missing or weak workflow evidence into severity-ranked suggested commands.
+- Surface open gap counts in `inspect`, `status`, handoff, reports, and evidence packages.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -336,6 +343,8 @@ openrepro lineage boc_demo
 openrepro trace-claims boc_demo --validate
 openrepro validate-claims boc_demo
 openrepro scorecard boc_demo
+openrepro gaps boc_demo
+openrepro todo boc_demo
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -695,6 +704,20 @@ evidence, candidate review, data provenance, experiment specs, run evidence,
 quality gates, repeatability evidence, and claim trace health. It is not a
 scientific reproduction score and must not be used to claim a paper was
 reproduced.
+
+### `openrepro gaps <project_name>`
+
+Generates actionable reproduction workflow gaps and writes:
+
+```text
+workspace/reproduction_gaps.json
+workspace/REPRODUCTION_GAPS.md
+```
+
+Gaps are severity-ranked to-dos derived from workflow evidence, scorecard
+dimensions, diagnostics, quality gates, and claim trace validation. Each gap
+includes a suggested next command. `openrepro todo <project_name>` is an alias
+that writes the same artifacts.
 
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
@@ -1071,12 +1094,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.6.0: claim traceability across candidates, experiments, data, and runs.
 - v1.6.1: claim trace validation for freshness and link integrity.
 - v1.7.0: workflow readiness scorecards across reproduction evidence dimensions.
+- v1.7.1: actionable reproduction gaps and todo artifacts.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.7.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.7.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

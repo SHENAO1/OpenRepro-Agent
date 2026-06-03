@@ -101,12 +101,13 @@ def _code_status(project_dir: Path) -> str:
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
+    gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
     return f"""# Code Status
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.7.0 命令入口。
+- `cli.py`：已完成 v1.7.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -120,6 +121,7 @@ def _code_status(project_dir: Path) -> str:
 - `repair.py`：已完成 repair-plan 和 repair dry-run 预览。
 - `lineage.py`：已完成 run lineage 产物。
 - `scorecard.py`：已完成 workflow readiness scorecard。
+- `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
 - `report_generator.py`：已完成项目报告。
 - `handoff_generator.py`：已完成多 Agent 交接文件生成。
@@ -159,6 +161,12 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {scorecard}
+```
+
+## Reproduction Gaps 状态
+
+```json
+{gaps}
 ```
 
 ## Experiment Inputs 状态
@@ -223,7 +231,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.7.0 闭环检查
+## v1.7.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -236,6 +244,7 @@ def _next_steps(project_dir: Path) -> str:
 - repair-dry-run: {'已完成' if (project_dir / 'workspace' / 'repair_dry_run.json').exists() else '未完成'}
 - lineage: {'已完成' if (project_dir / 'workspace' / 'run_lineage.json').exists() else '未完成'}
 - scorecard: {'已完成' if (project_dir / 'workspace' / 'reproduction_scorecard.json').exists() else '未完成'}
+- gaps: {'已完成' if (project_dir / 'workspace' / 'reproduction_gaps.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
 - evidence-package: {'已完成' if status.evidence_package_exists else '未完成'}
 
@@ -298,6 +307,7 @@ def _agent_handoff(project_dir: Path) -> str:
     repair = read_json(project_dir / "workspace" / "repair_dry_run.json", default={}) or {}
     lineage = read_json(project_dir / "workspace" / "run_lineage.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
+    gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
     return f"""# Agent Handoff
 
@@ -343,6 +353,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {scorecard}
+```
+
+## Reproduction Gaps 摘要
+
+```json
+{gaps}
 ```
 
 ## Experiment Inputs 摘要
@@ -442,6 +458,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "workspace" / "REPRODUCTION_SCORECARD.md",
             "Reproduction Readiness Scorecard",
             "尚未运行 scorecard，暂无复现准备度评分卡。",
+        ),
+        "REPRODUCTION_GAPS.md": _copy_or_placeholder(
+            project_dir / "workspace" / "REPRODUCTION_GAPS.md",
+            "Reproduction Gaps",
+            "尚未运行 gaps，暂无复现缺口清单。",
         ),
         "EVIDENCE_PACKAGE.md": _copy_or_placeholder(
             project_dir / "reports" / "evidence_package.md",

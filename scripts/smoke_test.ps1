@@ -56,6 +56,8 @@ python -m openrepro.cli doctor $Project
 python -m openrepro.cli benchmark --task benchmarks/sample_task.json --project boc_benchmark_smoke
 python -m openrepro.cli benchmark-suite --suite benchmarks/sample_suite.json --project-prefix smoke_suite
 python -m openrepro.cli benchmark-index
+python -m openrepro.cli gaps $Project
+python -m openrepro.cli todo $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip

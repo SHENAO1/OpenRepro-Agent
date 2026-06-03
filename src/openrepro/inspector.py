@@ -14,6 +14,7 @@ from .diagnostics import diagnose_project
 from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
+from .gaps import gaps_summary
 from .project_manager import get_status
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .scorecard import scorecard_summary
@@ -160,6 +161,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     latest_experiment_quality_gate = latest_experiment_quality_gate_summary(project_dir)
     trace_summary = claim_trace_summary(project_dir)
     scorecard = scorecard_summary(project_dir)
+    gaps = gaps_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -225,6 +227,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "scorecard_overall_score": scorecard["overall_score"],
         "scorecard_blocking_dimension_count": scorecard["blocking_dimension_count"],
         "scorecard_partial_dimension_count": scorecard["partial_dimension_count"],
+        "gaps_status": gaps["status"],
+        "gaps_open_count": gaps["open_count"],
+        "gaps_critical_count": gaps["critical_count"],
+        "gaps_high_count": gaps["high_count"],
+        "gaps_top_suggested_command": gaps["top_suggested_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

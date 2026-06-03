@@ -85,6 +85,22 @@ def _scorecard_block(project_dir: Path) -> str:
     )
 
 
+def _gaps_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 reproduction gaps。运行 `openrepro gaps <project>` 后会生成可执行缺口清单。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- open_count: {data.get('open_count', 0)}",
+            f"- critical_count: {data.get('critical_count', 0)}",
+            f"- high_count: {data.get('high_count', 0)}",
+            f"- top_suggested_command: {data.get('top_suggested_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def generate_report(project_dir: Path) -> Path:
     """Generate reports/report.md."""
     project_dir = Path(project_dir)
@@ -104,6 +120,7 @@ def generate_report(project_dir: Path) -> Path:
     verified_block = _verified_candidates_block(project_dir)
     repair_block = _repair_dry_run_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
+    gaps_block = _gaps_block(project_dir)
 
     metrics_block = "无"
     if metrics is not None:
@@ -191,14 +208,18 @@ OpenRepro-Agent v{__version__}
 
 {scorecard_block}
 
-## 13. 当前局限
+## 13. Reproduction Gaps 摘要
+
+{gaps_block}
+
+## 14. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 14. 下一阶段建议
+## 15. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

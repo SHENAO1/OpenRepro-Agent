@@ -230,6 +230,16 @@ Released in v1.6.1 with claim trace freshness and link-integrity validation.
 
 Released in v1.7.0 with project-level readiness scorecards.
 
+## v1.7.1 — Actionable reproduction gaps
+
+- [x] Add `openrepro gaps`.
+- [x] Add `openrepro todo` as a to-do oriented alias.
+- [x] Write `workspace/reproduction_gaps.json` and `workspace/REPRODUCTION_GAPS.md`.
+- [x] Convert upstream workflow evidence gaps into severity-ranked suggested commands.
+- [x] Surface gap counts in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.7.1 with actionable workflow gap artifacts.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

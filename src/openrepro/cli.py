@@ -28,6 +28,7 @@ from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
 from .experiment_spec import validate_experiment_spec
 from .experiment_templates import list_experiment_templates
+from .gaps import generate_reproduction_gaps
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -418,6 +419,42 @@ def scorecard_cmd(project_name: str = typer.Argument(..., help="Project director
     console.print(f"JSON: {project_dir / 'workspace' / 'reproduction_scorecard.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'REPRODUCTION_SCORECARD.md'}")
     _success("Reproduction readiness scorecard generated.")
+
+
+def _print_gaps(project_name: str, gaps: dict[str, object], project_dir: Path) -> None:
+    table = Table(title=f"Reproduction Gaps: {project_name}")
+    table.add_column("Severity")
+    table.add_column("Source")
+    table.add_column("Gap")
+    table.add_column("Suggested")
+    for item in gaps["gaps"]:
+        table.add_row(str(item["severity"]), str(item["source"]), str(item["title"]), str(item["suggested_command"]))
+    if not gaps["gaps"]:
+        table.add_row("none", "workflow", "No open upstream reproduction workflow gaps found.", "")
+    console.print(table)
+    console.print(f"Status: {gaps['status']}")
+    console.print(f"Open gaps: {gaps['open_count']}")
+    console.print(f"Top command: {gaps['top_suggested_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'reproduction_gaps.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPRODUCTION_GAPS.md'}")
+
+
+@app.command("gaps")
+def gaps_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate actionable reproduction workflow gaps."""
+    project_dir = require_project(project_name)
+    gaps = generate_reproduction_gaps(project_dir)
+    _print_gaps(project_name, gaps, project_dir)
+    _success("Reproduction gaps generated.")
+
+
+@app.command("todo")
+def todo_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate actionable reproduction workflow to-dos."""
+    project_dir = require_project(project_name)
+    gaps = generate_reproduction_gaps(project_dir)
+    _print_gaps(project_name, gaps, project_dir)
+    _success("Reproduction to-dos generated.")
 
 
 @app.command("list-templates")
@@ -818,6 +855,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Claim trace validation issues": summary["claim_trace_validation_issue_count"],
         "Readiness score": summary["scorecard_overall_score"],
         "Scorecard status": summary["scorecard_status"],
+        "Open gaps": summary["gaps_open_count"],
+        "Gap status": summary["gaps_status"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1105,6 +1144,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Claim trace validation issues": status.claim_trace_validation_issue_count,
         "Readiness score": status.scorecard_overall_score,
         "Scorecard status": status.scorecard_status,
+        "Open gaps": status.gaps_open_count,
+        "Gap status": status.gaps_status,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

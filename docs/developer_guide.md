@@ -208,6 +208,13 @@ experiment specs, run evidence, quality gates, repeatability evidence, and claim
 trace health. Scores are for triage and handoff only. They must not be described
 as scientific reproduction scores or proof that a paper result was reproduced.
 
+v1.7.1 adds `gaps.py`. Reproduction gaps should convert upstream workflow
+evidence issues into severity-ranked to-dos with suggested commands. Gaps may
+use scorecard dimensions, diagnostics, quality gates, and claim trace validation,
+but should avoid evaluating generated evidence packages directly to prevent
+self-referential freshness loops. Closing gaps is workflow housekeeping, not a
+scientific reproduction claim.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

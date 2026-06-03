@@ -12,6 +12,7 @@ from .claim_trace import generate_claim_trace, validate_claim_trace
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
+from .gaps import generate_reproduction_gaps
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
@@ -40,6 +41,7 @@ WORKSPACE_ARTIFACTS = [
     "claim_trace.json",
     "claim_trace_validation.json",
     "reproduction_scorecard.json",
+    "reproduction_gaps.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -256,6 +258,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     claim_trace = generate_claim_trace(project_dir)
     claim_trace_validation = validate_claim_trace(project_dir)
     scorecard = generate_reproduction_scorecard(project_dir)
+    gaps = generate_reproduction_gaps(project_dir)
     inspect_summary = inspect_project(project_dir)
     lineage = generate_run_lineage(project_dir)
     status = get_status(project_dir).to_dict()
@@ -306,6 +309,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "blocking_dimension_count": scorecard.get("blocking_dimension_count"),
             "partial_dimension_count": scorecard.get("partial_dimension_count"),
             "path": str(project_dir / "workspace" / "reproduction_scorecard.json"),
+        },
+        "gaps": {
+            "schema_version": gaps.get("schema_version"),
+            "status": gaps.get("status"),
+            "open_count": gaps.get("open_count"),
+            "critical_count": gaps.get("critical_count"),
+            "high_count": gaps.get("high_count"),
+            "top_suggested_command": gaps.get("top_suggested_command"),
+            "path": str(project_dir / "workspace" / "reproduction_gaps.json"),
         },
         "runs": runs,
         "lineage": {
@@ -421,6 +433,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_trace_validation_issue_count: {package['claim_trace']['validation_issue_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
+- gaps_status: {package['gaps']['status']}
+- gaps_open_count: {package['gaps']['open_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}
