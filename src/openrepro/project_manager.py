@@ -55,6 +55,8 @@ class ProjectStatus:
     latest_experiment_quality_gate_failed_check_count: int | None
     claim_trace_exists: bool
     claim_trace_claim_count: int
+    claim_trace_validation_status: str
+    claim_trace_validation_issue_count: int
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -282,6 +284,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             latest_experiment_quality_gate_failed_check_count=None,
             claim_trace_exists=False,
             claim_trace_claim_count=0,
+            claim_trace_validation_status="missing",
+            claim_trace_validation_issue_count=0,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -357,6 +361,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro lineage {project_dir}"
     elif not trace_summary["present"]:
         next_step = f"Run: openrepro trace-claims {project_dir}"
+    elif trace_summary["validation_status"] != "passed":
+        next_step = f"Run: openrepro validate-claims {project_dir}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -366,7 +372,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.6.0 workflow is complete. Review claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.6.1 workflow is complete. Review validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -396,6 +402,8 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         latest_experiment_quality_gate_failed_check_count=experiment_quality_gate["failed_check_count"],
         claim_trace_exists=bool(trace_summary["present"]),
         claim_trace_claim_count=trace_summary["claim_count"],
+        claim_trace_validation_status=str(trace_summary["validation_status"]),
+        claim_trace_validation_issue_count=trace_summary["validation_issue_count"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

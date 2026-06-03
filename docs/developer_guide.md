@@ -195,6 +195,13 @@ data, and run evidence. `trace-claims` should write JSON and Markdown under
 `workspace/`. The trace is an audit map only and must not imply that a claim was
 scientifically reproduced.
 
+v1.6.1 adds claim trace validation. `validate-claims` should check trace
+freshness and link integrity without rewriting `claim_trace.json`. Validation
+may flag stale traces, unresolved experiment claims, unregistered experiment
+data, and experiment runs that no longer point to known scaffolds. These checks
+are engineering audit checks only; they must not verify formulas, datasets, or
+scientific correctness.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

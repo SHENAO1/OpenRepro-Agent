@@ -210,6 +210,16 @@ verified-input experiment scaffolds, and `openrepro repair --dry-run`.
 - [x] Snapshot spec contracts into run outputs.
 - [x] Include spec hashes in experiment comparison and lineage.
 
+## v1.6.1 — Claim trace validation
+
+- [x] Add `openrepro validate-claims`.
+- [x] Add `openrepro trace-claims --validate`.
+- [x] Write `workspace/claim_trace_validation.json` and `workspace/CLAIM_TRACE_VALIDATION.md`.
+- [x] Detect missing, stale, or broken claim trace links across candidates, experiment specs, registered data, and runs.
+- [x] Surface claim trace validation in status, inspect, diagnose, and evidence packages.
+
+Released in v1.6.1 with claim trace freshness and link-integrity validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

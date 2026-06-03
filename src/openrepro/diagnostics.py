@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .artifact_manager import latest_run_dir, validate_run_manifest
+from .claim_trace import claim_trace_summary
 from .config import get_demo_config
 from .document_loader import load_source_index
 from .quality_gate import quality_gate_summaries
@@ -31,6 +32,15 @@ REPAIR_SUGGESTIONS: dict[str, str] = {
     "quality_gate_environment_snapshot_missing": "Rerun the experiment to regenerate the environment snapshot.",
     "quality_gate_metrics_missing": "Rerun the experiment or restore data/metrics.json with all required metrics.",
     "quality_gate_command_unsupported": "Use quality gates on supported run commands or keep this run as manifest-only evidence.",
+    "claim_trace_validation_missing": "Run `openrepro validate-claims` after generating claim trace artifacts.",
+    "claim_trace_validation_failed": "Inspect workspace/CLAIM_TRACE_VALIDATION.md, then refresh claim trace or restore missing links.",
+    "claim_trace_missing": "Run `openrepro trace-claims` to rebuild claim-to-evidence artifacts.",
+    "claim_trace_stale": "Run `openrepro trace-claims --validate` after the latest candidates, specs, data, or runs are ready.",
+    "claim_trace_unresolved_experiment_claim": "Regenerate the experiment scaffold from current verified candidates or refresh claim trace.",
+    "claim_trace_unresolved_verified_claim": "Refresh verified candidates and experiment specs, then rerun `openrepro trace-claims --validate`.",
+    "claim_trace_unverified_experiment_claim": "Review or approve the linked candidate before treating it as verified experiment evidence.",
+    "claim_trace_unregistered_experiment_data": "Register the linked data or rebuild the experiment spec with current registered data.",
+    "claim_trace_unlinked_experiment_run": "Rerun the experiment from an existing scaffold so run metadata links to experiment_id.",
     "unknown_error": "Inspect logs and rerun the failing command with the smallest reproducible input.",
 }
 
@@ -143,6 +153,38 @@ def _demo_config_issues(project_dir: Path) -> list[dict[str, Any]]:
     return [issue("invalid_demo_config", message, source="project_config") for failed, message in checks if failed]
 
 
+def _claim_trace_issues(project_dir: Path) -> list[dict[str, Any]]:
+    summary = claim_trace_summary(project_dir)
+    if not summary["present"]:
+        return []
+    validation_path = project_dir / "workspace" / "claim_trace_validation.json"
+    if not summary["validation_present"]:
+        return [
+            issue(
+                "claim_trace_validation_missing",
+                "Claim trace exists but has not been validated.",
+                source="claim_trace",
+            )
+        ]
+    if summary["validation_status"] == "passed":
+        return []
+    validation = read_json(validation_path, default={}) or {}
+    validation = validation if isinstance(validation, dict) else {}
+    issues = [
+        issue(
+            "claim_trace_validation_failed",
+            f"Claim trace validation failed with {summary['validation_issue_count']} issues.",
+            source="claim_trace",
+        )
+    ]
+    for item in validation.get("issues", []):
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("code") or "claim_trace_validation_failed")
+        issues.append(issue(code, str(item.get("message") or code), source="claim_trace", details=item.get("details", {})))
+    return issues
+
+
 def diagnose_project(project_dir: Path, run_dir: Path | None = None) -> dict[str, Any]:
     """Diagnose a project and optional run directory."""
     project_dir = Path(project_dir)
@@ -161,6 +203,7 @@ def diagnose_project(project_dir: Path, run_dir: Path | None = None) -> dict[str
                 )
             )
     issues.extend(_demo_config_issues(project_dir))
+    issues.extend(_claim_trace_issues(project_dir))
 
     target = run_dir or latest_run_dir(project_dir)
     validation: dict[str, Any] | None = None

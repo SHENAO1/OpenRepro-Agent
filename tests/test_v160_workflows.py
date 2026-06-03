@@ -46,7 +46,7 @@ def test_generate_claim_trace_links_claims_experiments_data_and_runs(tmp_path: P
     experiment = trace["experiments"][0]
     run = trace["runs"][0]
 
-    assert trace["schema_version"] == "1.6.0"
+    assert trace["schema_version"] == "1.6.1"
     assert trace["claim_count"] >= 1
     assert trace["verified_claim_count"] >= 1
     assert experiment["verified_claim_ids"]

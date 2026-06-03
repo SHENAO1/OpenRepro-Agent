@@ -14,7 +14,7 @@ from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
-from .claim_trace import generate_claim_trace
+from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
@@ -349,7 +349,10 @@ def compare_experiments_cmd(
 
 
 @app.command("trace-claims")
-def trace_claims_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+def trace_claims_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    validate: bool = typer.Option(False, "--validate", help="Validate claim trace freshness and link integrity after generation."),
+) -> None:
     """Generate claim-to-evidence traceability artifacts."""
     project_dir = require_project(project_name)
     trace = generate_claim_trace(project_dir)
@@ -360,6 +363,40 @@ def trace_claims_cmd(project_name: str = typer.Argument(..., help="Project direc
     console.print(f"Runs: {trace['run_trace_count']}")
     console.print(f"JSON: {project_dir / 'workspace' / 'claim_trace.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_TRACE.md'}")
+    if validate:
+        validation = validate_claim_trace(project_dir)
+        console.print(f"Validation: {validation['status']}")
+        console.print(f"Validation issues: {validation['issue_count']}")
+        console.print(f"Validation warnings: {validation['warning_count']}")
+        console.print(f"Validation JSON: {project_dir / 'workspace' / 'claim_trace_validation.json'}")
+        console.print(f"Validation Markdown: {project_dir / 'workspace' / 'CLAIM_TRACE_VALIDATION.md'}")
+        if not validation["valid"]:
+            raise typer.Exit(1)
+
+
+@app.command("validate-claims")
+def validate_claims_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate claim trace freshness and link integrity."""
+    project_dir = require_project(project_name)
+    validation = validate_claim_trace(project_dir)
+    table = Table(title=f"Claim Trace Validation: {project_name}")
+    table.add_column("Code")
+    table.add_column("Message")
+    rows = validation["issues"] or validation["warnings"]
+    if rows:
+        for item in rows:
+            table.add_row(str(item["code"]), str(item["message"]))
+    else:
+        table.add_row("none", "No claim trace issues found.")
+    console.print(table)
+    console.print(f"Status: {validation['status']}")
+    console.print(f"Issues: {validation['issue_count']}")
+    console.print(f"Warnings: {validation['warning_count']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_trace_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_TRACE_VALIDATION.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Claim trace validation passed.")
 
 
 @app.command("list-templates")
@@ -756,6 +793,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Claim trace": summary["claim_trace_status"],
         "Traced claims": summary["claim_trace_claim_count"],
         "Traced experiment links": summary["claim_trace_experiment_count"],
+        "Claim trace validation": summary["claim_trace_validation_status"],
+        "Claim trace validation issues": summary["claim_trace_validation_issue_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1039,6 +1078,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Experiment gate failed checks": status.latest_experiment_quality_gate_failed_check_count,
         "Claim trace exists": status.claim_trace_exists,
         "Traced claims": status.claim_trace_claim_count,
+        "Claim trace validation": status.claim_trace_validation_status,
+        "Claim trace validation issues": status.claim_trace_validation_issue_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
