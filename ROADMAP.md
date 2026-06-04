@@ -300,6 +300,16 @@ Released in v1.10.0 with workflow-level reproduction protocols.
 
 Released in v1.10.1 with protocol coverage checks.
 
+## v1.11.0 — Protocol action plan
+
+- [x] Add `openrepro protocol-plan`.
+- [x] Write `workspace/protocol_plan.json` and `workspace/PROTOCOL_PLAN.md`.
+- [x] Convert protocol coverage gaps into prioritized workflow actions.
+- [x] Surface critical/high counts and top command in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep action plans advisory and non-executing.
+
+Released in v1.11.0 with protocol action plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

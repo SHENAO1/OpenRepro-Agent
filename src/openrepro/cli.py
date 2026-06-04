@@ -36,6 +36,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
+from .protocol_plan import generate_protocol_plan
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
@@ -626,6 +627,34 @@ def protocol_coverage_cmd(project_name: str = typer.Argument(..., help="Project 
     _success("Protocol coverage generated.")
 
 
+@app.command("protocol-plan")
+def protocol_plan_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate prioritized actions from protocol coverage gaps."""
+    project_dir = require_project(project_name)
+    plan = generate_protocol_plan(project_dir)
+    table = Table(title=f"Protocol Plan: {project_name}")
+    table.add_column("Action")
+    table.add_column("Priority")
+    table.add_column("Source")
+    table.add_column("Suggested")
+    for item in plan["actions"]:
+        table.add_row(
+            str(item["action_id"]),
+            str(item["priority"]),
+            str(item["source"]),
+            str(item["suggested_command"]),
+        )
+    console.print(table)
+    console.print(f"Status: {plan['status']}")
+    console.print(f"Actions: {plan['action_count']}")
+    console.print(f"Critical: {plan['critical_count']}")
+    console.print(f"High: {plan['high_count']}")
+    console.print(f"Top command: {plan['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'protocol_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROTOCOL_PLAN.md'}")
+    _success("Protocol plan generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1038,6 +1067,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Protocol blockers": summary["protocol_blocking_criterion_count"],
         "Protocol coverage": summary["protocol_coverage_status"],
         "Protocol uncovered": summary["protocol_coverage_uncovered_count"],
+        "Protocol plan": summary["protocol_plan_status"],
+        "Protocol actions": summary["protocol_plan_action_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1339,6 +1370,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Protocol blockers": status.protocol_blocking_criterion_count,
         "Protocol coverage": status.protocol_coverage_status,
         "Protocol uncovered": status.protocol_coverage_uncovered_count,
+        "Protocol plan": status.protocol_plan_status,
+        "Protocol actions": status.protocol_plan_action_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

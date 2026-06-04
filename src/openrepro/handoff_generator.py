@@ -106,6 +106,7 @@ def _code_status(project_dir: Path) -> str:
     review_decisions = read_json(project_dir / "workspace" / "review_decisions.json", default={}) or {}
     protocol = read_json(project_dir / "workspace" / "reproduction_protocol.json", default={}) or {}
     protocol_coverage = read_json(project_dir / "workspace" / "protocol_coverage.json", default={}) or {}
+    protocol_plan = read_json(project_dir / "workspace" / "protocol_plan.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -113,7 +114,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.10.1 命令入口。
+- `cli.py`：已完成 v1.11.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -132,6 +133,7 @@ def _code_status(project_dir: Path) -> str:
 - `review_decisions.py`：已完成 human review decision loop。
 - `reproduction_protocol.py`：已完成 reproduction protocol。
 - `protocol_coverage.py`：已完成 protocol coverage。
+- `protocol_plan.py`：已完成 protocol action plan。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -203,6 +205,12 @@ def _code_status(project_dir: Path) -> str:
 
 ```json
 {protocol_coverage}
+```
+
+## Protocol Plan 状态
+
+```json
+{protocol_plan}
 ```
 
 ## Readiness Scorecard 状态
@@ -279,7 +287,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.10.1 闭环检查
+## v1.11.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -297,6 +305,7 @@ def _next_steps(project_dir: Path) -> str:
 - review-decisions: {'已完成' if (project_dir / 'workspace' / 'review_decisions.json').exists() else '未完成'}
 - protocol: {'已完成' if (project_dir / 'workspace' / 'reproduction_protocol.json').exists() else '未完成'}
 - protocol-coverage: {'已完成' if (project_dir / 'workspace' / 'protocol_coverage.json').exists() else '未完成'}
+- protocol-plan: {'已完成' if (project_dir / 'workspace' / 'protocol_plan.json').exists() else '未完成'}
 - scorecard: {'已完成' if (project_dir / 'workspace' / 'reproduction_scorecard.json').exists() else '未完成'}
 - gaps: {'已完成' if (project_dir / 'workspace' / 'reproduction_gaps.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
@@ -366,6 +375,7 @@ def _agent_handoff(project_dir: Path) -> str:
     review_decisions = read_json(project_dir / "workspace" / "review_decisions.json", default={}) or {}
     protocol = read_json(project_dir / "workspace" / "reproduction_protocol.json", default={}) or {}
     protocol_coverage = read_json(project_dir / "workspace" / "protocol_coverage.json", default={}) or {}
+    protocol_plan = read_json(project_dir / "workspace" / "protocol_plan.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -443,6 +453,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {protocol_coverage}
+```
+
+## Protocol Plan 摘要
+
+```json
+{protocol_plan}
 ```
 
 ## Readiness Scorecard 摘要
@@ -579,6 +595,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "workspace" / "PROTOCOL_COVERAGE.md",
             "Protocol Coverage",
             "尚未运行 protocol-coverage，暂无协议覆盖率摘要。",
+        ),
+        "PROTOCOL_PLAN.md": _copy_or_placeholder(
+            project_dir / "workspace" / "PROTOCOL_PLAN.md",
+            "Protocol Plan",
+            "尚未运行 protocol-plan，暂无协议行动计划。",
         ),
         "REPRODUCTION_SCORECARD.md": _copy_or_placeholder(
             project_dir / "workspace" / "REPRODUCTION_SCORECARD.md",

@@ -19,6 +19,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .project_manager import get_status
 from .protocol_coverage import generate_protocol_coverage
+from .protocol_plan import generate_protocol_plan
 from .quality_gate import quality_gate_summaries
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
@@ -54,6 +55,7 @@ WORKSPACE_ARTIFACTS = [
     "review_decisions.json",
     "reproduction_protocol.json",
     "protocol_coverage.json",
+    "protocol_plan.json",
     "experiment_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
@@ -289,6 +291,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     review_decisions = generate_review_decisions(project_dir)
     protocol = generate_reproduction_protocol(project_dir)
     protocol_coverage = generate_protocol_coverage(project_dir)
+    protocol_plan = generate_protocol_plan(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -405,6 +408,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "uncovered_count": protocol_coverage.get("uncovered_count"),
             "top_command": protocol_coverage.get("top_command"),
             "path": str(project_dir / "workspace" / "protocol_coverage.json"),
+        },
+        "protocol_plan": {
+            "schema_version": protocol_plan.get("schema_version"),
+            "status": protocol_plan.get("status"),
+            "action_count": protocol_plan.get("action_count"),
+            "critical_count": protocol_plan.get("critical_count"),
+            "high_count": protocol_plan.get("high_count"),
+            "top_command": protocol_plan.get("top_command"),
+            "path": str(project_dir / "workspace" / "protocol_plan.json"),
         },
         "runs": runs,
         "lineage": {
@@ -534,6 +546,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - protocol_blocking_criterion_count: {package['protocol']['blocking_criterion_count']}
 - protocol_coverage_status: {package['protocol_coverage']['status']}
 - protocol_coverage_uncovered_count: {package['protocol_coverage']['uncovered_count']}
+- protocol_plan_status: {package['protocol_plan']['status']}
+- protocol_plan_action_count: {package['protocol_plan']['action_count']}
 - lineage_exists: {package['status']['lineage_exists']}
 - handoff_complete: {package['status']['handoff_complete']}
 - source_file_count: {package['source_fingerprint']['file_count']}

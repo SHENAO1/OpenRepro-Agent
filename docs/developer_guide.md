@@ -251,6 +251,12 @@ claims, data, experiments, runs, and acceptance criteria are linked to current
 workflow evidence. Coverage scores are engineering completeness signals only;
 they must not be framed as scientific reproduction scores.
 
+v1.11.0 adds `protocol_plan.py`. Protocol plans should convert protocol
+coverage gaps into prioritized, advisory workflow actions. They may surface a
+top command and placeholder-input requirements, but they must not execute
+commands, fill unknown scientific values, or present planned actions as
+reproduction evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
