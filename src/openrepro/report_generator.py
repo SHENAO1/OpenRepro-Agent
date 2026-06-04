@@ -301,6 +301,22 @@ def _claim_evidence_report_block(project_dir: Path) -> str:
     )
 
 
+def _claim_evidence_report_validation_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "reports" / "claim_evidence_report_validation.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 claim evidence report validation。运行 `openrepro validate-claim-evidence-report <project>` 后会生成 claim evidence report 校验摘要。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- valid: {data.get('valid')}",
+            f"- issue_count: {data.get('issue_count', 0)}",
+            f"- warning_count: {data.get('warning_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -348,6 +364,7 @@ def generate_report(project_dir: Path) -> Path:
     claim_signoffs_block = _claim_signoffs_block(project_dir)
     claim_signoff_validation_block = _claim_signoff_validation_block(project_dir)
     claim_evidence_report_block = _claim_evidence_report_block(project_dir)
+    claim_evidence_report_validation_block = _claim_evidence_report_validation_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -485,22 +502,26 @@ OpenRepro-Agent v{__version__}
 
 {claim_evidence_report_block}
 
-## 25. Reproduction Readiness Scorecard 摘要
+## 25. Claim Evidence Report Validation 摘要
+
+{claim_evidence_report_validation_block}
+
+## 26. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 26. Reproduction Gaps 摘要
+## 27. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 27. 当前局限
+## 28. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 28. 下一阶段建议
+## 29. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

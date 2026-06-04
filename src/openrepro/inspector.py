@@ -12,6 +12,7 @@ from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
 from .claim_evidence_binder import claim_evidence_binder_summary, claim_evidence_binder_validation_summary
 from .claim_evidence_report import claim_evidence_report_summary
+from .claim_evidence_report_validation import claim_evidence_report_validation_summary
 from .claim_signoff import claim_signoff_summary
 from .claim_signoff_validation import claim_signoff_validation_summary
 from .claim_trace import claim_trace_summary
@@ -187,6 +188,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     claim_signoff = claim_signoff_summary(project_dir)
     claim_signoff_validation = claim_signoff_validation_summary(project_dir)
     claim_evidence_report = claim_evidence_report_summary(project_dir)
+    claim_evidence_report_validation = claim_evidence_report_validation_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -318,6 +320,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "claim_evidence_report_claim_count": claim_evidence_report["claim_count"],
         "claim_evidence_report_open_action_count": claim_evidence_report["open_action_count"],
         "claim_evidence_report_top_command": claim_evidence_report["top_command"],
+        "claim_evidence_report_validation_status": claim_evidence_report_validation["status"],
+        "claim_evidence_report_validation_issue_count": claim_evidence_report_validation["issue_count"],
+        "claim_evidence_report_validation_warning_count": claim_evidence_report_validation["warning_count"],
+        "claim_evidence_report_validation_top_command": claim_evidence_report_validation["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

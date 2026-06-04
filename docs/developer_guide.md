@@ -293,6 +293,12 @@ current claim evidence binder. It may invalidate workflow signoffs after
 evidence changes, but it must not alter human decisions or claim scientific
 correctness.
 
+v1.14.1 adds `claim_evidence_report_validation.py`. Report validation should
+compare the stored report against the current binder, binder validation, and
+claim signoffs without overwriting the report before checking freshness. It may
+flag stale reports and inconsistent ready states, but it must not convert report
+readiness into a scientific reproduction claim.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

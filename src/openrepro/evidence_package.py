@@ -12,6 +12,7 @@ from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file
 from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
 from .claim_evidence_report import generate_claim_evidence_report
+from .claim_evidence_report_validation import validate_claim_evidence_report
 from .claim_signoff import generate_claim_signoffs
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
@@ -312,6 +313,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     claim_signoffs = generate_claim_signoffs(project_dir)
     claim_signoff_validation = validate_claim_signoffs(project_dir)
     claim_evidence_report = generate_claim_evidence_report(project_dir)
+    claim_evidence_report_validation = validate_claim_evidence_report(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -397,6 +399,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "top_command": claim_evidence_report.get("top_command"),
             "path": str(project_dir / "reports" / "claim_evidence_report.json"),
             "markdown_path": str(project_dir / "reports" / "claim_evidence_report.md"),
+        },
+        "claim_evidence_report_validation": {
+            "schema_version": claim_evidence_report_validation.get("schema_version"),
+            "status": claim_evidence_report_validation.get("status"),
+            "issue_count": claim_evidence_report_validation.get("issue_count"),
+            "warning_count": claim_evidence_report_validation.get("warning_count"),
+            "top_command": claim_evidence_report_validation.get("top_command"),
+            "path": str(project_dir / "reports" / "claim_evidence_report_validation.json"),
+            "markdown_path": str(project_dir / "reports" / "claim_evidence_report_validation.md"),
         },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
@@ -506,6 +517,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "claim_evidence_report": {
                 "present": (project_dir / "reports" / "claim_evidence_report.md").exists(),
                 "path": str(project_dir / "reports" / "claim_evidence_report.md"),
+            },
+            "claim_evidence_report_validation": {
+                "present": (project_dir / "reports" / "claim_evidence_report_validation.md").exists(),
+                "path": str(project_dir / "reports" / "claim_evidence_report_validation.md"),
             },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
@@ -618,6 +633,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_signoff_validation_issue_count: {package['claim_signoff_validation']['issue_count']}
 - claim_evidence_report_status: {package['claim_evidence_report']['status']}
 - claim_evidence_report_open_action_count: {package['claim_evidence_report']['open_action_count']}
+- claim_evidence_report_validation_status: {package['claim_evidence_report_validation']['status']}
+- claim_evidence_report_validation_issue_count: {package['claim_evidence_report_validation']['issue_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

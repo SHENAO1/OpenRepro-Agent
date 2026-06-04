@@ -18,6 +18,7 @@ from .candidate_review import list_candidates, review_candidates
 from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
 from .claim_evidence_report import generate_claim_evidence_report
+from .claim_evidence_report_validation import validate_claim_evidence_report
 from .claim_signoff import ALLOWED_CLAIM_SIGNOFF_DECISIONS, generate_claim_signoffs, record_claim_signoff
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
@@ -859,6 +860,32 @@ def validate_claim_signoffs_cmd(project_name: str = typer.Argument(..., help="Pr
     _success("Claim signoff validation passed.")
 
 
+@app.command("validate-claim-evidence-report")
+def validate_claim_evidence_report_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate claim evidence report freshness and consistency."""
+    project_dir = require_project(project_name)
+    validation = validate_claim_evidence_report(project_dir)
+    table = Table(title=f"Claim Evidence Report Validation: {project_name}")
+    table.add_column("Code")
+    table.add_column("Message")
+    rows = validation["issues"] or validation["warnings"]
+    if rows:
+        for item in rows:
+            table.add_row(str(item["code"]), str(item["message"]))
+    else:
+        table.add_row("none", "No claim evidence report validation issues found.")
+    console.print(table)
+    console.print(f"Status: {validation['status']}")
+    console.print(f"Issues: {validation['issue_count']}")
+    console.print(f"Warnings: {validation['warning_count']}")
+    console.print(f"Top command: {validation['top_command']}")
+    console.print(f"JSON: {project_dir / 'reports' / 'claim_evidence_report_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'claim_evidence_report_validation.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Claim evidence report validation passed.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1286,6 +1313,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Signoff validation issues": summary["claim_signoff_validation_issue_count"],
         "Claim evidence report": summary["claim_evidence_report_status"],
         "Claim report actions": summary["claim_evidence_report_open_action_count"],
+        "Claim report validation": summary["claim_evidence_report_validation_status"],
+        "Claim report validation issues": summary["claim_evidence_report_validation_issue_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1602,6 +1631,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Signoff validation issues": status.claim_signoff_validation_issue_count,
         "Claim evidence report": status.claim_evidence_report_status,
         "Claim report actions": status.claim_evidence_report_open_action_count,
+        "Claim report validation": status.claim_evidence_report_validation_status,
+        "Claim report validation issues": status.claim_evidence_report_validation_issue_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -370,6 +370,16 @@ Released in v1.13.1 with reviewer-facing claim evidence reports.
 
 Released in v1.14.0 with claim signoff freshness validation.
 
+## v1.14.1 — Claim evidence report validation
+
+- [x] Add `openrepro validate-claim-evidence-report`.
+- [x] Write `reports/claim_evidence_report_validation.json` and `reports/claim_evidence_report_validation.md`.
+- [x] Detect stale reports when binder evidence, binder validation, or claim signoffs change.
+- [x] Check claim row counts, open action counts, and ready-report consistency.
+- [x] Surface claim evidence report validation status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.14.1 with claim evidence report freshness validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

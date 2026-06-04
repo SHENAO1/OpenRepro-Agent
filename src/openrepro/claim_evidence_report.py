@@ -13,8 +13,8 @@ from .utils import iso_now, read_json, safe_write_text, write_json
 CLAIM_EVIDENCE_REPORT_SCHEMA_VERSION = "1.13.1"
 
 
-def generate_claim_evidence_report(project_dir: Path) -> dict[str, Any]:
-    """Write reports/claim_evidence_report.json and Markdown."""
+def build_claim_evidence_report(project_dir: Path) -> dict[str, Any]:
+    """Build claim evidence report payload without writing report files."""
     project_dir = Path(project_dir)
     binder = generate_claim_evidence_binder(project_dir)
     validation = validate_claim_evidence_binder(project_dir)
@@ -48,6 +48,13 @@ def generate_claim_evidence_report(project_dir: Path) -> dict[str, Any]:
         },
         "policy": "Claim evidence reports summarize workflow evidence, validation, and human signoffs only; they do not prove scientific reproduction.",
     }
+    return result
+
+
+def generate_claim_evidence_report(project_dir: Path) -> dict[str, Any]:
+    """Write reports/claim_evidence_report.json and Markdown."""
+    project_dir = Path(project_dir)
+    result = build_claim_evidence_report(project_dir)
     write_json(project_dir / "reports" / "claim_evidence_report.json", result)
     safe_write_text(project_dir / "reports" / "claim_evidence_report.md", _render_markdown(result))
     return result

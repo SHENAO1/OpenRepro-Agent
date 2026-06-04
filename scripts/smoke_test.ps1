@@ -71,6 +71,7 @@ python -m openrepro.cli claim-signoff $Project --claim-id formula:F001 --decisio
 python -m openrepro.cli claim-signoff $Project --claim-id formula:F002 --decision accepted_workflow_evidence --reviewer smoke
 python -m openrepro.cli validate-claim-signoffs $Project
 python -m openrepro.cli claim-evidence-report $Project
+python -m openrepro.cli validate-claim-evidence-report $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip
