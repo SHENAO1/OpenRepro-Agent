@@ -402,6 +402,23 @@ def _refresh_run_block(project_dir: Path) -> str:
     )
 
 
+def _artifact_freshness_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "artifact_freshness.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 artifact freshness graph。运行 `openrepro freshness <project>` 后会生成新鲜度解释。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- node_count: {data.get('node_count', 0)}",
+            f"- stale_node_count: {data.get('stale_node_count', 0)}",
+            f"- top_stale_node: {data.get('top_stale_node')}",
+            f"- top_stale_reason: {data.get('top_stale_reason')}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -455,6 +472,7 @@ def generate_report(project_dir: Path) -> Path:
     review_site_block = _review_site_block(project_dir)
     collaboration_pack_block = _collaboration_pack_block(project_dir)
     refresh_run_block = _refresh_run_block(project_dir)
+    artifact_freshness_block = _artifact_freshness_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -616,22 +634,26 @@ OpenRepro-Agent v{__version__}
 
 {refresh_run_block}
 
-## 31. Reproduction Readiness Scorecard 摘要
+## 31. Artifact Freshness 摘要
+
+{artifact_freshness_block}
+
+## 32. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 32. Reproduction Gaps 摘要
+## 33. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 33. 当前局限
+## 34. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 34. 下一阶段建议
+## 35. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

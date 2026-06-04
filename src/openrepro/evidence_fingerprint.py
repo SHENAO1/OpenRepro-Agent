@@ -25,6 +25,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/REFRESH_RUN.md",
     "workspace/refresh_run.json",
     "workspace/refresh_run.zip",
+    "workspace/ARTIFACT_FRESHNESS.md",
+    "workspace/artifact_freshness.json",
 }
 
 

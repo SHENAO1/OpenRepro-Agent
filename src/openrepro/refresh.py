@@ -29,6 +29,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .claim_trace import generate_claim_trace, validate_claim_trace
     from .collaboration_pack import generate_collaboration_pack
     from .evidence_package import generate_evidence_package
+    from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
     from .handoff_generator import generate_handoff
     from .inspector import inspect_project
@@ -86,6 +87,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "collaboration_pack",
             "Refresh collaboration pack after refresh status is available.",
             lambda: generate_collaboration_pack(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "artifact_freshness",
+            "Refresh artifact freshness graph after handoff artifacts are current.",
+            lambda: generate_artifact_freshness(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

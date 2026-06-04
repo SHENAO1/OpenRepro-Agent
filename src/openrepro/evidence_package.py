@@ -20,6 +20,7 @@ from .collaboration_pack import collaboration_pack_summary
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
+from .freshness import artifact_freshness_summary
 from .gaps import generate_reproduction_gaps
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -324,6 +325,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
+    artifact_freshness = artifact_freshness_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -472,6 +474,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "markdown_path": refresh_run.get("markdown_path") or str(project_dir / "workspace" / "REFRESH_RUN.md"),
             "zip_path": refresh_run.get("zip_path"),
         },
+        "artifact_freshness": {
+            "schema_version": artifact_freshness.get("schema_version"),
+            "status": artifact_freshness.get("status"),
+            "node_count": artifact_freshness.get("node_count"),
+            "stale_node_count": artifact_freshness.get("stale_node_count"),
+            "top_stale_node": artifact_freshness.get("top_stale_node"),
+            "top_stale_reason": artifact_freshness.get("top_stale_reason"),
+            "top_command": artifact_freshness.get("top_command"),
+            "path": artifact_freshness.get("path") or str(project_dir / "workspace" / "artifact_freshness.json"),
+            "markdown_path": artifact_freshness.get("markdown_path") or str(project_dir / "workspace" / "ARTIFACT_FRESHNESS.md"),
+        },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
             "overall_score": scorecard.get("overall_score"),
@@ -605,6 +618,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "REFRESH_RUN.md").exists(),
                 "path": str(project_dir / "workspace" / "REFRESH_RUN.md"),
             },
+            "artifact_freshness": {
+                "present": (project_dir / "workspace" / "ARTIFACT_FRESHNESS.md").exists(),
+                "path": str(project_dir / "workspace" / "ARTIFACT_FRESHNESS.md"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -732,6 +749,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - refresh_run_status: {package['refresh_run']['status']}
 - refresh_run_step_count: {package['refresh_run']['step_count']}
 - refresh_run_failed_step_count: {package['refresh_run']['failed_step_count']}
+- artifact_freshness_status: {package['artifact_freshness']['status']}
+- artifact_freshness_stale_node_count: {package['artifact_freshness']['stale_node_count']}
+- artifact_freshness_top_stale_node: {package['artifact_freshness']['top_stale_node']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

@@ -146,7 +146,14 @@ def _next_safe_commands(
     seen: set[str] = set()
     for source, command in candidates:
         command = command.removeprefix("Run: ").strip()
-        if not command or command in seen or command.startswith("Project v") or command.startswith("openrepro collaboration-pack"):
+        if (
+            not command
+            or command in seen
+            or command.startswith("Project v")
+            or command.startswith("openrepro collaboration-pack")
+            or command.startswith("openrepro refresh")
+            or command.startswith("openrepro freshness")
+        ):
             continue
         seen.add(command)
         commands.append({"source": source, "command": command})

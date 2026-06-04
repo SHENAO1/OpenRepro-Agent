@@ -22,6 +22,7 @@ from .diagnostics import diagnose_project
 from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
+from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
 from .project_manager import get_status
 from .protocol_coverage import protocol_coverage_summary
@@ -199,6 +200,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     project_timeline = project_timeline_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
+    artifact_freshness = artifact_freshness_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -355,6 +357,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "refresh_run_failed_step_count": refresh_run["failed_step_count"],
         "refresh_run_top_failed_step": refresh_run["top_failed_step"],
         "refresh_run_top_command": refresh_run["top_command"],
+        "artifact_freshness_status": artifact_freshness["status"],
+        "artifact_freshness_stale_node_count": artifact_freshness["stale_node_count"],
+        "artifact_freshness_top_stale_node": artifact_freshness["top_stale_node"],
+        "artifact_freshness_top_stale_reason": artifact_freshness["top_stale_reason"],
+        "artifact_freshness_top_command": artifact_freshness["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

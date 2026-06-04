@@ -36,6 +36,7 @@ from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
 from .experiment_spec import validate_experiment_spec
 from .experiment_templates import list_experiment_templates
+from .freshness import generate_artifact_freshness
 from .gaps import generate_reproduction_gaps
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
@@ -1369,6 +1370,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Refresh run": summary["refresh_run_status"],
         "Refresh steps": summary["refresh_run_step_count"],
         "Refresh failures": summary["refresh_run_failed_step_count"],
+        "Freshness": summary["artifact_freshness_status"],
+        "Freshness stale": summary["artifact_freshness_stale_node_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1701,6 +1704,22 @@ def refresh_cmd(
     _success("Refresh run completed.")
 
 
+@app.command("freshness")
+def freshness_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Explain stale or missing derived artifacts with a dependency graph."""
+    project_dir = require_project(project_name)
+    graph = generate_artifact_freshness(project_dir)
+    table = Table(title=f"Artifact Freshness: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "node_count", "stale_node_count", "top_stale_node", "top_stale_reason", "top_command"]:
+        table.add_row(key, str(graph.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'artifact_freshness.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ARTIFACT_FRESHNESS.md'}")
+    _success("Artifact freshness graph generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1783,6 +1802,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Refresh run": status.refresh_run_status,
         "Refresh steps": status.refresh_run_step_count,
         "Refresh failures": status.refresh_run_failed_step_count,
+        "Artifact freshness": status.artifact_freshness_status,
+        "Freshness stale nodes": status.artifact_freshness_stale_node_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

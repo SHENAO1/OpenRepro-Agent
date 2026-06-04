@@ -333,6 +333,12 @@ fabricate missing scientific artifacts. Generated refresh files are excluded
 from evidence-package freshness fingerprints because they are orchestration
 records, not source evidence.
 
+v1.18.1 adds `freshness.py`. Artifact freshness graphs should explain why
+derived artifacts are current, stale, or missing. They may compare evidence
+package fingerprints against current source evidence and list dependency edges
+among handoff artifacts, but they should remain diagnostic records. Generated
+freshness graph files are excluded from evidence-package freshness fingerprints.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

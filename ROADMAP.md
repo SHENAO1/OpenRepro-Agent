@@ -430,6 +430,16 @@ Released in v1.17.0 with role-based collaboration packs.
 
 Released in v1.18.0 with a safe derived-artifact refresh pipeline.
 
+## v1.18.1 — Artifact freshness graph
+
+- [x] Add `openrepro freshness`.
+- [x] Write `workspace/artifact_freshness.json` and `workspace/ARTIFACT_FRESHNESS.md`.
+- [x] Compare evidence package source fingerprints against current project evidence.
+- [x] Explain stale or missing review sites, timelines, reviewer packets, collaboration packs, refresh runs, protocol preflight, and review decisions.
+- [x] Surface top stale node, top stale reason, and suggested command in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.18.1 with artifact freshness reasons and dependency edges.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -80,6 +80,7 @@ python -m openrepro.cli evidence-package $Project --zip
 python -m openrepro.cli review-site $Project --zip
 python -m openrepro.cli collaboration-pack $Project --zip
 python -m openrepro.cli refresh $Project --zip
+python -m openrepro.cli freshness $Project
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null
