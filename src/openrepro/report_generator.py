@@ -351,6 +351,23 @@ def _review_site_block(project_dir: Path) -> str:
     )
 
 
+def _project_timeline_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "project_timeline.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 project timeline。运行 `openrepro timeline <project>` 后会生成统一时间线。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- event_count: {data.get('event_count', 0)}",
+            f"- human_decision_count: {data.get('human_decision_count', 0)}",
+            f"- run_event_count: {data.get('run_event_count', 0)}",
+            f"- latest_event_at: {data.get('latest_event_at')}",
+            f"- latest_event_title: {data.get('latest_event_title')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -400,6 +417,7 @@ def generate_report(project_dir: Path) -> Path:
     claim_evidence_report_block = _claim_evidence_report_block(project_dir)
     claim_evidence_report_validation_block = _claim_evidence_report_validation_block(project_dir)
     reviewer_packet_block = _reviewer_packet_block(project_dir)
+    project_timeline_block = _project_timeline_block(project_dir)
     review_site_block = _review_site_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
@@ -546,26 +564,30 @@ OpenRepro-Agent v{__version__}
 
 {reviewer_packet_block}
 
-## 27. Review Site 摘要
+## 27. Project Timeline 摘要
+
+{project_timeline_block}
+
+## 28. Review Site 摘要
 
 {review_site_block}
 
-## 28. Reproduction Readiness Scorecard 摘要
+## 29. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 29. Reproduction Gaps 摘要
+## 30. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 30. 当前局限
+## 31. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 31. 下一阶段建议
+## 32. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

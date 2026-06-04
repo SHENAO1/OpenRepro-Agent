@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.16.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.16.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.16.0 workflow is:
+The v1.16.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → status
 ```
 
 ## What v0.4.0 supports
@@ -369,6 +369,13 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Summarize project readiness, claim evidence matrix, reviewer packet status, evidence package freshness, quality gates, open actions, blockers, and key artifact links.
 - Surface review site status in `inspect`, `status`, reports, handoff, and evidence packages.
 
+## What v1.16.1 adds
+
+- Add `openrepro timeline` for a unified project timeline and decision log.
+- Write `workspace/project_timeline.json` and `workspace/PROJECT_TIMELINE.md`.
+- Consolidate source ingestion, candidate reviews, verified candidates, claim signoffs, review decisions, runs, quality gates, and major evidence artifacts into chronological events.
+- Surface timeline status in `inspect`, `status`, reports, handoff, evidence packages, and review sites.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -473,6 +480,7 @@ openrepro validate-claim-signoffs boc_demo
 openrepro claim-evidence-report boc_demo
 openrepro validate-claim-evidence-report boc_demo
 openrepro reviewer-packet boc_demo --zip
+openrepro timeline boc_demo
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -1062,6 +1070,19 @@ package freshness, protocol preflight, quality gates, open actions, blockers,
 and key artifact links. It is a static HTML handoff view; no Node or web server
 is required.
 
+### `openrepro timeline <project_name>`
+
+Generates a unified project timeline and writes:
+
+```text
+workspace/project_timeline.json
+workspace/PROJECT_TIMELINE.md
+```
+
+The timeline consolidates source ingestion, candidate reviews, verified
+candidates, claim signoffs, review decisions, run manifests, quality gates, and
+major evidence artifacts into chronological events for audit and collaboration.
+
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
 Runs the same verified experiment scaffold again and records another normal
@@ -1454,12 +1475,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.14.1: claim evidence report freshness and consistency validation.
 - v1.15.0: reviewer packet for human claim evidence review.
 - v1.16.0: static review site for human-facing evidence handoff.
+- v1.16.1: project timeline and decision log for audit handoff.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.16.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.16.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

@@ -179,6 +179,8 @@ def _artifact_index(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "reports" / "reviewer_packet.md",
         project_dir / "reports" / "reviewer_packet.json",
         project_dir / "reports" / "reviewer_packet.zip",
+        project_dir / "workspace" / "PROJECT_TIMELINE.md",
+        project_dir / "workspace" / "project_timeline.json",
         project_dir / "reports" / "claim_evidence_report.md",
         project_dir / "reports" / "claim_evidence_report_validation.md",
         project_dir / "workspace" / "PROTOCOL_PREFLIGHT.md",

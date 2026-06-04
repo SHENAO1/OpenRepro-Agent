@@ -73,6 +73,7 @@ python -m openrepro.cli validate-claim-signoffs $Project
 python -m openrepro.cli claim-evidence-report $Project
 python -m openrepro.cli validate-claim-evidence-report $Project
 python -m openrepro.cli reviewer-packet $Project --zip
+python -m openrepro.cli timeline $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip

@@ -33,6 +33,7 @@ from .review_decisions import review_decision_summary
 from .review_site import review_site_summary
 from .reviewer_packet import reviewer_packet_summary
 from .scorecard import scorecard_summary
+from .timeline import project_timeline_summary
 from .utils import iso_now, read_json, write_json
 
 
@@ -193,6 +194,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     claim_evidence_report_validation = claim_evidence_report_validation_summary(project_dir)
     reviewer_packet = reviewer_packet_summary(project_dir)
     review_site = review_site_summary(project_dir)
+    project_timeline = project_timeline_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -336,6 +338,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "review_site_open_action_count": review_site["open_action_count"],
         "review_site_blocker_count": review_site["blocker_count"],
         "review_site_top_command": review_site["top_command"],
+        "project_timeline_status": project_timeline["status"],
+        "project_timeline_event_count": project_timeline["event_count"],
+        "project_timeline_human_decision_count": project_timeline["human_decision_count"],
+        "project_timeline_latest_event_title": project_timeline["latest_event_title"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

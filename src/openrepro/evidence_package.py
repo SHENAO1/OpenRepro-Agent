@@ -33,6 +33,7 @@ from .review_decisions import generate_review_decisions
 from .review_site import review_site_summary
 from .reviewer_packet import generate_reviewer_packet
 from .scorecard import generate_reproduction_scorecard
+from .timeline import generate_project_timeline
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
 EVIDENCE_PACKAGE_SCHEMA_VERSION = "1.0.1"
@@ -317,6 +318,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     claim_evidence_report = generate_claim_evidence_report(project_dir)
     claim_evidence_report_validation = validate_claim_evidence_report(project_dir)
     reviewer_packet = generate_reviewer_packet(project_dir)
+    project_timeline = generate_project_timeline(project_dir)
     review_site = review_site_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
@@ -432,6 +434,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "path": review_site.get("path") or str(project_dir / "reports" / "review_site" / "index.html"),
             "manifest_path": review_site.get("manifest_path") or str(project_dir / "reports" / "review_site_manifest.json"),
             "zip_path": review_site.get("zip_path"),
+        },
+        "project_timeline": {
+            "schema_version": project_timeline.get("schema_version"),
+            "status": project_timeline.get("status"),
+            "event_count": project_timeline.get("event_count"),
+            "human_decision_count": project_timeline.get("human_decision_count"),
+            "run_event_count": project_timeline.get("run_event_count"),
+            "latest_event_at": project_timeline.get("latest_event_at"),
+            "latest_event_title": project_timeline.get("latest_event_title"),
+            "path": str(project_dir / "workspace" / "project_timeline.json"),
+            "markdown_path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
         },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
@@ -554,6 +567,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "reports" / "review_site" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "review_site" / "index.html"),
             },
+            "project_timeline": {
+                "present": (project_dir / "workspace" / "PROJECT_TIMELINE.md").exists(),
+                "path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -672,6 +689,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - review_site_status: {package['review_site']['status']}
 - review_site_open_action_count: {package['review_site']['open_action_count']}
 - review_site_blocker_count: {package['review_site']['blocker_count']}
+- project_timeline_status: {package['project_timeline']['status']}
+- project_timeline_event_count: {package['project_timeline']['event_count']}
+- project_timeline_human_decision_count: {package['project_timeline']['human_decision_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

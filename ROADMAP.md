@@ -400,6 +400,16 @@ Released in v1.15.0 with reviewer packets for human claim evidence review.
 
 Released in v1.16.0 with a static human review site.
 
+## v1.16.1 — Project timeline
+
+- [x] Add `openrepro timeline`.
+- [x] Write `workspace/project_timeline.json` and `workspace/PROJECT_TIMELINE.md`.
+- [x] Consolidate source ingestion, reviews, signoffs, review decisions, runs, quality gates, and evidence artifacts into chronological events.
+- [x] Surface timeline status in status, inspect, reports, handoff, evidence packages, and review sites.
+- [x] Keep timeline records scoped to workflow history and decision audit, not scientific proof.
+
+Released in v1.16.1 with project timelines and decision logs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

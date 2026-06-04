@@ -54,6 +54,7 @@ from .review_site import generate_review_site
 from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
+from .timeline import generate_project_timeline
 
 app = typer.Typer(
     name="openrepro",
@@ -1357,6 +1358,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Review site": summary["review_site_status"],
         "Review site actions": summary["review_site_open_action_count"],
         "Review site blockers": summary["review_site_blocker_count"],
+        "Project timeline": summary["project_timeline_status"],
+        "Timeline events": summary["project_timeline_event_count"],
+        "Timeline decisions": summary["project_timeline_human_decision_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1628,6 +1632,22 @@ def review_site_cmd(
     _success("Review site generated.")
 
 
+@app.command("timeline")
+def timeline_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a project timeline and decision log."""
+    project_dir = require_project(project_name)
+    timeline = generate_project_timeline(project_dir)
+    table = Table(title=f"Project Timeline: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "event_count", "human_decision_count", "run_event_count", "latest_event_title"]:
+        table.add_row(key, str(timeline.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'project_timeline.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROJECT_TIMELINE.md'}")
+    _success("Project timeline generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1701,6 +1721,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Review site": status.review_site_status,
         "Review site actions": status.review_site_open_action_count,
         "Review site blockers": status.review_site_blocker_count,
+        "Project timeline": status.project_timeline_status,
+        "Timeline events": status.project_timeline_event_count,
+        "Timeline decisions": status.project_timeline_human_decision_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

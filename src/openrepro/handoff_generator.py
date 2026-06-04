@@ -116,6 +116,7 @@ def _code_status(project_dir: Path) -> str:
     claim_evidence_report_validation = read_json(project_dir / "reports" / "claim_evidence_report_validation.json", default={}) or {}
     reviewer_packet = read_json(project_dir / "reports" / "reviewer_packet.json", default={}) or {}
     review_site = read_json(project_dir / "reports" / "review_site_manifest.json", default={}) or {}
+    project_timeline = read_json(project_dir / "workspace" / "project_timeline.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -123,7 +124,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.16.0 命令入口。
+- `cli.py`：已完成 v1.16.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -151,6 +152,7 @@ def _code_status(project_dir: Path) -> str:
 - `claim_evidence_report_validation.py`：已完成 claim evidence report freshness validation。
 - `reviewer_packet.py`：已完成 reviewer packet generation。
 - `review_site.py`：已完成 static review site generation。
+- `timeline.py`：已完成 project timeline and decision log generation。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -284,6 +286,12 @@ def _code_status(project_dir: Path) -> str:
 {review_site}
 ```
 
+## Project Timeline 状态
+
+```json
+{project_timeline}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -358,7 +366,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.16.0 闭环检查
+## v1.16.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -385,6 +393,7 @@ def _next_steps(project_dir: Path) -> str:
 - claim-evidence-report: {'已完成' if (project_dir / 'reports' / 'claim_evidence_report.md').exists() else '未完成'}
 - validate-claim-evidence-report: {'已完成' if (project_dir / 'reports' / 'claim_evidence_report_validation.md').exists() else '未完成'}
 - reviewer-packet: {'已完成' if (project_dir / 'reports' / 'reviewer_packet.md').exists() else '未完成'}
+- timeline: {'已完成' if status.project_timeline_exists else '未完成'}
 - scorecard: {'已完成' if (project_dir / 'workspace' / 'reproduction_scorecard.json').exists() else '未完成'}
 - gaps: {'已完成' if (project_dir / 'workspace' / 'reproduction_gaps.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
@@ -776,6 +785,11 @@ def generate_handoff(project_dir: Path) -> list[Path]:
             project_dir / "reports" / "reviewer_packet.md",
             "Reviewer Packet",
             "尚未运行 reviewer-packet，暂无 reviewer packet。",
+        ),
+        "PROJECT_TIMELINE.md": _copy_or_placeholder(
+            project_dir / "workspace" / "PROJECT_TIMELINE.md",
+            "Project Timeline",
+            "尚未运行 timeline，暂无项目时间线。",
         ),
         "REPRODUCTION_SCORECARD.md": _copy_or_placeholder(
             project_dir / "workspace" / "REPRODUCTION_SCORECARD.md",

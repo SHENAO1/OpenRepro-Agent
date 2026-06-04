@@ -311,6 +311,12 @@ generated review-site files from evidence-package freshness fingerprints so the
 site can be generated after a current evidence package without making that
 package stale.
 
+v1.16.1 adds `timeline.py`. Project timelines should aggregate existing
+workflow evidence and human decisions into chronological JSON/Markdown without
+claiming scientific validation. Generate timelines before evidence packages so
+the package fingerprint includes the timeline, and keep review sites as a
+read-only view over the packaged evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
