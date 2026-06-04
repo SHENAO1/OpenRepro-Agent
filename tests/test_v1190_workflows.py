@@ -21,7 +21,7 @@ def test_generate_dashboard_ready_with_zip(tmp_path: Path):
     dashboard = generate_dashboard(project, export_zip=True)
     status = get_status(project)
 
-    assert dashboard["schema_version"] == "1.20.0"
+    assert dashboard["schema_version"] == "1.20.1"
     assert dashboard["status"] == "ready"
     assert dashboard["top_command"] is None
     assert dashboard["readiness"]["score"] == 100.0

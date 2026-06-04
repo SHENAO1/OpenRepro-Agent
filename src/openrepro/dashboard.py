@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from .acceptance_criteria import acceptance_criteria_summary
 from .artifact_manager import sha256_file
 from .collaboration_pack import collaboration_pack_summary
 from .evidence_fingerprint import evidence_package_status
@@ -21,7 +22,7 @@ from .scorecard import scorecard_summary
 from .timeline import project_timeline_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-DASHBOARD_SCHEMA_VERSION = "1.20.0"
+DASHBOARD_SCHEMA_VERSION = "1.20.1"
 
 
 def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -38,6 +39,7 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
     gaps = gaps_summary(project_dir)
     decisions = review_decision_summary(project_dir)
     project_profile = project_profile_summary(project_dir)
+    acceptance = acceptance_criteria_summary(project_dir)
     status, top_command = _dashboard_status(project_dir, evidence, freshness, refresh, collaboration)
     dashboard = {
         "schema_version": DASHBOARD_SCHEMA_VERSION,
@@ -61,6 +63,7 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
         "reviewer_packet": reviewer_packet,
         "review_site": review_site,
         "project_profile": project_profile,
+        "acceptance_criteria": acceptance,
         "evidence_package": evidence,
         "artifact_links": _artifact_links(project_dir),
         "policy": "Dashboards organize workflow state for project handoff; they do not prove scientific reproduction.",
@@ -126,6 +129,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "handoff" / "COLLABORATION_PACK.md",
         project_dir / "workspace" / "PROJECT_TIMELINE.md",
         project_dir / "workspace" / "PROJECT_PROFILE.md",
+        project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md",
         project_dir / "reports" / "reviewer_packet.md",
         project_dir / "reports" / "review_site" / "index.html",
         project_dir / "reports" / "evidence_package.md",
@@ -189,6 +193,7 @@ def _render_html(dashboard: dict[str, Any]) -> str:
     refresh = dashboard["refresh_run"]
     collaboration = dashboard["collaboration_pack"]
     project_profile = dashboard["project_profile"]
+    acceptance = dashboard["acceptance_criteria"]
     timeline = dashboard["timeline"]
     reviewer_packet = dashboard["reviewer_packet"]
     artifact_rows = "\n".join(
@@ -249,6 +254,8 @@ def _render_html(dashboard: dict[str, Any]) -> str:
         <div class="metric"><span>Unresolved decisions</span><strong>{_cell(readiness.get('unresolved_review_decisions'))}</strong></div>
         <div class="metric"><span>Project profile</span><strong>{_badge(project_profile.get('status'))}</strong></div>
         <div class="metric"><span>Target claims</span><strong>{_cell(project_profile.get('target_claim_count'))}</strong></div>
+        <div class="metric"><span>Acceptance</span><strong>{_badge(acceptance.get('status'))}</strong></div>
+        <div class="metric"><span>Criteria needs work</span><strong>{_cell(acceptance.get('needs_work_count'))}</strong></div>
       </div>
     </section>
     <section>

@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import __version__
+from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
 from .analyzer import analyze_project
 from .approval import approve_candidates
@@ -1378,6 +1379,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Project profile": summary["project_profile_status"],
         "Profile target claims": summary["project_profile_target_claim_count"],
         "Profile experiments": summary["project_profile_required_experiment_count"],
+        "Acceptance": summary["acceptance_criteria_status"],
+        "Acceptance criteria": summary["acceptance_criteria_count"],
+        "Acceptance needs work": summary["acceptance_criteria_needs_work_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1765,6 +1769,22 @@ def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.
     _success("Project profile generated.")
 
 
+@app.command("acceptance")
+def acceptance_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate project acceptance criteria."""
+    project_dir = require_project(project_name)
+    criteria = generate_acceptance_criteria(project_dir)
+    table = Table(title="Acceptance Criteria")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "top_command", "criteria_count", "passed_count", "needs_work_count", "required_failed_count"]:
+        table.add_row(key, str(criteria.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'acceptance_criteria.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ACCEPTANCE_CRITERIA.md'}")
+    _success("Acceptance criteria generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1854,6 +1874,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Profile target claims": status.project_profile_target_claim_count,
         "Profile experiments": status.project_profile_required_experiment_count,
         "Profile dimensions": status.project_profile_acceptance_dimension_count,
+        "Acceptance": status.acceptance_criteria_status,
+        "Acceptance criteria": status.acceptance_criteria_count,
+        "Acceptance needs work": status.acceptance_criteria_needs_work_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__
+from .acceptance_criteria import acceptance_criteria_summary
 from .advance import advance_summary
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .checkpoints import checkpoint_summary
@@ -193,6 +194,12 @@ class ProjectStatus:
     project_profile_required_experiment_count: int
     project_profile_acceptance_dimension_count: int
     project_profile_top_command: str | None
+    acceptance_criteria_exists: bool
+    acceptance_criteria_status: str
+    acceptance_criteria_count: int
+    acceptance_criteria_passed_count: int
+    acceptance_criteria_needs_work_count: int
+    acceptance_criteria_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -535,6 +542,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             project_profile_required_experiment_count=0,
             project_profile_acceptance_dimension_count=0,
             project_profile_top_command=None,
+            acceptance_criteria_exists=False,
+            acceptance_criteria_status="missing",
+            acceptance_criteria_count=0,
+            acceptance_criteria_passed_count=0,
+            acceptance_criteria_needs_work_count=0,
+            acceptance_criteria_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -593,6 +606,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
     project_profile = project_profile_summary(project_dir)
+    acceptance = acceptance_criteria_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -714,6 +728,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif project_profile["status"] not in {"ready", "ready_with_open_work"}:
         command = str(project_profile["top_command"] or f"openrepro profile {project_dir}")
         next_step = f"Run: {command}"
+    elif not acceptance["present"]:
+        next_step = f"Run: openrepro acceptance {project_dir}"
+    elif acceptance["status"] != "ready":
+        command = str(acceptance["top_command"] or f"openrepro acceptance {project_dir}")
+        next_step = f"Run: {command}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -748,7 +767,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         command = str(dashboard["top_command"] or f"openrepro dashboard {project_dir} --zip")
         next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.20.0 workflow is complete. Review the project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.20.1 workflow is complete. Review the acceptance criteria, project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -893,6 +912,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         project_profile_required_experiment_count=int(project_profile["required_experiment_count"] or 0),
         project_profile_acceptance_dimension_count=int(project_profile["acceptance_dimension_count"] or 0),
         project_profile_top_command=project_profile["top_command"],
+        acceptance_criteria_exists=bool(acceptance["present"]),
+        acceptance_criteria_status=str(acceptance["status"]),
+        acceptance_criteria_count=int(acceptance["criteria_count"] or 0),
+        acceptance_criteria_passed_count=int(acceptance["passed_count"] or 0),
+        acceptance_criteria_needs_work_count=int(acceptance["needs_work_count"] or 0),
+        acceptance_criteria_top_command=acceptance["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

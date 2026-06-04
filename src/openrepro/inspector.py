@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .acceptance_criteria import acceptance_criteria_summary
 from .advance import advance_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
@@ -205,6 +206,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
     project_profile = project_profile_summary(project_dir)
+    acceptance = acceptance_criteria_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -376,6 +378,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "project_profile_required_experiment_count": project_profile["required_experiment_count"],
         "project_profile_acceptance_dimension_count": project_profile["acceptance_dimension_count"],
         "project_profile_top_command": project_profile["top_command"],
+        "acceptance_criteria_status": acceptance["status"],
+        "acceptance_criteria_count": acceptance["criteria_count"],
+        "acceptance_criteria_passed_count": acceptance["passed_count"],
+        "acceptance_criteria_needs_work_count": acceptance["needs_work_count"],
+        "acceptance_criteria_top_command": acceptance["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

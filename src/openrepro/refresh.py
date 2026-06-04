@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.20.0"
+REFRESH_RUN_SCHEMA_VERSION = "1.20.1"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -20,6 +20,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
     from .advance import generate_advance_plan
+    from .acceptance_criteria import generate_acceptance_criteria
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
     from .claim_evidence_report import generate_claim_evidence_report
@@ -73,6 +74,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         ("reviewer_packet", "Refresh reviewer packet.", lambda: generate_reviewer_packet(project_dir, export_zip=export_zip)),
         ("timeline", "Refresh project timeline.", lambda: generate_project_timeline(project_dir)),
         ("project_profile", "Refresh project reproduction profile.", lambda: generate_project_profile(project_dir)),
+        ("acceptance_criteria", "Refresh acceptance criteria.", lambda: generate_acceptance_criteria(project_dir)),
         ("inspect", "Refresh inspect summary.", lambda: inspect_project(project_dir)),
         ("report", "Refresh project report.", lambda: generate_report(project_dir)),
         ("handoff", "Refresh handoff files.", lambda: generate_handoff(project_dir)),

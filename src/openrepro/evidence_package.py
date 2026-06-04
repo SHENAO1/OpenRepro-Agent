@@ -7,6 +7,7 @@ from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from . import __version__
+from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
@@ -83,6 +84,7 @@ WORKSPACE_ARTIFACTS = [
     "repair_dry_run.json",
     "repair_apply.json",
     "project_profile.json",
+    "acceptance_criteria.json",
 ]
 
 
@@ -326,6 +328,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     reviewer_packet = generate_reviewer_packet(project_dir)
     project_timeline = generate_project_timeline(project_dir)
     project_profile = generate_project_profile(project_dir)
+    acceptance_criteria = generate_acceptance_criteria(project_dir)
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
@@ -469,6 +472,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "acceptance_dimension_count": project_profile.get("acceptance_dimension_count"),
             "path": project_profile_existing.get("path") or str(project_dir / "workspace" / "project_profile.json"),
             "markdown_path": project_profile_existing.get("markdown_path") or str(project_dir / "workspace" / "PROJECT_PROFILE.md"),
+        },
+        "acceptance_criteria": {
+            "schema_version": acceptance_criteria.get("schema_version"),
+            "status": acceptance_criteria.get("status"),
+            "top_command": acceptance_criteria.get("top_command"),
+            "criteria_count": acceptance_criteria.get("criteria_count"),
+            "passed_count": acceptance_criteria.get("passed_count"),
+            "needs_work_count": acceptance_criteria.get("needs_work_count"),
+            "required_failed_count": acceptance_criteria.get("required_failed_count"),
+            "path": str(project_dir / "workspace" / "acceptance_criteria.json"),
+            "markdown_path": str(project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md"),
         },
         "collaboration_pack": {
             "schema_version": collaboration_pack.get("schema_version"),
@@ -642,6 +656,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "PROJECT_PROFILE.md").exists(),
                 "path": str(project_dir / "workspace" / "PROJECT_PROFILE.md"),
             },
+            "acceptance_criteria": {
+                "present": (project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md").exists(),
+                "path": str(project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md"),
+            },
             "collaboration_pack": {
                 "present": (project_dir / "handoff" / "COLLABORATION_PACK.md").exists(),
                 "path": str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
@@ -783,6 +801,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - project_profile_target_claim_count: {package['project_profile']['target_claim_count']}
 - project_profile_required_experiment_count: {package['project_profile']['required_experiment_count']}
 - project_profile_acceptance_dimension_count: {package['project_profile']['acceptance_dimension_count']}
+- acceptance_criteria_status: {package['acceptance_criteria']['status']}
+- acceptance_criteria_passed_count: {package['acceptance_criteria']['passed_count']}
+- acceptance_criteria_needs_work_count: {package['acceptance_criteria']['needs_work_count']}
 - collaboration_pack_status: {package['collaboration_pack']['status']}
 - collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
 - collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}

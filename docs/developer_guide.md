@@ -351,6 +351,14 @@ dimensions before reports and evidence packages are finalized. They are source
 evidence for scope and should remain included in evidence-package fingerprints.
 Profiles must not claim that scientific reproduction has succeeded.
 
+v1.20.1 adds `acceptance_criteria.py`. Acceptance criteria should evaluate
+workflow readiness gates derived from the project profile: reviewed claims,
+current data, experiment contracts, run evidence, quality gates, trace
+validation, scorecard gaps, and protocol readiness. They are source evidence
+for readiness gates and should remain included in evidence-package
+fingerprints. Acceptance criteria must not claim scientific reproduction
+success.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

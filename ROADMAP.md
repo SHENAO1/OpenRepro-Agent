@@ -460,6 +460,16 @@ Released in v1.19.0 with a static project dashboard.
 
 Released in v1.20.0 with an auditable project reproduction profile.
 
+## v1.20.1 — Acceptance criteria
+
+- [x] Add `openrepro acceptance`.
+- [x] Write `workspace/acceptance_criteria.json` and `workspace/ACCEPTANCE_CRITERIA.md`.
+- [x] Evaluate claim review, data provenance, experiment scaffolds, input/spec readiness, run evidence, quality gates, claim trace validation, scorecard gaps, and protocol readiness.
+- [x] Surface acceptance criteria status in status, inspect, reports, handoff, freshness, dashboards, refresh runs, and evidence packages.
+- [x] Keep acceptance criteria as workflow readiness checks, not scientific proof.
+
+Released in v1.20.1 with project-level acceptance criteria.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

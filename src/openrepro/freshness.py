@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from .acceptance_criteria import acceptance_criteria_summary
 from .artifact_manager import sha256_file
 from .collaboration_pack import collaboration_pack_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
@@ -17,7 +18,7 @@ from .reviewer_packet import reviewer_packet_summary
 from .timeline import project_timeline_summary
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-ARTIFACT_FRESHNESS_SCHEMA_VERSION = "1.20.0"
+ARTIFACT_FRESHNESS_SCHEMA_VERSION = "1.20.1"
 
 
 def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
@@ -29,6 +30,7 @@ def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
     refresh = refresh_run_summary(project_dir)
     timeline = project_timeline_summary(project_dir)
     project_profile = project_profile_summary(project_dir)
+    acceptance = acceptance_criteria_summary(project_dir)
     reviewer_packet = reviewer_packet_summary(project_dir)
     preflight = protocol_preflight_summary(project_dir)
     decisions = review_decision_summary(project_dir)
@@ -65,6 +67,14 @@ def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
             project_profile.get("path"),
             _simple_reason("project_profile", project_profile["status"], "ready or ready_with_open_work"),
             str(project_profile.get("top_command") or f"openrepro profile {project_dir}"),
+        ),
+        _node(
+            "acceptance_criteria",
+            acceptance["status"],
+            acceptance["present"] and acceptance["status"] == "ready",
+            acceptance.get("path"),
+            _simple_reason("acceptance_criteria", acceptance["status"], "ready"),
+            str(acceptance.get("top_command") or f"openrepro acceptance {project_dir}"),
         ),
         _node(
             "reviewer_packet",
@@ -215,12 +225,14 @@ def _edges() -> list[dict[str, str]]:
     return [
         {"source": "source_fingerprint", "target": "evidence_package"},
         {"source": "project_profile", "target": "evidence_package"},
+        {"source": "acceptance_criteria", "target": "evidence_package"},
         {"source": "reviewer_packet", "target": "review_site"},
         {"source": "protocol_preflight", "target": "review_site"},
         {"source": "evidence_package", "target": "review_site"},
         {"source": "review_site", "target": "collaboration_pack"},
         {"source": "project_timeline", "target": "collaboration_pack"},
         {"source": "project_profile", "target": "collaboration_pack"},
+        {"source": "acceptance_criteria", "target": "collaboration_pack"},
         {"source": "reviewer_packet", "target": "collaboration_pack"},
         {"source": "review_decisions", "target": "collaboration_pack"},
         {"source": "refresh_run", "target": "artifact_freshness"},
