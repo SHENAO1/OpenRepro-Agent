@@ -19,6 +19,7 @@ from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
 from .claim_evidence_report import generate_claim_evidence_report
 from .claim_signoff import ALLOWED_CLAIM_SIGNOFF_DECISIONS, generate_claim_signoffs, record_claim_signoff
+from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
@@ -832,6 +833,32 @@ def claim_evidence_report_cmd(project_name: str = typer.Argument(..., help="Proj
     _success("Claim evidence report generated.")
 
 
+@app.command("validate-claim-signoffs")
+def validate_claim_signoffs_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate claim signoff coverage and freshness."""
+    project_dir = require_project(project_name)
+    validation = validate_claim_signoffs(project_dir)
+    table = Table(title=f"Claim Signoff Validation: {project_name}")
+    table.add_column("Code")
+    table.add_column("Message")
+    rows = validation["issues"] or validation["warnings"]
+    if rows:
+        for item in rows:
+            table.add_row(str(item["code"]), str(item["message"]))
+    else:
+        table.add_row("none", "No claim signoff validation issues found.")
+    console.print(table)
+    console.print(f"Status: {validation['status']}")
+    console.print(f"Issues: {validation['issue_count']}")
+    console.print(f"Warnings: {validation['warning_count']}")
+    console.print(f"Top command: {validation['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_signoff_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_SIGNOFF_VALIDATION.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Claim signoff validation passed.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1255,6 +1282,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Claim signoffs": summary["claim_signoff_status"],
         "Signed claims": summary["claim_signoff_signed_claim_count"],
         "Open signoff claims": summary["claim_signoff_open_claim_count"],
+        "Signoff validation": summary["claim_signoff_validation_status"],
+        "Signoff validation issues": summary["claim_signoff_validation_issue_count"],
         "Claim evidence report": summary["claim_evidence_report_status"],
         "Claim report actions": summary["claim_evidence_report_open_action_count"],
         "Runs": summary["run_count"],
@@ -1569,6 +1598,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Claim signoffs": status.claim_signoff_status,
         "Signed claims": status.claim_signoff_signed_claim_count,
         "Open signoff claims": status.claim_signoff_open_claim_count,
+        "Signoff validation": status.claim_signoff_validation_status,
+        "Signoff validation issues": status.claim_signoff_validation_issue_count,
         "Claim evidence report": status.claim_evidence_report_status,
         "Claim report actions": status.claim_evidence_report_open_action_count,
         "Latest run dir": status.latest_run_dir or "None",

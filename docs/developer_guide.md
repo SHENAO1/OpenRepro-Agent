@@ -287,6 +287,12 @@ the binder, binder validation, and latest signoffs into a reviewer-facing
 matrix. Reports may identify open workflow actions and top commands, but they
 must keep the distinction between workflow evidence and scientific proof.
 
+v1.14.0 adds `claim_signoff_validation.py`. Signoff validation should check
+coverage, freshness, orphan records, and accepted incomplete claims against the
+current claim evidence binder. It may invalidate workflow signoffs after
+evidence changes, but it must not alter human decisions or claim scientific
+correctness.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

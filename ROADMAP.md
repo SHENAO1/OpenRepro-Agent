@@ -360,6 +360,16 @@ Released in v1.13.0 with human signoffs for claim evidence binder records.
 
 Released in v1.13.1 with reviewer-facing claim evidence reports.
 
+## v1.14.0 — Claim signoff validation
+
+- [x] Add `openrepro validate-claim-signoffs`.
+- [x] Write `workspace/claim_signoff_validation.json` and `workspace/CLAIM_SIGNOFF_VALIDATION.md`.
+- [x] Detect stale signoff snapshots, orphan signoffs, incomplete accepted claims, and failed binder validation.
+- [x] Surface claim signoff validation status in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep validation scoped to workflow decision freshness, not scientific proof.
+
+Released in v1.14.0 with claim signoff freshness validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
