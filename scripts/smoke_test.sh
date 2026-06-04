@@ -77,6 +77,7 @@ python -m openrepro.cli collaboration-pack "$PROJECT" --zip
 python -m openrepro.cli refresh "$PROJECT" --zip
 python -m openrepro.cli freshness "$PROJECT"
 python -m openrepro.cli dashboard "$PROJECT" --zip
+python -m openrepro.cli readiness-review "$PROJECT" --zip
 python -m openrepro.cli status "$PROJECT"
 
 mkdir -p .codex_tmp/pytest-basetemp

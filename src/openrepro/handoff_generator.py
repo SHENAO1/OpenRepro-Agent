@@ -123,6 +123,7 @@ def _code_status(project_dir: Path) -> str:
     dashboard = read_json(project_dir / "reports" / "dashboard_manifest.json", default={}) or {}
     project_profile = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
     acceptance_criteria = read_json(project_dir / "workspace" / "acceptance_criteria.json", default={}) or {}
+    readiness_review = read_json(project_dir / "reports" / "readiness_review.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -130,7 +131,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.20.1 命令入口。
+- `cli.py`：已完成 v1.21.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -165,6 +166,7 @@ def _code_status(project_dir: Path) -> str:
 - `dashboard.py`：已完成 static project dashboard。
 - `project_profile.py`：已完成 project reproduction profile。
 - `acceptance_criteria.py`：已完成 acceptance criteria generation。
+- `readiness_review.py`：已完成 final readiness review report。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -340,6 +342,12 @@ def _code_status(project_dir: Path) -> str:
 {acceptance_criteria}
 ```
 
+## Readiness Review 状态
+
+```json
+{readiness_review}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -414,7 +422,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.20.1 闭环检查
+## v1.21.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -453,6 +461,7 @@ def _next_steps(project_dir: Path) -> str:
 - dashboard: {'已完成' if status.dashboard_exists else '未完成'}
 - profile: {'已完成' if status.project_profile_exists else '未完成'}
 - acceptance: {'已完成' if status.acceptance_criteria_exists else '未完成'}
+- readiness-review: {'已完成' if status.readiness_review_exists else '未完成'}
 
 ## 下一阶段建议
 

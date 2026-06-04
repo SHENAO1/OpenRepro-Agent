@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.20.1"
+REFRESH_RUN_SCHEMA_VERSION = "1.21.0"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -41,6 +41,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .protocol_preflight import generate_protocol_preflight
     from .project_profile import generate_project_profile
     from .quality_gate import evaluate_all_quality_gates
+    from .readiness_review import generate_readiness_review
     from .report_generator import generate_report
     from .reproduction_protocol import generate_reproduction_protocol
     from .review_board import generate_review_board
@@ -112,6 +113,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "dashboard",
             "Refresh static project dashboard.",
             lambda: generate_dashboard(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "readiness_review",
+            "Refresh final readiness review.",
+            lambda: generate_readiness_review(project_dir, export_zip=export_zip),
         )
     )
     result = _build_result(project_dir, export_zip, records)

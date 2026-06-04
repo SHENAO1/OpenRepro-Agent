@@ -17,6 +17,9 @@ EXCLUDED_REPORT_PREFIXES = {
     "review_site.zip",
     "dashboard_manifest.json",
     "dashboard.zip",
+    "readiness_review.json",
+    "READINESS_REVIEW.md",
+    "readiness_review.zip",
 }
 EXCLUDED_REPORT_DIRS = {"review_site", "dashboard"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {

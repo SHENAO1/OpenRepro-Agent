@@ -50,6 +50,7 @@ from .protocol_preflight import generate_protocol_preflight
 from .project_profile import generate_project_profile
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
+from .readiness_review import generate_readiness_review
 from .refresh import generate_refresh_run
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
@@ -1382,6 +1383,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Acceptance": summary["acceptance_criteria_status"],
         "Acceptance criteria": summary["acceptance_criteria_count"],
         "Acceptance needs work": summary["acceptance_criteria_needs_work_count"],
+        "Readiness review": summary["readiness_review_status"],
+        "Readiness blockers": summary["readiness_review_blocker_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1753,6 +1756,27 @@ def dashboard_cmd(
     _success("Dashboard generated.")
 
 
+@app.command("readiness-review")
+def readiness_review_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/readiness_review.zip."),
+) -> None:
+    """Generate a final readiness review report."""
+    project_dir = require_project(project_name)
+    review = generate_readiness_review(project_dir, export_zip=export_zip)
+    table = Table(title="Readiness Review")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "top_command", "check_count", "passed_check_count", "blocker_count", "open_action_count"]:
+        table.add_row(key, str(review.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'reports' / 'readiness_review.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'READINESS_REVIEW.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'readiness_review.zip'}")
+    _success("Readiness review generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1877,6 +1901,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Acceptance": status.acceptance_criteria_status,
         "Acceptance criteria": status.acceptance_criteria_count,
         "Acceptance needs work": status.acceptance_criteria_needs_work_count,
+        "Readiness review": status.readiness_review_status,
+        "Readiness blockers": status.readiness_review_blocker_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

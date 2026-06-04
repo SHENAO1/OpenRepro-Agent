@@ -470,6 +470,16 @@ Released in v1.20.0 with an auditable project reproduction profile.
 
 Released in v1.20.1 with project-level acceptance criteria.
 
+## v1.21.0 — Readiness review
+
+- [x] Add `openrepro readiness-review`.
+- [x] Write `reports/readiness_review.json`, `reports/READINESS_REVIEW.md`, and optional `reports/readiness_review.zip`.
+- [x] Check profile, acceptance criteria, evidence package freshness, artifact freshness, refresh run, dashboard, collaboration pack, review site, reviewer packet, scorecard, gaps, protocol preflight, and review decisions.
+- [x] Surface readiness review status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep readiness reviews as final workflow handoff reports, not scientific proof.
+
+Released in v1.21.0 with final readiness review reports.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

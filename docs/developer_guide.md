@@ -359,6 +359,13 @@ for readiness gates and should remain included in evidence-package
 fingerprints. Acceptance criteria must not claim scientific reproduction
 success.
 
+v1.21.0 adds `readiness_review.py`. Readiness reviews should be final
+human-handoff reports that check downstream artifacts such as evidence package,
+freshness, refresh, dashboard, review site, reviewer packet, and collaboration
+pack after source evidence has been finalized. Generated readiness review files
+are excluded from evidence-package freshness fingerprints because they are
+downstream reports, not source evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

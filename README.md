@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.20.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.21.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.20.1 workflow is:
+The v1.21.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → status
 ```
 
 ## What v0.4.0 supports
@@ -423,6 +423,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Evaluate claim review, data provenance, experiment scaffolds, input/spec readiness, run evidence, quality gates, claim trace validation, scorecard gaps, and protocol readiness.
 - Surface acceptance criteria status in `inspect`, `status`, reports, handoff, freshness, dashboards, refresh runs, and evidence packages.
 - Keep acceptance criteria as workflow readiness checks, not scientific reproduction proof.
+
+## What v1.21.0 adds
+
+- Add `openrepro readiness-review` for final human-review readiness.
+- Write `reports/readiness_review.json`, `reports/READINESS_REVIEW.md`, and optional `reports/readiness_review.zip`.
+- Check project profile, acceptance criteria, evidence package freshness, artifact freshness, refresh run, dashboard, collaboration pack, review site, reviewer packet, scorecard, gaps, protocol preflight, and review decisions.
+- Surface readiness review status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
+- Keep readiness reviews as final workflow handoff reports, not scientific reproduction proof.
 
 ## Current limitations
 
@@ -1588,12 +1596,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.19.0: static project dashboard for handoff and artifact navigation.
 - v1.20.0: project reproduction profile for scope, targets, and acceptance dimensions.
 - v1.20.1: acceptance criteria for workflow readiness gates.
+- v1.21.0: final readiness review for human handoff.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.20.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.21.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

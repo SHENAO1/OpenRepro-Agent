@@ -438,6 +438,23 @@ def _dashboard_block(project_dir: Path) -> str:
     )
 
 
+def _readiness_review_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "reports" / "readiness_review.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 readiness review。运行 `openrepro readiness-review <project> --zip` 后会生成最终人工审阅报告。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- check_count: {data.get('check_count', 0)}",
+            f"- passed_check_count: {data.get('passed_check_count', 0)}",
+            f"- blocker_count: {data.get('blocker_count', 0)}",
+            f"- open_action_count: {data.get('open_action_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _project_profile_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -528,6 +545,7 @@ def generate_report(project_dir: Path) -> Path:
     refresh_run_block = _refresh_run_block(project_dir)
     artifact_freshness_block = _artifact_freshness_block(project_dir)
     dashboard_block = _dashboard_block(project_dir)
+    readiness_review_block = _readiness_review_block(project_dir)
     project_profile_block = _project_profile_block(project_dir)
     acceptance_criteria_block = _acceptance_criteria_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
@@ -699,30 +717,34 @@ OpenRepro-Agent v{__version__}
 
 {dashboard_block}
 
-## 33. Project Profile 摘要
+## 33. Readiness Review 摘要
+
+{readiness_review_block}
+
+## 34. Project Profile 摘要
 
 {project_profile_block}
 
-## 34. Acceptance Criteria 摘要
+## 35. Acceptance Criteria 摘要
 
 {acceptance_criteria_block}
 
-## 35. Reproduction Readiness Scorecard 摘要
+## 36. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 36. Reproduction Gaps 摘要
+## 37. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 37. 当前局限
+## 38. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 38. 下一阶段建议
+## 39. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
