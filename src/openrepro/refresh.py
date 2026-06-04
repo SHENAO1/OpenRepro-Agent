@@ -28,6 +28,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .claim_signoff_validation import validate_claim_signoffs
     from .claim_trace import generate_claim_trace, validate_claim_trace
     from .collaboration_pack import generate_collaboration_pack
+    from .dashboard import generate_dashboard
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
@@ -97,6 +98,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "artifact_freshness",
             "Refresh artifact freshness graph after handoff artifacts are current.",
             lambda: generate_artifact_freshness(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "dashboard",
+            "Refresh static project dashboard.",
+            lambda: generate_dashboard(project_dir, export_zip=export_zip),
         )
     )
     result = _build_result(project_dir, export_zip, records)

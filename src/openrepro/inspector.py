@@ -17,6 +17,7 @@ from .claim_signoff import claim_signoff_summary
 from .claim_signoff_validation import claim_signoff_validation_summary
 from .claim_trace import claim_trace_summary
 from .collaboration_pack import collaboration_pack_summary
+from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
@@ -201,6 +202,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
     artifact_freshness = artifact_freshness_summary(project_dir)
+    dashboard = dashboard_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -362,6 +364,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "artifact_freshness_top_stale_node": artifact_freshness["top_stale_node"],
         "artifact_freshness_top_stale_reason": artifact_freshness["top_stale_reason"],
         "artifact_freshness_top_command": artifact_freshness["top_command"],
+        "dashboard_status": dashboard["status"],
+        "dashboard_readiness_score": dashboard["readiness_score"],
+        "dashboard_stale_node_count": dashboard["stale_node_count"],
+        "dashboard_top_command": dashboard["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

@@ -440,6 +440,16 @@ Released in v1.18.0 with a safe derived-artifact refresh pipeline.
 
 Released in v1.18.1 with artifact freshness reasons and dependency edges.
 
+## v1.19.0 — Project dashboard index
+
+- [x] Add `openrepro dashboard`.
+- [x] Write `reports/dashboard/index.html`, `reports/dashboard_manifest.json`, and optional `reports/dashboard.zip`.
+- [x] Combine readiness score, artifact freshness, refresh run, collaboration pack, timeline, reviewer packet, review site, evidence package, and handoff links.
+- [x] Surface dashboard status in status, inspect, reports, handoff, review sites, and evidence packages.
+- [x] Keep dashboards as static project handoff views, not scientific proof.
+
+Released in v1.19.0 with a static project dashboard.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

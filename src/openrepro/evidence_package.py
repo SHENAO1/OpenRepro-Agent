@@ -17,6 +17,7 @@ from .claim_signoff import generate_claim_signoffs
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import collaboration_pack_summary
+from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
@@ -326,6 +327,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
     artifact_freshness = artifact_freshness_summary(project_dir)
+    dashboard = dashboard_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -485,6 +487,16 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "path": artifact_freshness.get("path") or str(project_dir / "workspace" / "artifact_freshness.json"),
             "markdown_path": artifact_freshness.get("markdown_path") or str(project_dir / "workspace" / "ARTIFACT_FRESHNESS.md"),
         },
+        "dashboard": {
+            "schema_version": dashboard.get("schema_version"),
+            "status": dashboard.get("status"),
+            "top_command": dashboard.get("top_command"),
+            "readiness_score": dashboard.get("readiness_score"),
+            "stale_node_count": dashboard.get("stale_node_count"),
+            "path": dashboard.get("path") or str(project_dir / "reports" / "dashboard" / "index.html"),
+            "manifest_path": dashboard.get("manifest_path") or str(project_dir / "reports" / "dashboard_manifest.json"),
+            "zip_path": dashboard.get("zip_path"),
+        },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
             "overall_score": scorecard.get("overall_score"),
@@ -622,6 +634,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "ARTIFACT_FRESHNESS.md").exists(),
                 "path": str(project_dir / "workspace" / "ARTIFACT_FRESHNESS.md"),
             },
+            "dashboard": {
+                "present": (project_dir / "reports" / "dashboard" / "index.html").exists(),
+                "path": str(project_dir / "reports" / "dashboard" / "index.html"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -752,6 +768,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - artifact_freshness_status: {package['artifact_freshness']['status']}
 - artifact_freshness_stale_node_count: {package['artifact_freshness']['stale_node_count']}
 - artifact_freshness_top_stale_node: {package['artifact_freshness']['top_stale_node']}
+- dashboard_status: {package['dashboard']['status']}
+- dashboard_readiness_score: {package['dashboard']['readiness_score']}
+- dashboard_stale_node_count: {package['dashboard']['stale_node_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

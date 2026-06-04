@@ -120,6 +120,7 @@ def _code_status(project_dir: Path) -> str:
     collaboration_pack = read_json(project_dir / "handoff" / "collaboration_pack.json", default={}) or {}
     refresh_run = read_json(project_dir / "workspace" / "refresh_run.json", default={}) or {}
     artifact_freshness = read_json(project_dir / "workspace" / "artifact_freshness.json", default={}) or {}
+    dashboard = read_json(project_dir / "reports" / "dashboard_manifest.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -127,7 +128,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.18.1 命令入口。
+- `cli.py`：已完成 v1.19.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -159,6 +160,7 @@ def _code_status(project_dir: Path) -> str:
 - `collaboration_pack.py`：已完成 role-based collaboration handoff pack。
 - `refresh.py`：已完成 safe derived-artifact refresh pipeline。
 - `freshness.py`：已完成 artifact freshness graph。
+- `dashboard.py`：已完成 static project dashboard。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -316,6 +318,12 @@ def _code_status(project_dir: Path) -> str:
 {artifact_freshness}
 ```
 
+## Dashboard 状态
+
+```json
+{dashboard}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -390,7 +398,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.18.1 闭环检查
+## v1.19.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -426,6 +434,7 @@ def _next_steps(project_dir: Path) -> str:
 - collaboration-pack: {'已完成' if status.collaboration_pack_exists else '未完成'}
 - refresh: {'已完成' if status.refresh_run_exists else '未完成'}
 - freshness: {'已完成' if status.artifact_freshness_exists else '未完成'}
+- dashboard: {'已完成' if status.dashboard_exists else '未完成'}
 
 ## 下一阶段建议
 

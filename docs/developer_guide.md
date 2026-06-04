@@ -339,6 +339,12 @@ package fingerprints against current source evidence and list dependency edges
 among handoff artifacts, but they should remain diagnostic records. Generated
 freshness graph files are excluded from evidence-package freshness fingerprints.
 
+v1.19.0 adds `dashboard.py`. Dashboards should be static project handoff views
+that aggregate readiness, freshness, refresh, collaboration, timeline, reviewer,
+review-site, evidence-package, and handoff links. Generated dashboard files are
+excluded from evidence-package freshness fingerprints because they are
+downstream navigation artifacts, not source evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

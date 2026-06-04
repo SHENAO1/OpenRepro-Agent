@@ -25,6 +25,7 @@ from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
+from .dashboard import generate_dashboard
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
@@ -1372,6 +1373,7 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Refresh failures": summary["refresh_run_failed_step_count"],
         "Freshness": summary["artifact_freshness_status"],
         "Freshness stale": summary["artifact_freshness_stale_node_count"],
+        "Dashboard": summary["dashboard_status"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1720,6 +1722,29 @@ def freshness_cmd(project_name: str = typer.Argument(..., help="Project director
     _success("Artifact freshness graph generated.")
 
 
+@app.command("dashboard")
+def dashboard_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/dashboard.zip."),
+) -> None:
+    """Generate a static project dashboard."""
+    project_dir = require_project(project_name)
+    dashboard = generate_dashboard(project_dir, export_zip=export_zip)
+    table = Table(title=f"Dashboard: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "top_command"]:
+        table.add_row(key, str(dashboard.get(key)))
+    table.add_row("readiness_score", str(dashboard.get("readiness", {}).get("score")))
+    table.add_row("stale_node_count", str(dashboard.get("freshness", {}).get("stale_node_count")))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'dashboard' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'dashboard_manifest.json'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'dashboard.zip'}")
+    _success("Dashboard generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1804,6 +1829,7 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Refresh failures": status.refresh_run_failed_step_count,
         "Artifact freshness": status.artifact_freshness_status,
         "Freshness stale nodes": status.artifact_freshness_stale_node_count,
+        "Dashboard": status.dashboard_status,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
