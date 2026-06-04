@@ -317,6 +317,13 @@ claiming scientific validation. Generate timelines before evidence packages so
 the package fingerprint includes the timeline, and keep review sites as a
 read-only view over the packaged evidence.
 
+v1.17.0 adds `collaboration_pack.py`. Collaboration packs should be role-based
+handoff views for maintainers, reviewers, experimenters, and the next agent.
+They should list safe commands and files to inspect first, but remain a
+coordination layer rather than evidence that scientific reproduction succeeded.
+Generated collaboration pack files are excluded from evidence-package freshness
+fingerprints because they are downstream handoff artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

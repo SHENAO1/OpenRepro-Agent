@@ -16,6 +16,7 @@ from .claim_evidence_report_validation import claim_evidence_report_validation_s
 from .claim_signoff import claim_signoff_summary
 from .claim_signoff_validation import claim_signoff_validation_summary
 from .claim_trace import claim_trace_summary
+from .collaboration_pack import collaboration_pack_summary
 from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
@@ -195,6 +196,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     reviewer_packet = reviewer_packet_summary(project_dir)
     review_site = review_site_summary(project_dir)
     project_timeline = project_timeline_summary(project_dir)
+    collaboration_pack = collaboration_pack_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -342,6 +344,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "project_timeline_event_count": project_timeline["event_count"],
         "project_timeline_human_decision_count": project_timeline["human_decision_count"],
         "project_timeline_latest_event_title": project_timeline["latest_event_title"],
+        "collaboration_pack_status": collaboration_pack["status"],
+        "collaboration_pack_unresolved_decision_count": collaboration_pack["unresolved_decision_count"],
+        "collaboration_pack_next_safe_command_count": collaboration_pack["next_safe_command_count"],
+        "collaboration_pack_top_command": collaboration_pack["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

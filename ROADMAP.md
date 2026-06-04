@@ -410,6 +410,16 @@ Released in v1.16.0 with a static human review site.
 
 Released in v1.16.1 with project timelines and decision logs.
 
+## v1.17.0 — Collaboration pack
+
+- [x] Add `openrepro collaboration-pack`.
+- [x] Write `handoff/collaboration_pack.json`, `handoff/COLLABORATION_PACK.md`, and optional `handoff/collaboration_pack.zip`.
+- [x] Split collaboration work into maintainer, reviewer, experimenter, and next-agent checklists.
+- [x] Summarize unresolved decisions, next safe commands, readiness state, and files to inspect first.
+- [x] Surface collaboration pack status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.17.0 with role-based collaboration packs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

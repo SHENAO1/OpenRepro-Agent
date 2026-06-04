@@ -16,6 +16,7 @@ from .claim_evidence_report_validation import validate_claim_evidence_report
 from .claim_signoff import generate_claim_signoffs
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
+from .collaboration_pack import collaboration_pack_summary
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
@@ -320,6 +321,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     reviewer_packet = generate_reviewer_packet(project_dir)
     project_timeline = generate_project_timeline(project_dir)
     review_site = review_site_summary(project_dir)
+    collaboration_pack = collaboration_pack_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -446,6 +448,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "path": str(project_dir / "workspace" / "project_timeline.json"),
             "markdown_path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
         },
+        "collaboration_pack": {
+            "schema_version": collaboration_pack.get("schema_version"),
+            "status": collaboration_pack.get("status"),
+            "role_count": collaboration_pack.get("role_count"),
+            "unresolved_decision_count": collaboration_pack.get("unresolved_decision_count"),
+            "next_safe_command_count": collaboration_pack.get("next_safe_command_count"),
+            "top_command": collaboration_pack.get("top_command"),
+            "path": collaboration_pack.get("path") or str(project_dir / "handoff" / "collaboration_pack.json"),
+            "markdown_path": collaboration_pack.get("markdown_path") or str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
+            "zip_path": collaboration_pack.get("zip_path"),
+        },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
             "overall_score": scorecard.get("overall_score"),
@@ -571,6 +584,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "PROJECT_TIMELINE.md").exists(),
                 "path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
             },
+            "collaboration_pack": {
+                "present": (project_dir / "handoff" / "COLLABORATION_PACK.md").exists(),
+                "path": str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -692,6 +709,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - project_timeline_status: {package['project_timeline']['status']}
 - project_timeline_event_count: {package['project_timeline']['event_count']}
 - project_timeline_human_decision_count: {package['project_timeline']['human_decision_count']}
+- collaboration_pack_status: {package['collaboration_pack']['status']}
+- collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
+- collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

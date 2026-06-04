@@ -71,6 +71,7 @@ python -m openrepro.cli report "$PROJECT"
 python -m openrepro.cli handoff "$PROJECT"
 python -m openrepro.cli evidence-package "$PROJECT" --zip
 python -m openrepro.cli review-site "$PROJECT" --zip
+python -m openrepro.cli collaboration-pack "$PROJECT" --zip
 python -m openrepro.cli status "$PROJECT"
 
 mkdir -p .codex_tmp/pytest-basetemp

@@ -19,6 +19,9 @@ EXCLUDED_REPORT_PREFIXES = {
 EXCLUDED_REPORT_DIRS = {"review_site"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "handoff/EVIDENCE_PACKAGE.md",
+    "handoff/COLLABORATION_PACK.md",
+    "handoff/collaboration_pack.json",
+    "handoff/collaboration_pack.zip",
 }
 
 

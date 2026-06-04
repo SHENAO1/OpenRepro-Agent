@@ -22,6 +22,7 @@ from .claim_evidence_report_validation import validate_claim_evidence_report
 from .claim_signoff import ALLOWED_CLAIM_SIGNOFF_DECISIONS, generate_claim_signoffs, record_claim_signoff
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
+from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
@@ -1361,6 +1362,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Project timeline": summary["project_timeline_status"],
         "Timeline events": summary["project_timeline_event_count"],
         "Timeline decisions": summary["project_timeline_human_decision_count"],
+        "Collaboration pack": summary["collaboration_pack_status"],
+        "Collab unresolved": summary["collaboration_pack_unresolved_decision_count"],
+        "Collab commands": summary["collaboration_pack_next_safe_command_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1648,6 +1652,27 @@ def timeline_cmd(project_name: str = typer.Argument(..., help="Project directory
     _success("Project timeline generated.")
 
 
+@app.command("collaboration-pack")
+def collaboration_pack_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export handoff/collaboration_pack.zip."),
+) -> None:
+    """Generate a role-based collaboration handoff pack."""
+    project_dir = require_project(project_name)
+    pack = generate_collaboration_pack(project_dir, export_zip=export_zip)
+    table = Table(title=f"Collaboration Pack: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "role_count", "unresolved_decision_count", "next_safe_command_count", "top_command"]:
+        table.add_row(key, str(pack.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'handoff' / 'collaboration_pack.json'}")
+    console.print(f"Markdown: {project_dir / 'handoff' / 'COLLABORATION_PACK.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'handoff' / 'collaboration_pack.zip'}")
+    _success("Collaboration pack generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1724,6 +1749,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Project timeline": status.project_timeline_status,
         "Timeline events": status.project_timeline_event_count,
         "Timeline decisions": status.project_timeline_human_decision_count,
+        "Collaboration pack": status.collaboration_pack_status,
+        "Collab unresolved": status.collaboration_pack_unresolved_decision_count,
+        "Collab commands": status.collaboration_pack_next_safe_command_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
