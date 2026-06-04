@@ -340,6 +340,16 @@ Released in v1.12.0 with claim evidence binders.
 
 Released in v1.12.1 with claim evidence binder validation.
 
+## v1.13.0 — Claim signoff loop
+
+- [x] Add `openrepro claim-signoff`.
+- [x] Write `workspace/claim_signoffs.json` and `workspace/CLAIM_SIGNOFFS.md`.
+- [x] Support `accepted_workflow_evidence`, `needs_more_evidence`, `rejected`, and `deferred` decisions.
+- [x] Track signed, unsigned, terminal, accepted, and open claim counts.
+- [x] Surface claim signoff status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.13.0 with human signoffs for claim evidence binder records.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -275,6 +275,13 @@ and runs, then report stale or internally inconsistent binders. It may suggest
 regenerating the binder, but it must not rewrite binder files before detecting
 staleness or present validation as scientific correctness.
 
+v1.13.0 adds `claim_signoff.py`. Claim signoffs should record explicit human
+decisions for each claim evidence binder record. `accepted_workflow_evidence`
+means the reviewer accepts the workflow evidence record as organized, not that
+the paper claim has been scientifically reproduced. Non-terminal decisions
+should preserve follow-up commands or notes instead of fabricating missing
+evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

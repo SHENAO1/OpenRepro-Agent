@@ -60,6 +60,8 @@ python -m openrepro.cli protocol-plan "$PROJECT"
 python -m openrepro.cli protocol-preflight "$PROJECT"
 python -m openrepro.cli evidence-binder "$PROJECT"
 python -m openrepro.cli validate-evidence-binder "$PROJECT"
+python -m openrepro.cli claim-signoff "$PROJECT" --claim-id formula:F001 --decision accepted_workflow_evidence --reviewer smoke
+python -m openrepro.cli claim-signoff "$PROJECT" --claim-id formula:F002 --decision accepted_workflow_evidence --reviewer smoke
 python -m openrepro.cli report "$PROJECT"
 python -m openrepro.cli handoff "$PROJECT"
 python -m openrepro.cli evidence-package "$PROJECT" --zip

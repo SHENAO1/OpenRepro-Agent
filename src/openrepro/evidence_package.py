@@ -11,6 +11,7 @@ from .advance import generate_advance_plan
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
+from .claim_signoff import generate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
@@ -51,6 +52,7 @@ WORKSPACE_ARTIFACTS = [
     "claim_trace_validation.json",
     "claim_evidence_binder.json",
     "claim_evidence_binder_validation.json",
+    "claim_signoffs.json",
     "reproduction_scorecard.json",
     "reproduction_gaps.json",
     "workflow_checkpoints.json",
@@ -106,6 +108,10 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "blocking_criterion_count",
         "coverage_score",
         "uncovered_count",
+        "signoff_count",
+        "signed_claim_count",
+        "open_claim_count",
+        "accepted_count",
     ]:
         if key in data:
             summary[key] = data.get(key)
@@ -300,6 +306,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     protocol_preflight = generate_protocol_preflight(project_dir)
     claim_binder = generate_claim_evidence_binder(project_dir)
     claim_binder_validation = validate_claim_evidence_binder(project_dir)
+    claim_signoffs = generate_claim_signoffs(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -354,6 +361,20 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "top_command": claim_binder.get("top_command"),
             "path": str(project_dir / "workspace" / "claim_evidence_binder.json"),
             "validation_path": str(project_dir / "workspace" / "claim_evidence_binder_validation.json"),
+        },
+        "claim_signoffs": {
+            "schema_version": claim_signoffs.get("schema_version"),
+            "status": claim_signoffs.get("status"),
+            "claim_count": claim_signoffs.get("claim_count"),
+            "signoff_count": claim_signoffs.get("signoff_count"),
+            "signed_claim_count": claim_signoffs.get("signed_claim_count"),
+            "open_claim_count": claim_signoffs.get("open_claim_count"),
+            "accepted_count": claim_signoffs.get("accepted_count"),
+            "needs_more_evidence_count": claim_signoffs.get("needs_more_evidence_count"),
+            "deferred_count": claim_signoffs.get("deferred_count"),
+            "rejected_count": claim_signoffs.get("rejected_count"),
+            "top_command": claim_signoffs.get("top_command"),
+            "path": str(project_dir / "workspace" / "claim_signoffs.json"),
         },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
@@ -564,6 +585,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_evidence_binder_incomplete_claim_count: {package['claim_evidence_binder']['incomplete_claim_count']}
 - claim_evidence_binder_validation_status: {package['claim_evidence_binder']['validation_status']}
 - claim_evidence_binder_validation_issue_count: {package['claim_evidence_binder']['validation_issue_count']}
+- claim_signoff_status: {package['claim_signoffs']['status']}
+- claim_signoff_signed_claim_count: {package['claim_signoffs']['signed_claim_count']}
+- claim_signoff_open_claim_count: {package['claim_signoffs']['open_claim_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

@@ -17,6 +17,7 @@ from .benchmark_runner import generate_benchmark_index, run_benchmark, run_bench
 from .candidate_review import list_candidates, review_candidates
 from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
+from .claim_signoff import ALLOWED_CLAIM_SIGNOFF_DECISIONS, generate_claim_signoffs, record_claim_signoff
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
@@ -741,6 +742,66 @@ def validate_evidence_binder_cmd(project_name: str = typer.Argument(..., help="P
     _success("Claim evidence binder validation passed.")
 
 
+@app.command("claim-signoff")
+def claim_signoff_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    claim_id: str | None = typer.Option(None, "--claim-id", help="Claim id from workspace/claim_evidence_binder.json."),
+    decision: str | None = typer.Option(
+        None,
+        "--decision",
+        help=f"Claim signoff decision: {', '.join(sorted(ALLOWED_CLAIM_SIGNOFF_DECISIONS))}.",
+    ),
+    reviewer: str | None = typer.Option(None, "--reviewer", help="Human reviewer name."),
+    note: str = typer.Option("", "--note", help="Optional signoff note."),
+    followup_command: str | None = typer.Option(None, "--followup-command", help="Optional follow-up command."),
+) -> None:
+    """Record or summarize human signoffs for claim evidence binder claims."""
+    project_dir = require_project(project_name)
+    wants_record = any(value is not None for value in [claim_id, decision, reviewer])
+    try:
+        if wants_record:
+            if claim_id is None or decision is None or reviewer is None:
+                raise ValueError("--claim-id, --decision, and --reviewer are required together.")
+            signoffs = record_claim_signoff(
+                project_dir,
+                claim_id=claim_id,
+                decision=decision,
+                reviewer=reviewer,
+                note=note,
+                followup_command=followup_command,
+            )
+        else:
+            signoffs = generate_claim_signoffs(project_dir)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+
+    table = Table(title=f"Claim Signoffs: {project_name}")
+    table.add_column("Claim")
+    table.add_column("Decision")
+    table.add_column("Reviewer")
+    table.add_column("Terminal")
+    if signoffs["latest_signoffs"]:
+        for item in signoffs["latest_signoffs"]:
+            table.add_row(
+                str(item.get("claim_id")),
+                str(item.get("decision")),
+                str(item.get("reviewer")),
+                str(item.get("terminal")),
+            )
+    else:
+        table.add_row("none", "none", "none", "False")
+    console.print(table)
+    console.print(f"Status: {signoffs['status']}")
+    console.print(f"Claims: {signoffs['claim_count']}")
+    console.print(f"Signed claims: {signoffs['signed_claim_count']}")
+    console.print(f"Open claims: {signoffs['open_claim_count']}")
+    console.print(f"Top command: {signoffs['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_signoffs.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_SIGNOFFS.md'}")
+    _success("Claim signoffs updated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1161,6 +1222,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Incomplete claims": summary["claim_evidence_binder_incomplete_claim_count"],
         "Binder validation": summary["claim_evidence_binder_validation_status"],
         "Binder validation issues": summary["claim_evidence_binder_validation_issue_count"],
+        "Claim signoffs": summary["claim_signoff_status"],
+        "Signed claims": summary["claim_signoff_signed_claim_count"],
+        "Open signoff claims": summary["claim_signoff_open_claim_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1470,6 +1534,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Incomplete claims": status.claim_evidence_binder_incomplete_claim_count,
         "Binder validation": status.claim_evidence_binder_validation_status,
         "Binder validation issues": status.claim_evidence_binder_validation_issue_count,
+        "Claim signoffs": status.claim_signoff_status,
+        "Signed claims": status.claim_signoff_signed_claim_count,
+        "Open signoff claims": status.claim_signoff_open_claim_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,
