@@ -2,92 +2,122 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+from openrepro.advance import generate_advance_plan
 from openrepro.analyzer import analyze_project
 from openrepro.approval import approve_candidates
+from openrepro.candidate_review import review_candidates
+from openrepro.checkpoints import generate_workflow_checkpoints
+from openrepro.claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
+from openrepro.claim_trace import generate_claim_trace, validate_claim_trace
 from openrepro.cli import app
+from openrepro.data_registry import register_data
 from openrepro.document_loader import ingest_source
-from openrepro.experiment_compare import compare_experiments
+from openrepro.evidence_package import generate_evidence_package
+from openrepro.experiment_compare import compare_experiments, rerun_experiment
 from openrepro.experiment_runner import run_experiment
 from openrepro.experiment_scaffold import scaffold_experiment
-from openrepro.experiment_spec import inspect_experiment_specs, validate_experiment_spec
+from openrepro.gaps import generate_reproduction_gaps
+from openrepro.lineage import generate_run_lineage
 from openrepro.planner import generate_experiment_plan
-from openrepro.project_manager import init_project
-from openrepro.utils import read_json, write_json
+from openrepro.project_manager import get_status, init_project
+from openrepro.protocol_coverage import generate_protocol_coverage
+from openrepro.protocol_plan import generate_protocol_plan
+from openrepro.protocol_preflight import generate_protocol_preflight
+from openrepro.reproduction_protocol import generate_reproduction_protocol
+from openrepro.review_board import generate_review_board
+from openrepro.review_decisions import generate_review_decisions
+from openrepro.scorecard import generate_reproduction_scorecard
 
 runner = CliRunner()
 
 
-def _prepare_project(tmp_path: Path) -> Path:
+def _prepare_ready_project(tmp_path: Path) -> Path:
     init_project("boc_demo", base_dir=tmp_path)
     project = tmp_path / "boc_demo"
     source = tmp_path / "notes.md"
     source.write_text(
-        "# Spec Freshness Notes\n\nFormula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 32",
+        "# Binder Validation Notes\n\nFormula: x[n] = c[n] * s[n] + noise.\n\nnoise_std = 0.05\ncode_length: 32",
         encoding="utf-8",
     )
     ingest_source(project, source)
     analyze_project(project)
     generate_experiment_plan(project)
-    approve_candidates(project, approve_all=True, reviewer="freshness-test")
-    scaffold_experiment(project, experiment_id="spec_exp", template="boc-like")
+    review_candidates(project, candidate_ids=["F001"], status="needs_more_evidence", reviewer="binder-validation")
+    approve_candidates(project, approve_all=True, reviewer="binder-validation")
+    data_file = project / "data" / "binder_validation_dataset.json"
+    data_file.write_text('{"samples": [1, 2, 3]}', encoding="utf-8")
+    register_data(project, data_file, role="dataset", note="Binder validation fixture data")
+    scaffold_experiment(project, experiment_id="binder_validation_exp", template="boc-like")
+    run_experiment(project, "binder_validation_exp", confirm=True)
+    rerun_experiment(project, "binder_validation_exp", confirm=True)
+    compare_experiments(project, "binder_validation_exp")
+    generate_run_lineage(project)
+    generate_claim_trace(project)
+    validate_claim_trace(project)
+    generate_reproduction_scorecard(project)
+    generate_reproduction_gaps(project)
+    generate_workflow_checkpoints(project)
+    generate_advance_plan(project, dry_run=True)
+    generate_review_board(project)
+    generate_review_decisions(project)
+    generate_reproduction_protocol(project)
+    generate_protocol_coverage(project)
+    generate_protocol_plan(project)
+    generate_protocol_preflight(project)
+    generate_claim_evidence_binder(project)
     return project
 
 
-def _make_spec_stale(project: Path) -> None:
-    expected_path = project / "experiments" / "spec_exp" / "expected_artifacts.json"
-    expected = read_json(expected_path)
-    expected["optional"] = list(expected.get("optional", [])) + ["data/extra_optional.json"]
-    write_json(expected_path, expected)
+def test_validate_claim_evidence_binder_passes_for_current_binder(tmp_path: Path):
+    project = _prepare_ready_project(tmp_path)
 
+    validation = validate_claim_evidence_binder(project)
+    status = get_status(project)
 
-def test_spec_freshness_inspection_and_strict_validation(tmp_path: Path):
-    project = _prepare_project(tmp_path)
-    validation = validate_experiment_spec(project, "spec_exp")
-
+    assert validation["schema_version"] == "1.12.1"
+    assert validation["status"] == "passed"
     assert validation["valid"] is True
-    assert validation["freshness_status"] == "current"
-    assert validation["source_fingerprint"]["package_sha256"] == validation["source_fingerprint"]["current_sha256"]
-
-    _make_spec_stale(project)
-    summary = inspect_experiment_specs(project)
-    strict = validate_experiment_spec(project, "spec_exp", strict=True)
-
-    assert summary["stale_count"] == 1
-    assert summary["specs"][0]["status"] == "stale"
-    assert strict["valid"] is False
-    assert strict["stale"] is True
-    assert strict["freshness_status"] == "stale"
-
-    refreshed = validate_experiment_spec(project, "spec_exp")
-
-    assert refreshed["valid"] is True
-    assert refreshed["freshness_status"] == "current"
-    assert refreshed["source_fingerprint"]["package_sha256"] == refreshed["source_fingerprint"]["current_sha256"]
+    assert validation["issue_count"] == 0
+    assert validation["top_command"] is None
+    assert (project / "workspace" / "claim_evidence_binder_validation.json").exists()
+    assert (project / "workspace" / "CLAIM_EVIDENCE_BINDER_VALIDATION.md").exists()
+    assert status.claim_evidence_binder_validation_exists is True
+    assert status.claim_evidence_binder_validation_status == "passed"
+    assert status.claim_evidence_binder_validation_issue_count == 0
 
 
-def test_cli_strict_validation_fails_on_stale_spec(tmp_path: Path, monkeypatch):
+def test_validate_claim_evidence_binder_detects_stale_binder(tmp_path: Path):
+    init_project("boc_demo", base_dir=tmp_path)
+    project = tmp_path / "boc_demo"
+    source = tmp_path / "notes.md"
+    source.write_text("# Stale Binder\n\nFormula: x[n] = c[n] + noise.\n\nnoise_std = 0.05", encoding="utf-8")
+    ingest_source(project, source)
+    analyze_project(project)
+    generate_experiment_plan(project)
+    generate_claim_evidence_binder(project)
+    approve_candidates(project, approve_all=True, reviewer="binder-validation")
+
+    validation = validate_claim_evidence_binder(project)
+
+    assert validation["status"] == "failed"
+    assert validation["valid"] is False
+    assert validation["issue_count"] > 0
+    assert validation["top_command"] is not None
+    assert any(item["code"] == "binder_stale" for item in validation["issues"])
+
+
+def test_cli_validate_evidence_binder_and_package_summary(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    project = _prepare_project(tmp_path)
-    validate_experiment_spec(project, "spec_exp")
-    _make_spec_stale(project)
+    project = _prepare_ready_project(tmp_path)
 
-    strict = runner.invoke(app, ["validate-experiment-spec", "boc_demo", "--experiment-id", "spec_exp", "--strict"])
-    refresh = runner.invoke(app, ["validate-experiment-spec", "boc_demo", "--experiment-id", "spec_exp"])
+    result = runner.invoke(app, ["validate-evidence-binder", "boc_demo"])
+    package = generate_evidence_package(project)
 
-    assert strict.exit_code == 1, strict.output
-    assert "stale" in strict.output
-    assert refresh.exit_code == 0, refresh.output
-    assert "current" in refresh.output
-
-
-def test_compare_experiments_warns_when_spec_hash_changes(tmp_path: Path):
-    project = _prepare_project(tmp_path)
-    run_experiment(project, "spec_exp", confirm=True)
-    _make_spec_stale(project)
-    validate_experiment_spec(project, "spec_exp")
-    run_experiment(project, "spec_exp", confirm=True)
-
-    comparison = compare_experiments(project, "spec_exp")
-
-    assert comparison["hash_comparison"]["spec_sha256"]["equal"] is False
-    assert comparison["warnings"] == ["Experiment spec hash differs between compared runs."]
+    assert result.exit_code == 0, result.output
+    assert "Claim evidence binder validation passed" in result.output
+    assert package["claim_evidence_binder"]["validation_status"] == "passed"
+    assert package["claim_evidence_binder"]["validation_issue_count"] == 0
+    assert any(
+        item["name"] == "claim_evidence_binder_validation.json" and item["present"]
+        for item in package["workspace_artifacts"]
+    )

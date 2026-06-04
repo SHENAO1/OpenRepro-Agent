@@ -330,6 +330,16 @@ Released in v1.11.1 with protocol readiness preflight checks.
 
 Released in v1.12.0 with claim evidence binders.
 
+## v1.12.1 — Claim evidence binder validation
+
+- [x] Add `openrepro validate-evidence-binder`.
+- [x] Write `workspace/claim_evidence_binder_validation.json` and `workspace/CLAIM_EVIDENCE_BINDER_VALIDATION.md`.
+- [x] Detect stale binders when claims, protocol coverage, review decisions, data, specs, or runs change.
+- [x] Check claim counts, duplicate claim ids, and missing-evidence consistency.
+- [x] Surface binder validation in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.12.1 with claim evidence binder validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

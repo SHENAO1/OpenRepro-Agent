@@ -506,7 +506,7 @@ def analyze_project(project_dir: Path) -> dict[str, Any]:
 
     config = load_project_config(project_dir)
     project_name = config.get("project_name", project_dir.name)
-    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v1.12.0-rule")
+    analyzer_version = (config.get("analysis") or {}).get("analyzer_version", "v1.12.1-rule")
     source_index = load_source_index(project_dir)
     documents = read_text_sources(project_dir)
     chunks = _chunk_documents(documents)

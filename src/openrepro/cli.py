@@ -16,7 +16,7 @@ from .artifact_manager import latest_run_dir, validate_all_run_manifests, valida
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
 from .checkpoints import generate_workflow_checkpoints
-from .claim_evidence_binder import generate_claim_evidence_binder
+from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
@@ -715,6 +715,32 @@ def evidence_binder_cmd(project_name: str = typer.Argument(..., help="Project di
     _success("Claim evidence binder generated.")
 
 
+@app.command("validate-evidence-binder")
+def validate_evidence_binder_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate claim evidence binder freshness and consistency."""
+    project_dir = require_project(project_name)
+    validation = validate_claim_evidence_binder(project_dir)
+    table = Table(title=f"Claim Evidence Binder Validation: {project_name}")
+    table.add_column("Code")
+    table.add_column("Message")
+    rows = validation["issues"] or validation["warnings"]
+    if rows:
+        for item in rows:
+            table.add_row(str(item["code"]), str(item["message"]))
+    else:
+        table.add_row("none", "No claim evidence binder issues found.")
+    console.print(table)
+    console.print(f"Status: {validation['status']}")
+    console.print(f"Issues: {validation['issue_count']}")
+    console.print(f"Warnings: {validation['warning_count']}")
+    console.print(f"Top command: {validation['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_evidence_binder_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_EVIDENCE_BINDER_VALIDATION.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Claim evidence binder validation passed.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1133,6 +1159,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Preflight blockers": summary["protocol_preflight_blocking_count"],
         "Evidence binder": summary["claim_evidence_binder_status"],
         "Incomplete claims": summary["claim_evidence_binder_incomplete_claim_count"],
+        "Binder validation": summary["claim_evidence_binder_validation_status"],
+        "Binder validation issues": summary["claim_evidence_binder_validation_issue_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1440,6 +1468,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Preflight blockers": status.protocol_preflight_blocking_count,
         "Evidence binder": status.claim_evidence_binder_status,
         "Incomplete claims": status.claim_evidence_binder_incomplete_claim_count,
+        "Binder validation": status.claim_evidence_binder_validation_status,
+        "Binder validation issues": status.claim_evidence_binder_validation_issue_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

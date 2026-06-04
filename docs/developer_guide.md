@@ -269,6 +269,12 @@ and review decisions. Missing evidence lists should drive workflow follow-up,
 but a complete binder must not be described as scientific proof that a paper
 claim was reproduced.
 
+v1.12.1 adds claim evidence binder validation. Validation should compare the
+stored binder against current claims, coverage, review decisions, data, specs,
+and runs, then report stale or internally inconsistent binders. It may suggest
+regenerating the binder, but it must not rewrite binder files before detecting
+staleness or present validation as scientific correctness.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
