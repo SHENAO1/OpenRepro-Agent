@@ -10,6 +10,7 @@ from .advance import advance_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
+from .claim_evidence_binder import claim_evidence_binder_summary
 from .claim_trace import claim_trace_summary
 from .data_registry import data_index_summary
 from .diagnostics import diagnose_project
@@ -178,6 +179,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     protocol_coverage = protocol_coverage_summary(project_dir)
     protocol_plan = protocol_plan_summary(project_dir)
     protocol_preflight = protocol_preflight_summary(project_dir)
+    claim_binder = claim_evidence_binder_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -287,6 +289,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "protocol_preflight_blocking_count": protocol_preflight["blocking_count"],
         "protocol_preflight_warning_count": protocol_preflight["warning_count"],
         "protocol_preflight_top_command": protocol_preflight["top_command"],
+        "claim_evidence_binder_status": claim_binder["status"],
+        "claim_evidence_binder_claim_count": claim_binder["claim_count"],
+        "claim_evidence_binder_complete_claim_count": claim_binder["complete_claim_count"],
+        "claim_evidence_binder_incomplete_claim_count": claim_binder["incomplete_claim_count"],
+        "claim_evidence_binder_top_command": claim_binder["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

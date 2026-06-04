@@ -16,6 +16,7 @@ from .artifact_manager import latest_run_dir, validate_all_run_manifests, valida
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
 from .checkpoints import generate_workflow_checkpoints
+from .claim_evidence_binder import generate_claim_evidence_binder
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
@@ -684,6 +685,36 @@ def protocol_preflight_cmd(project_name: str = typer.Argument(..., help="Project
     _success("Protocol preflight generated.")
 
 
+@app.command("evidence-binder")
+def evidence_binder_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Bind traced claims to workflow evidence."""
+    project_dir = require_project(project_name)
+    binder = generate_claim_evidence_binder(project_dir)
+    table = Table(title=f"Claim Evidence Binder: {project_name}")
+    table.add_column("Claim")
+    table.add_column("Status")
+    table.add_column("Experiments")
+    table.add_column("Runs")
+    table.add_column("Missing")
+    for item in binder["claims"]:
+        table.add_row(
+            str(item["claim_id"]),
+            str(item["status"]),
+            str(len(item["linked_experiments"])),
+            str(len(item["linked_runs"])),
+            ", ".join(item["missing_evidence"]),
+        )
+    console.print(table)
+    console.print(f"Status: {binder['status']}")
+    console.print(f"Claims: {binder['claim_count']}")
+    console.print(f"Complete claims: {binder['complete_claim_count']}")
+    console.print(f"Incomplete claims: {binder['incomplete_claim_count']}")
+    console.print(f"Top command: {binder['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'claim_evidence_binder.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CLAIM_EVIDENCE_BINDER.md'}")
+    _success("Claim evidence binder generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1100,6 +1131,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Protocol actions": summary["protocol_plan_action_count"],
         "Protocol preflight": summary["protocol_preflight_status"],
         "Preflight blockers": summary["protocol_preflight_blocking_count"],
+        "Evidence binder": summary["claim_evidence_binder_status"],
+        "Incomplete claims": summary["claim_evidence_binder_incomplete_claim_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1405,6 +1438,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Protocol actions": status.protocol_plan_action_count,
         "Protocol preflight": status.protocol_preflight_status,
         "Preflight blockers": status.protocol_preflight_blocking_count,
+        "Evidence binder": status.claim_evidence_binder_status,
+        "Incomplete claims": status.claim_evidence_binder_incomplete_claim_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

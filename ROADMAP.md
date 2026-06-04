@@ -320,6 +320,16 @@ Released in v1.11.0 with protocol action plans.
 
 Released in v1.11.1 with protocol readiness preflight checks.
 
+## v1.12.0 — Claim evidence binder
+
+- [x] Add `openrepro evidence-binder`.
+- [x] Write `workspace/claim_evidence_binder.json` and `workspace/CLAIM_EVIDENCE_BINDER.md`.
+- [x] Bind each traced claim to experiments, runs, registered data, quality gates, protocol coverage, and review decisions.
+- [x] Surface incomplete claim counts in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep claim binding limited to workflow evidence organization.
+
+Released in v1.12.0 with claim evidence binders.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -65,6 +65,7 @@ python -m openrepro.cli protocol $Project
 python -m openrepro.cli protocol-coverage $Project
 python -m openrepro.cli protocol-plan $Project
 python -m openrepro.cli protocol-preflight $Project
+python -m openrepro.cli evidence-binder $Project
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip

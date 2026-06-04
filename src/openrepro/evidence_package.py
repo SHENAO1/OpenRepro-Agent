@@ -10,6 +10,7 @@ from . import __version__
 from .advance import generate_advance_plan
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
+from .claim_evidence_binder import generate_claim_evidence_binder
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .data_registry import data_index_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
@@ -48,6 +49,7 @@ WORKSPACE_ARTIFACTS = [
     "quality_gate_summary.json",
     "claim_trace.json",
     "claim_trace_validation.json",
+    "claim_evidence_binder.json",
     "reproduction_scorecard.json",
     "reproduction_gaps.json",
     "workflow_checkpoints.json",
@@ -295,6 +297,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     protocol_coverage = generate_protocol_coverage(project_dir)
     protocol_plan = generate_protocol_plan(project_dir)
     protocol_preflight = generate_protocol_preflight(project_dir)
+    claim_binder = generate_claim_evidence_binder(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -336,6 +339,15 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "validation_warning_count": claim_trace_validation.get("warning_count"),
             "path": str(project_dir / "workspace" / "claim_trace.json"),
             "validation_path": str(project_dir / "workspace" / "claim_trace_validation.json"),
+        },
+        "claim_evidence_binder": {
+            "schema_version": claim_binder.get("schema_version"),
+            "status": claim_binder.get("status"),
+            "claim_count": claim_binder.get("claim_count"),
+            "complete_claim_count": claim_binder.get("complete_claim_count"),
+            "incomplete_claim_count": claim_binder.get("incomplete_claim_count"),
+            "top_command": claim_binder.get("top_command"),
+            "path": str(project_dir / "workspace" / "claim_evidence_binder.json"),
         },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
@@ -542,6 +554,8 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_trace_experiment_count: {package['claim_trace']['experiment_trace_count']}
 - claim_trace_validation_status: {package['claim_trace']['validation_status']}
 - claim_trace_validation_issue_count: {package['claim_trace']['validation_issue_count']}
+- claim_evidence_binder_status: {package['claim_evidence_binder']['status']}
+- claim_evidence_binder_incomplete_claim_count: {package['claim_evidence_binder']['incomplete_claim_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

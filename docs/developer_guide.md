@@ -263,6 +263,12 @@ spec, quality-gate, and review-decision state. Missing or stale evidence
 packages may be warnings, but blockers must still point to commands that
 generate real workflow evidence rather than fabricating results.
 
+v1.12.0 adds `claim_evidence_binder.py`. Binders should organize each traced
+claim with linked experiments, runs, data ids, quality gates, protocol coverage,
+and review decisions. Missing evidence lists should drive workflow follow-up,
+but a complete binder must not be described as scientific proof that a paper
+claim was reproduced.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

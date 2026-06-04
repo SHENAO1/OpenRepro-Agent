@@ -10,6 +10,7 @@ from . import __version__
 from .advance import advance_summary
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .checkpoints import checkpoint_summary
+from .claim_evidence_binder import claim_evidence_binder_summary
 from .claim_trace import claim_trace_summary
 from .config import create_project_config, load_project_config, save_project_config
 from .data_registry import data_index_summary
@@ -110,6 +111,11 @@ class ProjectStatus:
     protocol_preflight_blocking_count: int
     protocol_preflight_warning_count: int
     protocol_preflight_top_command: str | None
+    claim_evidence_binder_exists: bool
+    claim_evidence_binder_status: str
+    claim_evidence_binder_claim_count: int
+    claim_evidence_binder_incomplete_claim_count: int
+    claim_evidence_binder_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -382,6 +388,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             protocol_preflight_blocking_count=0,
             protocol_preflight_warning_count=0,
             protocol_preflight_top_command=None,
+            claim_evidence_binder_exists=False,
+            claim_evidence_binder_status="missing",
+            claim_evidence_binder_claim_count=0,
+            claim_evidence_binder_incomplete_claim_count=0,
+            claim_evidence_binder_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -426,6 +437,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     protocol_coverage = protocol_coverage_summary(project_dir)
     protocol_plan = protocol_plan_summary(project_dir)
     protocol_preflight = protocol_preflight_summary(project_dir)
+    claim_binder = claim_evidence_binder_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -502,6 +514,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif protocol_preflight["blocking_count"] > 0:
         command = str(protocol_preflight["top_command"] or f"openrepro protocol-preflight {project_dir}")
         next_step = f"Run: {command}"
+    elif not claim_binder["present"]:
+        next_step = f"Run: openrepro evidence-binder {project_dir}"
+    elif claim_binder["incomplete_claim_count"] > 0:
+        command = str(claim_binder["top_command"] or f"openrepro evidence-binder {project_dir}")
+        next_step = f"Run: {command}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -511,7 +528,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.11.1 workflow is complete. Review the protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.12.0 workflow is complete. Review the claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -586,6 +603,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         protocol_preflight_blocking_count=protocol_preflight["blocking_count"],
         protocol_preflight_warning_count=protocol_preflight["warning_count"],
         protocol_preflight_top_command=protocol_preflight["top_command"],
+        claim_evidence_binder_exists=bool(claim_binder["present"]),
+        claim_evidence_binder_status=str(claim_binder["status"]),
+        claim_evidence_binder_claim_count=claim_binder["claim_count"],
+        claim_evidence_binder_incomplete_claim_count=claim_binder["incomplete_claim_count"],
+        claim_evidence_binder_top_command=claim_binder["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,
