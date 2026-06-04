@@ -450,6 +450,16 @@ Released in v1.18.1 with artifact freshness reasons and dependency edges.
 
 Released in v1.19.0 with a static project dashboard.
 
+## v1.20.0 — Project reproduction profile
+
+- [x] Add `openrepro profile`.
+- [x] Write `workspace/project_profile.json` and `workspace/PROJECT_PROFILE.md`.
+- [x] Summarize project type, reproduction goal, target claims, required data, required experiments, and acceptance dimensions.
+- [x] Surface project profile status in status, inspect, reports, handoff, freshness, dashboards, refresh runs, and evidence packages.
+- [x] Keep profiles as scope and acceptance definitions, not scientific proof.
+
+Released in v1.20.0 with an auditable project reproduction profile.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

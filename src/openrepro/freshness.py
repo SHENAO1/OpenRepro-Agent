@@ -9,6 +9,7 @@ from .artifact_manager import sha256_file
 from .collaboration_pack import collaboration_pack_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .protocol_preflight import protocol_preflight_summary
+from .project_profile import project_profile_summary
 from .refresh import refresh_run_summary
 from .review_decisions import review_decision_summary
 from .review_site import review_site_summary
@@ -16,7 +17,7 @@ from .reviewer_packet import reviewer_packet_summary
 from .timeline import project_timeline_summary
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-ARTIFACT_FRESHNESS_SCHEMA_VERSION = "1.18.1"
+ARTIFACT_FRESHNESS_SCHEMA_VERSION = "1.20.0"
 
 
 def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
@@ -27,6 +28,7 @@ def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
     collaboration = collaboration_pack_summary(project_dir)
     refresh = refresh_run_summary(project_dir)
     timeline = project_timeline_summary(project_dir)
+    project_profile = project_profile_summary(project_dir)
     reviewer_packet = reviewer_packet_summary(project_dir)
     preflight = protocol_preflight_summary(project_dir)
     decisions = review_decision_summary(project_dir)
@@ -55,6 +57,14 @@ def generate_artifact_freshness(project_dir: Path) -> dict[str, Any]:
             timeline.get("path"),
             _simple_reason("project_timeline", timeline["status"], "ready"),
             f"openrepro timeline {project_dir}",
+        ),
+        _node(
+            "project_profile",
+            project_profile["status"],
+            project_profile["present"] and project_profile["status"] in {"ready", "ready_with_open_work"},
+            project_profile.get("path"),
+            _simple_reason("project_profile", project_profile["status"], "ready or ready_with_open_work"),
+            str(project_profile.get("top_command") or f"openrepro profile {project_dir}"),
         ),
         _node(
             "reviewer_packet",
@@ -204,11 +214,13 @@ def _collaboration_reason(summary: dict[str, Any]) -> str:
 def _edges() -> list[dict[str, str]]:
     return [
         {"source": "source_fingerprint", "target": "evidence_package"},
+        {"source": "project_profile", "target": "evidence_package"},
         {"source": "reviewer_packet", "target": "review_site"},
         {"source": "protocol_preflight", "target": "review_site"},
         {"source": "evidence_package", "target": "review_site"},
         {"source": "review_site", "target": "collaboration_pack"},
         {"source": "project_timeline", "target": "collaboration_pack"},
+        {"source": "project_profile", "target": "collaboration_pack"},
         {"source": "reviewer_packet", "target": "collaboration_pack"},
         {"source": "review_decisions", "target": "collaboration_pack"},
         {"source": "refresh_run", "target": "artifact_freshness"},

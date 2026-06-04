@@ -345,6 +345,12 @@ review-site, evidence-package, and handoff links. Generated dashboard files are
 excluded from evidence-package freshness fingerprints because they are
 downstream navigation artifacts, not source evidence.
 
+v1.20.0 adds `project_profile.py`. Project profiles should define reproduction
+scope, target claims, required data, required experiments, and acceptance
+dimensions before reports and evidence packages are finalized. They are source
+evidence for scope and should remain included in evidence-package fingerprints.
+Profiles must not claim that scientific reproduction has succeeded.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

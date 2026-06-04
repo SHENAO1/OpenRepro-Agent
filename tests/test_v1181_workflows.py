@@ -19,7 +19,7 @@ def test_generate_artifact_freshness_current_after_refresh(tmp_path: Path):
     graph = generate_artifact_freshness(project)
     status = get_status(project)
 
-    assert graph["schema_version"] == "1.18.1"
+    assert graph["schema_version"] == "1.20.0"
     assert graph["status"] == "current"
     assert graph["stale_node_count"] == 0
     assert graph["top_stale_reason"] is None

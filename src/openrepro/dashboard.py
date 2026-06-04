@@ -12,6 +12,7 @@ from .collaboration_pack import collaboration_pack_summary
 from .evidence_fingerprint import evidence_package_status
 from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
+from .project_profile import project_profile_summary
 from .refresh import refresh_run_summary
 from .review_decisions import review_decision_summary
 from .review_site import review_site_summary
@@ -20,7 +21,7 @@ from .scorecard import scorecard_summary
 from .timeline import project_timeline_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-DASHBOARD_SCHEMA_VERSION = "1.19.0"
+DASHBOARD_SCHEMA_VERSION = "1.20.0"
 
 
 def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -36,6 +37,7 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
     scorecard = scorecard_summary(project_dir)
     gaps = gaps_summary(project_dir)
     decisions = review_decision_summary(project_dir)
+    project_profile = project_profile_summary(project_dir)
     status, top_command = _dashboard_status(project_dir, evidence, freshness, refresh, collaboration)
     dashboard = {
         "schema_version": DASHBOARD_SCHEMA_VERSION,
@@ -58,6 +60,7 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
         "timeline": timeline,
         "reviewer_packet": reviewer_packet,
         "review_site": review_site,
+        "project_profile": project_profile,
         "evidence_package": evidence,
         "artifact_links": _artifact_links(project_dir),
         "policy": "Dashboards organize workflow state for project handoff; they do not prove scientific reproduction.",
@@ -122,6 +125,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "REFRESH_RUN.md",
         project_dir / "handoff" / "COLLABORATION_PACK.md",
         project_dir / "workspace" / "PROJECT_TIMELINE.md",
+        project_dir / "workspace" / "PROJECT_PROFILE.md",
         project_dir / "reports" / "reviewer_packet.md",
         project_dir / "reports" / "review_site" / "index.html",
         project_dir / "reports" / "evidence_package.md",
@@ -184,6 +188,7 @@ def _render_html(dashboard: dict[str, Any]) -> str:
     freshness = dashboard["freshness"]
     refresh = dashboard["refresh_run"]
     collaboration = dashboard["collaboration_pack"]
+    project_profile = dashboard["project_profile"]
     timeline = dashboard["timeline"]
     reviewer_packet = dashboard["reviewer_packet"]
     artifact_rows = "\n".join(
@@ -242,6 +247,8 @@ def _render_html(dashboard: dict[str, Any]) -> str:
         <div class="metric"><span>Open gaps</span><strong>{_cell(readiness.get('gaps_open_count'))}</strong></div>
         <div class="metric"><span>Review decisions</span><strong>{_badge(readiness.get('review_decision_status'))}</strong></div>
         <div class="metric"><span>Unresolved decisions</span><strong>{_cell(readiness.get('unresolved_review_decisions'))}</strong></div>
+        <div class="metric"><span>Project profile</span><strong>{_badge(project_profile.get('status'))}</strong></div>
+        <div class="metric"><span>Target claims</span><strong>{_cell(project_profile.get('target_claim_count'))}</strong></div>
       </div>
     </section>
     <section>

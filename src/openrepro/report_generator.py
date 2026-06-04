@@ -438,6 +438,24 @@ def _dashboard_block(project_dir: Path) -> str:
     )
 
 
+def _project_profile_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 project profile。运行 `openrepro profile <project>` 后会生成复现目标画像。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- project_type: {data.get('project_type')}",
+            f"- target_claim_count: {data.get('target_claim_count', 0)}",
+            f"- required_data_count: {data.get('required_data_count', 0)}",
+            f"- required_experiment_count: {data.get('required_experiment_count', 0)}",
+            f"- acceptance_dimension_count: {data.get('acceptance_dimension_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -493,6 +511,7 @@ def generate_report(project_dir: Path) -> Path:
     refresh_run_block = _refresh_run_block(project_dir)
     artifact_freshness_block = _artifact_freshness_block(project_dir)
     dashboard_block = _dashboard_block(project_dir)
+    project_profile_block = _project_profile_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -662,22 +681,26 @@ OpenRepro-Agent v{__version__}
 
 {dashboard_block}
 
-## 33. Reproduction Readiness Scorecard 摘要
+## 33. Project Profile 摘要
+
+{project_profile_block}
+
+## 34. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 34. Reproduction Gaps 摘要
+## 35. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 35. 当前局限
+## 36. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 36. 下一阶段建议
+## 37. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

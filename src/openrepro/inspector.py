@@ -29,6 +29,7 @@ from .project_manager import get_status
 from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
 from .protocol_preflight import protocol_preflight_summary
+from .project_profile import project_profile_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .refresh import refresh_run_summary
 from .reproduction_protocol import protocol_summary
@@ -203,6 +204,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     refresh_run = refresh_run_summary(project_dir)
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
+    project_profile = project_profile_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -368,6 +370,12 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "dashboard_readiness_score": dashboard["readiness_score"],
         "dashboard_stale_node_count": dashboard["stale_node_count"],
         "dashboard_top_command": dashboard["top_command"],
+        "project_profile_status": project_profile["status"],
+        "project_profile_target_claim_count": project_profile["target_claim_count"],
+        "project_profile_required_data_count": project_profile["required_data_count"],
+        "project_profile_required_experiment_count": project_profile["required_experiment_count"],
+        "project_profile_acceptance_dimension_count": project_profile["acceptance_dimension_count"],
+        "project_profile_top_command": project_profile["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

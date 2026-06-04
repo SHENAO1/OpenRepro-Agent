@@ -46,6 +46,7 @@ from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
 from .protocol_preflight import generate_protocol_preflight
+from .project_profile import generate_project_profile
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .refresh import generate_refresh_run
@@ -1374,6 +1375,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Freshness": summary["artifact_freshness_status"],
         "Freshness stale": summary["artifact_freshness_stale_node_count"],
         "Dashboard": summary["dashboard_status"],
+        "Project profile": summary["project_profile_status"],
+        "Profile target claims": summary["project_profile_target_claim_count"],
+        "Profile experiments": summary["project_profile_required_experiment_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1745,6 +1749,22 @@ def dashboard_cmd(
     _success("Dashboard generated.")
 
 
+@app.command("profile")
+def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a project reproduction profile."""
+    project_dir = require_project(project_name)
+    profile = generate_project_profile(project_dir)
+    table = Table(title="Project Profile")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "top_command", "target_claim_count", "required_data_count", "required_experiment_count", "acceptance_dimension_count"]:
+        table.add_row(key, str(profile.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'project_profile.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROJECT_PROFILE.md'}")
+    _success("Project profile generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1830,6 +1850,10 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Artifact freshness": status.artifact_freshness_status,
         "Freshness stale nodes": status.artifact_freshness_stale_node_count,
         "Dashboard": status.dashboard_status,
+        "Project profile": status.project_profile_status,
+        "Profile target claims": status.project_profile_target_claim_count,
+        "Profile experiments": status.project_profile_required_experiment_count,
+        "Profile dimensions": status.project_profile_acceptance_dimension_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -29,6 +29,7 @@ from .project_manager import get_status
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
 from .protocol_preflight import generate_protocol_preflight
+from .project_profile import generate_project_profile, project_profile_summary
 from .quality_gate import quality_gate_summaries
 from .refresh import refresh_run_summary
 from .reproduction_protocol import generate_reproduction_protocol
@@ -81,6 +82,7 @@ WORKSPACE_ARTIFACTS = [
     "repair_plan.json",
     "repair_dry_run.json",
     "repair_apply.json",
+    "project_profile.json",
 ]
 
 
@@ -323,11 +325,13 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     claim_evidence_report_validation = validate_claim_evidence_report(project_dir)
     reviewer_packet = generate_reviewer_packet(project_dir)
     project_timeline = generate_project_timeline(project_dir)
+    project_profile = generate_project_profile(project_dir)
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
+    project_profile_existing = project_profile_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -453,6 +457,18 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "latest_event_title": project_timeline.get("latest_event_title"),
             "path": str(project_dir / "workspace" / "project_timeline.json"),
             "markdown_path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
+        },
+        "project_profile": {
+            "schema_version": project_profile.get("schema_version"),
+            "status": project_profile.get("status"),
+            "top_command": project_profile.get("top_command"),
+            "project_type": project_profile.get("project_type"),
+            "target_claim_count": project_profile.get("target_claim_count"),
+            "required_data_count": project_profile.get("required_data_count"),
+            "required_experiment_count": project_profile.get("required_experiment_count"),
+            "acceptance_dimension_count": project_profile.get("acceptance_dimension_count"),
+            "path": project_profile_existing.get("path") or str(project_dir / "workspace" / "project_profile.json"),
+            "markdown_path": project_profile_existing.get("markdown_path") or str(project_dir / "workspace" / "PROJECT_PROFILE.md"),
         },
         "collaboration_pack": {
             "schema_version": collaboration_pack.get("schema_version"),
@@ -622,6 +638,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "PROJECT_TIMELINE.md").exists(),
                 "path": str(project_dir / "workspace" / "PROJECT_TIMELINE.md"),
             },
+            "project_profile": {
+                "present": (project_dir / "workspace" / "PROJECT_PROFILE.md").exists(),
+                "path": str(project_dir / "workspace" / "PROJECT_PROFILE.md"),
+            },
             "collaboration_pack": {
                 "present": (project_dir / "handoff" / "COLLABORATION_PACK.md").exists(),
                 "path": str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
@@ -759,6 +779,10 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - project_timeline_status: {package['project_timeline']['status']}
 - project_timeline_event_count: {package['project_timeline']['event_count']}
 - project_timeline_human_decision_count: {package['project_timeline']['human_decision_count']}
+- project_profile_status: {package['project_profile']['status']}
+- project_profile_target_claim_count: {package['project_profile']['target_claim_count']}
+- project_profile_required_experiment_count: {package['project_profile']['required_experiment_count']}
+- project_profile_acceptance_dimension_count: {package['project_profile']['acceptance_dimension_count']}
 - collaboration_pack_status: {package['collaboration_pack']['status']}
 - collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
 - collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}

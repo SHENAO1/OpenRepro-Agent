@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.18.0"
+REFRESH_RUN_SCHEMA_VERSION = "1.20.0"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -38,6 +38,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .protocol_coverage import generate_protocol_coverage
     from .protocol_plan import generate_protocol_plan
     from .protocol_preflight import generate_protocol_preflight
+    from .project_profile import generate_project_profile
     from .quality_gate import evaluate_all_quality_gates
     from .report_generator import generate_report
     from .reproduction_protocol import generate_reproduction_protocol
@@ -71,6 +72,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         ("claim_evidence_report_validation", "Validate claim evidence report.", lambda: validate_claim_evidence_report(project_dir)),
         ("reviewer_packet", "Refresh reviewer packet.", lambda: generate_reviewer_packet(project_dir, export_zip=export_zip)),
         ("timeline", "Refresh project timeline.", lambda: generate_project_timeline(project_dir)),
+        ("project_profile", "Refresh project reproduction profile.", lambda: generate_project_profile(project_dir)),
         ("inspect", "Refresh inspect summary.", lambda: inspect_project(project_dir)),
         ("report", "Refresh project report.", lambda: generate_report(project_dir)),
         ("handoff", "Refresh handoff files.", lambda: generate_handoff(project_dir)),

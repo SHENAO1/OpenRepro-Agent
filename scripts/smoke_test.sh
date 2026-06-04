@@ -67,6 +67,7 @@ python -m openrepro.cli claim-evidence-report "$PROJECT"
 python -m openrepro.cli validate-claim-evidence-report "$PROJECT"
 python -m openrepro.cli reviewer-packet "$PROJECT" --zip
 python -m openrepro.cli timeline "$PROJECT"
+python -m openrepro.cli profile "$PROJECT"
 python -m openrepro.cli report "$PROJECT"
 python -m openrepro.cli handoff "$PROJECT"
 python -m openrepro.cli evidence-package "$PROJECT" --zip
