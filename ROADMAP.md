@@ -310,6 +310,16 @@ Released in v1.10.1 with protocol coverage checks.
 
 Released in v1.11.0 with protocol action plans.
 
+## v1.11.1 — Protocol preflight
+
+- [x] Add `openrepro protocol-preflight`.
+- [x] Write `workspace/protocol_preflight.json` and `workspace/PROTOCOL_PREFLIGHT.md`.
+- [x] Check protocol readiness, coverage, action plan, data provenance, experiment specs, quality gates, and review decisions.
+- [x] Surface preflight blockers and warnings in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep evidence package freshness as an advisory warning so preflight can run before packaging.
+
+Released in v1.11.1 with protocol readiness preflight checks.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

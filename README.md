@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.11.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.11.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.11.0 workflow is:
+The v1.11.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -306,6 +306,13 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Track critical/high action counts, top command, and human-input requirements.
 - Surface protocol plan status in `inspect`, `status`, reports, handoff, and evidence packages.
 
+## What v1.11.1 adds
+
+- Add `openrepro protocol-preflight` for checking protocol readiness before handoff or execution.
+- Write `workspace/protocol_preflight.json` and `workspace/PROTOCOL_PREFLIGHT.md`.
+- Check protocol readiness, coverage, plan actions, data provenance, specs, quality gates, and review decisions.
+- Surface preflight status in `inspect`, `status`, reports, handoff, and evidence packages.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -402,6 +409,7 @@ openrepro review-decision boc_demo --item-id candidate_verification_missing --de
 openrepro protocol boc_demo
 openrepro protocol-coverage boc_demo
 openrepro protocol-plan boc_demo
+openrepro protocol-preflight boc_demo
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -868,6 +876,19 @@ The action plan previews suggested commands, priority, source dimension, and
 whether placeholder input still needs a human. It does not execute commands or
 prove scientific reproduction.
 
+### `openrepro protocol-preflight <project_name>`
+
+Runs protocol readiness preflight checks and writes:
+
+```text
+workspace/protocol_preflight.json
+workspace/PROTOCOL_PREFLIGHT.md
+```
+
+Preflight checks whether the protocol, coverage, action plan, data provenance,
+experiment specs, quality gates, and review decisions are ready. Evidence
+package freshness is advisory only so preflight can run before packaging.
+
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
 Runs the same verified experiment scaffold again and records another normal
@@ -1251,12 +1272,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.10.0: reproduction protocol with claim/data/experiment/run acceptance criteria.
 - v1.10.1: protocol coverage checks for workflow evidence completeness.
 - v1.11.0: protocol action plans from coverage gaps.
+- v1.11.1: protocol readiness preflight checks.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.11.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.11.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

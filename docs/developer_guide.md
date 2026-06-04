@@ -257,6 +257,12 @@ top command and placeholder-input requirements, but they must not execute
 commands, fill unknown scientific values, or present planned actions as
 reproduction evidence.
 
+v1.11.1 adds `protocol_preflight.py`. Preflight should check protocol readiness
+before execution or handoff by aggregating protocol, coverage, plan, data,
+spec, quality-gate, and review-decision state. Missing or stale evidence
+packages may be warnings, but blockers must still point to commands that
+generate real workflow evidence rather than fabricating results.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

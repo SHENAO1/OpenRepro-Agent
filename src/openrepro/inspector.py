@@ -20,6 +20,7 @@ from .gaps import gaps_summary
 from .project_manager import get_status
 from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
+from .protocol_preflight import protocol_preflight_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
@@ -176,6 +177,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     protocol = protocol_summary(project_dir)
     protocol_coverage = protocol_coverage_summary(project_dir)
     protocol_plan = protocol_plan_summary(project_dir)
+    protocol_preflight = protocol_preflight_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -280,6 +282,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "protocol_plan_critical_count": protocol_plan["critical_count"],
         "protocol_plan_high_count": protocol_plan["high_count"],
         "protocol_plan_top_command": protocol_plan["top_command"],
+        "protocol_preflight_status": protocol_preflight["status"],
+        "protocol_preflight_check_count": protocol_preflight["check_count"],
+        "protocol_preflight_blocking_count": protocol_preflight["blocking_count"],
+        "protocol_preflight_warning_count": protocol_preflight["warning_count"],
+        "protocol_preflight_top_command": protocol_preflight["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

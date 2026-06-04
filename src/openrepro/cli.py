@@ -37,6 +37,7 @@ from .lineage import generate_run_lineage
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
+from .protocol_preflight import generate_protocol_preflight
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
@@ -655,6 +656,34 @@ def protocol_plan_cmd(project_name: str = typer.Argument(..., help="Project dire
     _success("Protocol plan generated.")
 
 
+@app.command("protocol-preflight")
+def protocol_preflight_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Run protocol readiness preflight checks."""
+    project_dir = require_project(project_name)
+    preflight = generate_protocol_preflight(project_dir)
+    table = Table(title=f"Protocol Preflight: {project_name}")
+    table.add_column("Check")
+    table.add_column("Severity")
+    table.add_column("Status")
+    table.add_column("Suggested")
+    for item in preflight["checks"]:
+        table.add_row(
+            str(item["label"]),
+            str(item["severity"]),
+            str(item["status"]),
+            str(item["suggested_command"]),
+        )
+    console.print(table)
+    console.print(f"Status: {preflight['status']}")
+    console.print(f"Checks: {preflight['check_count']}")
+    console.print(f"Blocking: {preflight['blocking_count']}")
+    console.print(f"Warnings: {preflight['warning_count']}")
+    console.print(f"Top command: {preflight['top_command']}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'protocol_preflight.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROTOCOL_PREFLIGHT.md'}")
+    _success("Protocol preflight generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1069,6 +1098,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Protocol uncovered": summary["protocol_coverage_uncovered_count"],
         "Protocol plan": summary["protocol_plan_status"],
         "Protocol actions": summary["protocol_plan_action_count"],
+        "Protocol preflight": summary["protocol_preflight_status"],
+        "Preflight blockers": summary["protocol_preflight_blocking_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1372,6 +1403,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Protocol uncovered": status.protocol_coverage_uncovered_count,
         "Protocol plan": status.protocol_plan_status,
         "Protocol actions": status.protocol_plan_action_count,
+        "Protocol preflight": status.protocol_preflight_status,
+        "Preflight blockers": status.protocol_preflight_blocking_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -201,6 +201,22 @@ def _protocol_plan_block(project_dir: Path) -> str:
     )
 
 
+def _protocol_preflight_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "protocol_preflight.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 protocol preflight。运行 `openrepro protocol-preflight <project>` 后会生成协议预检摘要。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- check_count: {data.get('check_count', 0)}",
+            f"- blocking_count: {data.get('blocking_count', 0)}",
+            f"- warning_count: {data.get('warning_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -242,6 +258,7 @@ def generate_report(project_dir: Path) -> Path:
     protocol_block = _protocol_block(project_dir)
     protocol_coverage_block = _protocol_coverage_block(project_dir)
     protocol_plan_block = _protocol_plan_block(project_dir)
+    protocol_preflight_block = _protocol_preflight_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -355,22 +372,26 @@ OpenRepro-Agent v{__version__}
 
 {protocol_plan_block}
 
-## 19. Reproduction Readiness Scorecard 摘要
+## 19. Protocol Preflight 摘要
+
+{protocol_preflight_block}
+
+## 20. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 20. Reproduction Gaps 摘要
+## 21. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 21. 当前局限
+## 22. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 22. 下一阶段建议
+## 23. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。
