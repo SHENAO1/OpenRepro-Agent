@@ -30,6 +30,7 @@ from .quality_gate import quality_gate_summaries
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import generate_review_decisions
+from .review_site import review_site_summary
 from .reviewer_packet import generate_reviewer_packet
 from .scorecard import generate_reproduction_scorecard
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
@@ -316,6 +317,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     claim_evidence_report = generate_claim_evidence_report(project_dir)
     claim_evidence_report_validation = validate_claim_evidence_report(project_dir)
     reviewer_packet = generate_reviewer_packet(project_dir)
+    review_site = review_site_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -420,6 +422,16 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "top_command": reviewer_packet.get("top_command"),
             "path": str(project_dir / "reports" / "reviewer_packet.json"),
             "markdown_path": str(project_dir / "reports" / "reviewer_packet.md"),
+        },
+        "review_site": {
+            "schema_version": review_site.get("schema_version"),
+            "status": review_site.get("status"),
+            "open_action_count": review_site.get("open_action_count"),
+            "blocker_count": review_site.get("blocker_count"),
+            "top_command": review_site.get("top_command"),
+            "path": review_site.get("path") or str(project_dir / "reports" / "review_site" / "index.html"),
+            "manifest_path": review_site.get("manifest_path") or str(project_dir / "reports" / "review_site_manifest.json"),
+            "zip_path": review_site.get("zip_path"),
         },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
@@ -538,6 +550,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "reports" / "reviewer_packet.md").exists(),
                 "path": str(project_dir / "reports" / "reviewer_packet.md"),
             },
+            "review_site": {
+                "present": (project_dir / "reports" / "review_site" / "index.html").exists(),
+                "path": str(project_dir / "reports" / "review_site" / "index.html"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -653,6 +669,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_evidence_report_validation_issue_count: {package['claim_evidence_report_validation']['issue_count']}
 - reviewer_packet_status: {package['reviewer_packet']['status']}
 - reviewer_packet_open_action_count: {package['reviewer_packet']['open_action_count']}
+- review_site_status: {package['review_site']['status']}
+- review_site_open_action_count: {package['review_site']['open_action_count']}
+- review_site_blocker_count: {package['review_site']['blocker_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

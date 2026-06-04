@@ -28,6 +28,7 @@ from .protocol_preflight import protocol_preflight_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
 from .review_board import review_board_summary
 from .review_decisions import review_decision_summary
+from .review_site import review_site_summary
 from .reviewer_packet import reviewer_packet_summary
 from .reproduction_protocol import protocol_summary
 from .scorecard import scorecard_summary
@@ -147,6 +148,11 @@ class ProjectStatus:
     reviewer_packet_open_action_count: int
     reviewer_packet_validation_issue_count: int
     reviewer_packet_top_command: str | None
+    review_site_exists: bool
+    review_site_status: str
+    review_site_open_action_count: int
+    review_site_blocker_count: int
+    review_site_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -450,6 +456,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             reviewer_packet_open_action_count=0,
             reviewer_packet_validation_issue_count=0,
             reviewer_packet_top_command=None,
+            review_site_exists=False,
+            review_site_status="missing",
+            review_site_open_action_count=0,
+            review_site_blocker_count=0,
+            review_site_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -501,6 +512,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     claim_evidence_report = claim_evidence_report_summary(project_dir)
     claim_evidence_report_validation = claim_evidence_report_validation_summary(project_dir)
     reviewer_packet = reviewer_packet_summary(project_dir)
+    review_site = review_site_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -621,8 +633,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro evidence-package {project_dir}"
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
+    elif not review_site["present"]:
+        next_step = f"Run: openrepro review-site {project_dir} --zip"
+    elif review_site["status"] != "ready":
+        command = str(review_site["top_command"] or f"openrepro review-site {project_dir} --zip")
+        next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.15.0 workflow is complete. Review the reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.16.0 workflow is complete. Review the static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -728,6 +745,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         reviewer_packet_open_action_count=reviewer_packet["open_action_count"],
         reviewer_packet_validation_issue_count=reviewer_packet["validation_issue_count"],
         reviewer_packet_top_command=reviewer_packet["top_command"],
+        review_site_exists=bool(review_site["present"]),
+        review_site_status=str(review_site["status"]),
+        review_site_open_action_count=review_site["open_action_count"],
+        review_site_blocker_count=review_site["blocker_count"],
+        review_site_top_command=review_site["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

@@ -390,6 +390,16 @@ Released in v1.14.1 with claim evidence report freshness validation.
 
 Released in v1.15.0 with reviewer packets for human claim evidence review.
 
+## v1.16.0 — Static review site
+
+- [x] Add `openrepro review-site`.
+- [x] Write `reports/review_site/index.html`, `reports/review_site_manifest.json`, and optional `reports/review_site.zip`.
+- [x] Summarize readiness, claim evidence, evidence package freshness, quality gates, open actions, blockers, and artifact links.
+- [x] Surface review site status in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep review sites as static workflow handoff views, not scientific proof.
+
+Released in v1.16.0 with a static human review site.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

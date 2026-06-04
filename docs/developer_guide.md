@@ -305,6 +305,12 @@ hashes for human handoff. They may export a zip for convenience, but the packet
 must remain workflow review evidence rather than a claim of scientific
 reproduction.
 
+v1.16.0 adds `review_site.py`. Review sites should be static HTML handoff views
+over existing workflow evidence, with a JSON manifest and optional zip. Exclude
+generated review-site files from evidence-package freshness fingerprints so the
+site can be generated after a current evidence package without making that
+package stale.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -50,6 +50,7 @@ from .report_generator import generate_report
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
+from .review_site import generate_review_site
 from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
@@ -1353,6 +1354,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Claim report validation issues": summary["claim_evidence_report_validation_issue_count"],
         "Reviewer packet": summary["reviewer_packet_status"],
         "Reviewer packet actions": summary["reviewer_packet_open_action_count"],
+        "Review site": summary["review_site_status"],
+        "Review site actions": summary["review_site_open_action_count"],
+        "Review site blockers": summary["review_site_blocker_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1603,6 +1607,27 @@ def evidence_package_cmd(
         console.print(f"Zip: {project_dir / 'reports' / 'evidence_package.zip'}")
 
 
+@app.command("review-site")
+def review_site_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/review_site.zip."),
+) -> None:
+    """Generate a static human review site."""
+    project_dir = require_project(project_name)
+    site = generate_review_site(project_dir, export_zip=export_zip)
+    table = Table(title=f"Review Site: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "open_action_count", "blocker_count", "top_command"]:
+        table.add_row(key, str(site.get(key)))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'review_site' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'review_site_manifest.json'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'review_site.zip'}")
+    _success("Review site generated.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1673,6 +1698,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Claim report validation issues": status.claim_evidence_report_validation_issue_count,
         "Reviewer packet": status.reviewer_packet_status,
         "Reviewer packet actions": status.reviewer_packet_open_action_count,
+        "Review site": status.review_site_status,
+        "Review site actions": status.review_site_open_action_count,
+        "Review site blockers": status.review_site_blocker_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

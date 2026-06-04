@@ -13,7 +13,10 @@ EXCLUDED_REPORT_PREFIXES = {
     "evidence_package.json",
     "evidence_package.md",
     "evidence_package.zip",
+    "review_site_manifest.json",
+    "review_site.zip",
 }
+EXCLUDED_REPORT_DIRS = {"review_site"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "handoff/EVIDENCE_PACKAGE.md",
 }
@@ -38,6 +41,10 @@ def _included_files(project_dir: Path) -> list[Path]:
             relative = path.relative_to(project_dir).as_posix()
             if relative in EXCLUDED_PROJECT_RELATIVE_PATHS:
                 continue
+            if path.is_relative_to(project_dir / "reports"):
+                report_parts = path.relative_to(project_dir / "reports").parts
+                if report_parts and report_parts[0] in EXCLUDED_REPORT_DIRS:
+                    continue
             if path.parent == project_dir / "reports" and path.name in EXCLUDED_REPORT_PREFIXES:
                 continue
             files.append(path)

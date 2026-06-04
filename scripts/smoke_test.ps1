@@ -76,6 +76,7 @@ python -m openrepro.cli reviewer-packet $Project --zip
 python -m openrepro.cli report $Project
 python -m openrepro.cli handoff $Project
 python -m openrepro.cli evidence-package $Project --zip
+python -m openrepro.cli review-site $Project --zip
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null

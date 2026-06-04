@@ -115,6 +115,7 @@ def _code_status(project_dir: Path) -> str:
     claim_evidence_report = read_json(project_dir / "reports" / "claim_evidence_report.json", default={}) or {}
     claim_evidence_report_validation = read_json(project_dir / "reports" / "claim_evidence_report_validation.json", default={}) or {}
     reviewer_packet = read_json(project_dir / "reports" / "reviewer_packet.json", default={}) or {}
+    review_site = read_json(project_dir / "reports" / "review_site_manifest.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -122,7 +123,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.15.0 命令入口。
+- `cli.py`：已完成 v1.16.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -149,6 +150,7 @@ def _code_status(project_dir: Path) -> str:
 - `claim_evidence_report.py`：已完成 reviewer-facing claim evidence report。
 - `claim_evidence_report_validation.py`：已完成 claim evidence report freshness validation。
 - `reviewer_packet.py`：已完成 reviewer packet generation。
+- `review_site.py`：已完成 static review site generation。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -276,6 +278,12 @@ def _code_status(project_dir: Path) -> str:
 {reviewer_packet}
 ```
 
+## Review Site 状态
+
+```json
+{review_site}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -350,7 +358,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.15.0 闭环检查
+## v1.16.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -381,6 +389,7 @@ def _next_steps(project_dir: Path) -> str:
 - gaps: {'已完成' if (project_dir / 'workspace' / 'reproduction_gaps.json').exists() else '未完成'}
 - handoff: {'已完成' if status.handoff_complete else '未完成'}
 - evidence-package: {'已完成' if status.evidence_package_exists else '未完成'}
+- review-site: {'已完成' if status.review_site_exists else '未完成'}
 
 ## 下一阶段建议
 
