@@ -47,6 +47,7 @@ def test_report_generates_report_md(tmp_path: Path):
     assert "Claim Signoff Validation 摘要" in text
     assert "Claim Evidence Report 摘要" in text
     assert "Claim Evidence Report Validation 摘要" in text
+    assert "Reviewer Packet 摘要" in text
     assert "Reproduction Readiness Scorecard 摘要" in text
     assert "Reproduction Gaps 摘要" in text
 
@@ -77,4 +78,5 @@ def test_handoff_generates_all_files(tmp_path: Path):
     assert (project / "handoff" / "CLAIM_SIGNOFF_VALIDATION.md").exists()
     assert (project / "handoff" / "CLAIM_EVIDENCE_REPORT.md").exists()
     assert (project / "handoff" / "CLAIM_EVIDENCE_REPORT_VALIDATION.md").exists()
+    assert (project / "handoff" / "REVIEWER_PACKET.md").exists()
     assert (project / "handoff" / "REPRODUCTION_GAPS.md").exists()

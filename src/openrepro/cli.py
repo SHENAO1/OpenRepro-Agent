@@ -50,6 +50,7 @@ from .report_generator import generate_report
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
+from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
 
@@ -886,6 +887,41 @@ def validate_claim_evidence_report_cmd(project_name: str = typer.Argument(..., h
     _success("Claim evidence report validation passed.")
 
 
+@app.command("reviewer-packet")
+def reviewer_packet_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/reviewer_packet.zip."),
+) -> None:
+    """Generate a reviewer packet for human claim evidence review."""
+    project_dir = require_project(project_name)
+    packet = generate_reviewer_packet(project_dir, export_zip=export_zip)
+    table = Table(title=f"Reviewer Packet: {project_name}")
+    table.add_column("Claim")
+    table.add_column("Evidence")
+    table.add_column("Signoff")
+    table.add_column("Risk")
+    for item in packet["review_items"]:
+        table.add_row(
+            str(item.get("claim_id")),
+            str(item.get("evidence_status")),
+            str(item.get("signoff_decision")),
+            ", ".join(item.get("risk_flags", [])),
+        )
+    if not packet["review_items"]:
+        table.add_row("none", "needs_claims", "none", "needs_claims")
+    console.print(table)
+    console.print(f"Status: {packet['status']}")
+    console.print(f"Claims: {packet['claim_count']}")
+    console.print(f"Open actions: {packet['open_action_count']}")
+    console.print(f"Validation issues: {packet['validation_issue_count']}")
+    console.print(f"Top command: {packet['top_command']}")
+    console.print(f"JSON: {project_dir / 'reports' / 'reviewer_packet.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'reviewer_packet.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'reviewer_packet.zip'}")
+    _success("Reviewer packet generated.")
+
+
 @app.command("list-templates")
 def list_templates_cmd() -> None:
     """List available experiment scaffold templates."""
@@ -1315,6 +1351,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Claim report actions": summary["claim_evidence_report_open_action_count"],
         "Claim report validation": summary["claim_evidence_report_validation_status"],
         "Claim report validation issues": summary["claim_evidence_report_validation_issue_count"],
+        "Reviewer packet": summary["reviewer_packet_status"],
+        "Reviewer packet actions": summary["reviewer_packet_open_action_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1633,6 +1671,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Claim report actions": status.claim_evidence_report_open_action_count,
         "Claim report validation": status.claim_evidence_report_validation_status,
         "Claim report validation issues": status.claim_evidence_report_validation_issue_count,
+        "Reviewer packet": status.reviewer_packet_status,
+        "Reviewer packet actions": status.reviewer_packet_open_action_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

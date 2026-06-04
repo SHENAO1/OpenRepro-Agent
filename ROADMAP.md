@@ -380,6 +380,16 @@ Released in v1.14.0 with claim signoff freshness validation.
 
 Released in v1.14.1 with claim evidence report freshness validation.
 
+## v1.15.0 — Reviewer packet
+
+- [x] Add `openrepro reviewer-packet`.
+- [x] Write `reports/reviewer_packet.json`, `reports/reviewer_packet.md`, and optional `reports/reviewer_packet.zip`.
+- [x] Summarize claim evidence, signoffs, validations, open actions, review order, and source artifact hashes.
+- [x] Surface reviewer packet status in status, inspect, reports, handoff, and evidence packages.
+- [x] Keep reviewer packets scoped to workflow review handoff, not scientific proof.
+
+Released in v1.15.0 with reviewer packets for human claim evidence review.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

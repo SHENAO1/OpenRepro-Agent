@@ -317,6 +317,23 @@ def _claim_evidence_report_validation_block(project_dir: Path) -> str:
     )
 
 
+def _reviewer_packet_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "reports" / "reviewer_packet.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 reviewer packet。运行 `openrepro reviewer-packet <project>` 后会生成审阅包。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- claim_count: {data.get('claim_count', 0)}",
+            f"- review_item_count: {data.get('review_item_count', 0)}",
+            f"- open_action_count: {data.get('open_action_count', 0)}",
+            f"- validation_issue_count: {data.get('validation_issue_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _gaps_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -365,6 +382,7 @@ def generate_report(project_dir: Path) -> Path:
     claim_signoff_validation_block = _claim_signoff_validation_block(project_dir)
     claim_evidence_report_block = _claim_evidence_report_block(project_dir)
     claim_evidence_report_validation_block = _claim_evidence_report_validation_block(project_dir)
+    reviewer_packet_block = _reviewer_packet_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
     gaps_block = _gaps_block(project_dir)
 
@@ -506,22 +524,26 @@ OpenRepro-Agent v{__version__}
 
 {claim_evidence_report_validation_block}
 
-## 26. Reproduction Readiness Scorecard 摘要
+## 26. Reviewer Packet 摘要
+
+{reviewer_packet_block}
+
+## 27. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 27. Reproduction Gaps 摘要
+## 28. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 28. 当前局限
+## 29. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 29. 下一阶段建议
+## 30. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

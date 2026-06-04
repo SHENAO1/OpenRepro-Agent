@@ -299,6 +299,12 @@ claim signoffs without overwriting the report before checking freshness. It may
 flag stale reports and inconsistent ready states, but it must not convert report
 readiness into a scientific reproduction claim.
 
+v1.15.0 adds `reviewer_packet.py`. Reviewer packets should consolidate claim
+evidence, signoffs, validations, open actions, review order, and source artifact
+hashes for human handoff. They may export a zip for convenience, but the packet
+must remain workflow review evidence rather than a claim of scientific
+reproduction.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

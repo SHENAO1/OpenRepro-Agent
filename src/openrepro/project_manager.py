@@ -28,6 +28,7 @@ from .protocol_preflight import protocol_preflight_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
 from .review_board import review_board_summary
 from .review_decisions import review_decision_summary
+from .reviewer_packet import reviewer_packet_summary
 from .reproduction_protocol import protocol_summary
 from .scorecard import scorecard_summary
 from .utils import ensure_dirs, iso_now, project_required_dirs, read_json, safe_write_text
@@ -141,6 +142,11 @@ class ProjectStatus:
     claim_evidence_report_validation_status: str
     claim_evidence_report_validation_issue_count: int
     claim_evidence_report_validation_top_command: str | None
+    reviewer_packet_exists: bool
+    reviewer_packet_status: str
+    reviewer_packet_open_action_count: int
+    reviewer_packet_validation_issue_count: int
+    reviewer_packet_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -439,6 +445,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             claim_evidence_report_validation_status="missing",
             claim_evidence_report_validation_issue_count=0,
             claim_evidence_report_validation_top_command=None,
+            reviewer_packet_exists=False,
+            reviewer_packet_status="missing",
+            reviewer_packet_open_action_count=0,
+            reviewer_packet_validation_issue_count=0,
+            reviewer_packet_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -489,6 +500,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     claim_signoff_validation = claim_signoff_validation_summary(project_dir)
     claim_evidence_report = claim_evidence_report_summary(project_dir)
     claim_evidence_report_validation = claim_evidence_report_validation_summary(project_dir)
+    reviewer_packet = reviewer_packet_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -596,6 +608,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif claim_evidence_report_validation["status"] != "passed":
         command = str(claim_evidence_report_validation["top_command"] or f"openrepro validate-claim-evidence-report {project_dir}")
         next_step = f"Run: {command}"
+    elif not reviewer_packet["present"]:
+        next_step = f"Run: openrepro reviewer-packet {project_dir}"
+    elif reviewer_packet["status"] != "ready":
+        command = str(reviewer_packet["top_command"] or f"openrepro reviewer-packet {project_dir}")
+        next_step = f"Run: {command}"
     elif not report_exists:
         next_step = f"Run: openrepro report {project_dir}"
     elif not handoff_complete:
@@ -605,7 +622,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif evidence_status["stale"]:
         next_step = f"Run: openrepro evidence-package {project_dir} --zip"
     else:
-        next_step = "Project v1.14.1 workflow is complete. Review validated claim evidence reports, validated claim signoffs, claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.15.0 workflow is complete. Review the reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -706,6 +723,11 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         claim_evidence_report_validation_status=str(claim_evidence_report_validation["status"]),
         claim_evidence_report_validation_issue_count=claim_evidence_report_validation["issue_count"],
         claim_evidence_report_validation_top_command=claim_evidence_report_validation["top_command"],
+        reviewer_packet_exists=bool(reviewer_packet["present"]),
+        reviewer_packet_status=str(reviewer_packet["status"]),
+        reviewer_packet_open_action_count=reviewer_packet["open_action_count"],
+        reviewer_packet_validation_issue_count=reviewer_packet["validation_issue_count"],
+        reviewer_packet_top_command=reviewer_packet["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

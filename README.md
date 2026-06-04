@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.14.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.15.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.14.1 workflow is:
+The v1.15.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → status
 ```
 
 ## What v0.4.0 supports
@@ -355,6 +355,13 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Detect stale reports when binder evidence, binder validation, or claim signoffs change.
 - Surface claim evidence report validation status in `inspect`, `status`, reports, handoff, and evidence packages.
 
+## What v1.15.0 adds
+
+- Add `openrepro reviewer-packet` for human reviewer handoff.
+- Write `reports/reviewer_packet.json`, `reports/reviewer_packet.md`, and optional `reports/reviewer_packet.zip`.
+- Summarize claim evidence, signoffs, validations, open actions, review order, and source artifact hashes.
+- Surface reviewer packet status in `inspect`, `status`, reports, handoff, and evidence packages.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -458,6 +465,7 @@ openrepro claim-signoff boc_demo --claim-id formula:F001 --decision accepted_wor
 openrepro validate-claim-signoffs boc_demo
 openrepro claim-evidence-report boc_demo
 openrepro validate-claim-evidence-report boc_demo
+openrepro reviewer-packet boc_demo --zip
 openrepro doctor boc_demo
 openrepro benchmark --task benchmarks/sample_task.json --project boc_benchmark
 openrepro benchmark-suite --suite benchmarks/sample_suite.json --project-prefix boc_suite
@@ -1017,6 +1025,20 @@ Validation checks whether the stored report still matches the current binder,
 binder validation, and claim signoffs. It also checks claim row counts, open
 action counts, and whether a `ready` report is internally consistent.
 
+### `openrepro reviewer-packet <project_name> [--zip]`
+
+Generates a human reviewer handoff packet and writes:
+
+```text
+reports/reviewer_packet.json
+reports/reviewer_packet.md
+reports/reviewer_packet.zip
+```
+
+The packet summarizes claim evidence, signoffs, validations, open actions,
+review order, and source artifact hashes. It is an organized workflow review
+packet, not a scientific proof package.
+
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
 Runs the same verified experiment scaffold again and records another normal
@@ -1407,12 +1429,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.13.1: reviewer-facing claim evidence report across binder, validation, and signoffs.
 - v1.14.0: claim signoff freshness and coverage validation.
 - v1.14.1: claim evidence report freshness and consistency validation.
+- v1.15.0: reviewer packet for human claim evidence review.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.14.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.15.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

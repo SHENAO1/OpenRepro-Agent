@@ -158,6 +158,7 @@ def required_handoff_files() -> list[str]:
         "CLAIM_SIGNOFF_VALIDATION.md",
         "CLAIM_EVIDENCE_REPORT.md",
         "CLAIM_EVIDENCE_REPORT_VALIDATION.md",
+        "REVIEWER_PACKET.md",
         "REPRODUCTION_SCORECARD.md",
         "REPRODUCTION_GAPS.md",
         "EVIDENCE_PACKAGE.md",
