@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.13.0" in result.output
+    assert "OpenRepro-Agent v1.13.1" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -100,6 +100,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["validate-evidence-binder", "boc_demo"],
         ["claim-signoff", "boc_demo", "--claim-id", "formula:F001", "--decision", "accepted_workflow_evidence", "--reviewer", "cli-test"],
         ["claim-signoff", "boc_demo", "--claim-id", "formula:F002", "--decision", "accepted_workflow_evidence", "--reviewer", "cli-test"],
+        ["claim-evidence-report", "boc_demo"],
         ["doctor", "boc_demo"],
         ["diagnose", "boc_demo"],
         ["repair-plan", "boc_demo"],
@@ -175,6 +176,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "CLAIM_EVIDENCE_BINDER_VALIDATION.md").exists()
     assert (project / "workspace" / "claim_signoffs.json").exists()
     assert (project / "workspace" / "CLAIM_SIGNOFFS.md").exists()
+    assert (project / "reports" / "claim_evidence_report.json").exists()
+    assert (project / "reports" / "claim_evidence_report.md").exists()
     run_dirs = list((project / "outputs").iterdir())
     assert len(run_dirs) == 4
     assert any((run_dir / "figures" / "correlation.png").exists() for run_dir in run_dirs)

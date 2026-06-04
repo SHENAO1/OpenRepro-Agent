@@ -282,6 +282,11 @@ the paper claim has been scientifically reproduced. Non-terminal decisions
 should preserve follow-up commands or notes instead of fabricating missing
 evidence.
 
+v1.13.1 adds `claim_evidence_report.py`. Claim evidence reports should merge
+the binder, binder validation, and latest signoffs into a reviewer-facing
+matrix. Reports may identify open workflow actions and top commands, but they
+must keep the distinction between workflow evidence and scientific proof.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

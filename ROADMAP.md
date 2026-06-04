@@ -350,6 +350,16 @@ Released in v1.12.1 with claim evidence binder validation.
 
 Released in v1.13.0 with human signoffs for claim evidence binder records.
 
+## v1.13.1 — Claim evidence report
+
+- [x] Add `openrepro claim-evidence-report`.
+- [x] Write `reports/claim_evidence_report.json` and `reports/claim_evidence_report.md`.
+- [x] Combine claim binder evidence, binder validation, and latest human signoffs per claim.
+- [x] Surface open actions and top command for reviewer handoff.
+- [x] Surface claim evidence report status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.13.1 with reviewer-facing claim evidence reports.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
