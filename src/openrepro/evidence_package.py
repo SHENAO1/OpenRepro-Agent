@@ -28,6 +28,7 @@ from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
 from .protocol_preflight import generate_protocol_preflight
 from .quality_gate import quality_gate_summaries
+from .refresh import refresh_run_summary
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_decisions import generate_review_decisions
@@ -322,6 +323,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     project_timeline = generate_project_timeline(project_dir)
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
+    refresh_run = refresh_run_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -459,6 +461,17 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "markdown_path": collaboration_pack.get("markdown_path") or str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
             "zip_path": collaboration_pack.get("zip_path"),
         },
+        "refresh_run": {
+            "schema_version": refresh_run.get("schema_version"),
+            "status": refresh_run.get("status"),
+            "step_count": refresh_run.get("step_count"),
+            "failed_step_count": refresh_run.get("failed_step_count"),
+            "top_failed_step": refresh_run.get("top_failed_step"),
+            "top_command": refresh_run.get("top_command"),
+            "path": refresh_run.get("path") or str(project_dir / "workspace" / "refresh_run.json"),
+            "markdown_path": refresh_run.get("markdown_path") or str(project_dir / "workspace" / "REFRESH_RUN.md"),
+            "zip_path": refresh_run.get("zip_path"),
+        },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
             "overall_score": scorecard.get("overall_score"),
@@ -588,6 +601,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "handoff" / "COLLABORATION_PACK.md").exists(),
                 "path": str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
             },
+            "refresh_run": {
+                "present": (project_dir / "workspace" / "REFRESH_RUN.md").exists(),
+                "path": str(project_dir / "workspace" / "REFRESH_RUN.md"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -712,6 +729,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - collaboration_pack_status: {package['collaboration_pack']['status']}
 - collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
 - collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}
+- refresh_run_status: {package['refresh_run']['status']}
+- refresh_run_step_count: {package['refresh_run']['step_count']}
+- refresh_run_failed_step_count: {package['refresh_run']['failed_step_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

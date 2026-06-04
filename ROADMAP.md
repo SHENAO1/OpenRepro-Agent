@@ -420,6 +420,16 @@ Released in v1.16.1 with project timelines and decision logs.
 
 Released in v1.17.0 with role-based collaboration packs.
 
+## v1.18.0 — Refresh pipeline
+
+- [x] Add `openrepro refresh`.
+- [x] Write `workspace/refresh_run.json`, `workspace/REFRESH_RUN.md`, and optional `workspace/refresh_run.zip`.
+- [x] Refresh derived workflow artifacts without running experiments, adding signoffs, or closing review decisions.
+- [x] Record per-step status, failed step count, top failed step, guardrails, and policy.
+- [x] Surface refresh run status in status, inspect, reports, handoff, and evidence packages.
+
+Released in v1.18.0 with a safe derived-artifact refresh pipeline.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

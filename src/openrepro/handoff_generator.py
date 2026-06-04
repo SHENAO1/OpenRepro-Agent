@@ -118,6 +118,7 @@ def _code_status(project_dir: Path) -> str:
     review_site = read_json(project_dir / "reports" / "review_site_manifest.json", default={}) or {}
     project_timeline = read_json(project_dir / "workspace" / "project_timeline.json", default={}) or {}
     collaboration_pack = read_json(project_dir / "handoff" / "collaboration_pack.json", default={}) or {}
+    refresh_run = read_json(project_dir / "workspace" / "refresh_run.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -125,7 +126,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.17.0 命令入口。
+- `cli.py`：已完成 v1.18.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -155,6 +156,7 @@ def _code_status(project_dir: Path) -> str:
 - `review_site.py`：已完成 static review site generation。
 - `timeline.py`：已完成 project timeline and decision log generation。
 - `collaboration_pack.py`：已完成 role-based collaboration handoff pack。
+- `refresh.py`：已完成 safe derived-artifact refresh pipeline。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -300,6 +302,12 @@ def _code_status(project_dir: Path) -> str:
 {collaboration_pack}
 ```
 
+## Refresh Run 状态
+
+```json
+{refresh_run}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -374,7 +382,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.17.0 闭环检查
+## v1.18.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -408,6 +416,7 @@ def _next_steps(project_dir: Path) -> str:
 - evidence-package: {'已完成' if status.evidence_package_exists else '未完成'}
 - review-site: {'已完成' if status.review_site_exists else '未完成'}
 - collaboration-pack: {'已完成' if status.collaboration_pack_exists else '未完成'}
+- refresh: {'已完成' if status.refresh_run_exists else '未完成'}
 
 ## 下一阶段建议
 

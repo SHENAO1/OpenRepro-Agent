@@ -324,6 +324,15 @@ coordination layer rather than evidence that scientific reproduction succeeded.
 Generated collaboration pack files are excluded from evidence-package freshness
 fingerprints because they are downstream handoff artifacts.
 
+v1.18.0 adds `refresh.py`. Refresh runs should regenerate derived workflow and
+handoff artifacts only: quality gates for existing runs, lineage, traceability,
+scorecards, gaps, protocols, binders, reviewer packets, timelines, reports,
+handoff files, evidence packages, review sites, and collaboration packs. They
+must not run experiments, add claim signoffs, close review decisions, or
+fabricate missing scientific artifacts. Generated refresh files are excluded
+from evidence-package freshness fingerprints because they are orchestration
+records, not source evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

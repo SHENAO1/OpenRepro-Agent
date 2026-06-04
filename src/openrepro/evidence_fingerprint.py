@@ -22,6 +22,9 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "handoff/COLLABORATION_PACK.md",
     "handoff/collaboration_pack.json",
     "handoff/collaboration_pack.zip",
+    "workspace/REFRESH_RUN.md",
+    "workspace/refresh_run.json",
+    "workspace/refresh_run.zip",
 }
 
 

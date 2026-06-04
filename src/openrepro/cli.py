@@ -46,6 +46,7 @@ from .protocol_plan import generate_protocol_plan
 from .protocol_preflight import generate_protocol_preflight
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
+from .refresh import generate_refresh_run
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
 from .reproduction_protocol import generate_reproduction_protocol
@@ -1365,6 +1366,9 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Collaboration pack": summary["collaboration_pack_status"],
         "Collab unresolved": summary["collaboration_pack_unresolved_decision_count"],
         "Collab commands": summary["collaboration_pack_next_safe_command_count"],
+        "Refresh run": summary["refresh_run_status"],
+        "Refresh steps": summary["refresh_run_step_count"],
+        "Refresh failures": summary["refresh_run_failed_step_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1673,6 +1677,30 @@ def collaboration_pack_cmd(
     _success("Collaboration pack generated.")
 
 
+@app.command("refresh")
+def refresh_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export downstream zip artifacts and workspace/refresh_run.zip."),
+) -> None:
+    """Refresh derived workflow and handoff artifacts without running experiments."""
+    project_dir = require_project(project_name)
+    run = generate_refresh_run(project_dir, export_zip=export_zip)
+    table = Table(title=f"Refresh Run: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "step_count", "passed_step_count", "failed_step_count", "top_failed_step", "top_command"]:
+        table.add_row(key, str(run.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'refresh_run.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REFRESH_RUN.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'workspace' / 'refresh_run.zip'}")
+    if run["status"] != "complete":
+        _warn("Refresh completed with failed steps.")
+        raise typer.Exit(1)
+    _success("Refresh run completed.")
+
+
 @app.command("status")
 def status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Show current project workflow status."""
@@ -1752,6 +1780,9 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Collaboration pack": status.collaboration_pack_status,
         "Collab unresolved": status.collaboration_pack_unresolved_decision_count,
         "Collab commands": status.collaboration_pack_next_safe_command_count,
+        "Refresh run": status.refresh_run_status,
+        "Refresh steps": status.refresh_run_step_count,
+        "Refresh failures": status.refresh_run_failed_step_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

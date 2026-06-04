@@ -27,6 +27,7 @@ from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
 from .protocol_preflight import protocol_preflight_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary
+from .refresh import refresh_run_summary
 from .review_board import review_board_summary
 from .review_decisions import review_decision_summary
 from .review_site import review_site_summary
@@ -165,6 +166,12 @@ class ProjectStatus:
     collaboration_pack_unresolved_decision_count: int
     collaboration_pack_next_safe_command_count: int
     collaboration_pack_top_command: str | None
+    refresh_run_exists: bool
+    refresh_run_status: str
+    refresh_run_step_count: int
+    refresh_run_failed_step_count: int
+    refresh_run_top_failed_step: str | None
+    refresh_run_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -483,6 +490,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             collaboration_pack_unresolved_decision_count=0,
             collaboration_pack_next_safe_command_count=0,
             collaboration_pack_top_command=None,
+            refresh_run_exists=False,
+            refresh_run_status="missing",
+            refresh_run_step_count=0,
+            refresh_run_failed_step_count=0,
+            refresh_run_top_failed_step=None,
+            refresh_run_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -537,6 +550,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     review_site = review_site_summary(project_dir)
     project_timeline = project_timeline_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
+    refresh_run = refresh_run_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -671,8 +685,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif collaboration_pack["status"] != "ready":
         command = str(collaboration_pack["top_command"] or f"openrepro collaboration-pack {project_dir} --zip")
         next_step = f"Run: {command}"
+    elif not refresh_run["present"]:
+        next_step = f"Run: openrepro refresh {project_dir} --zip"
+    elif refresh_run["status"] != "complete":
+        command = str(refresh_run["top_command"] or f"openrepro refresh {project_dir} --zip")
+        next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.17.0 workflow is complete. Review the collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.18.0 workflow is complete. Review the refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -793,6 +812,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         collaboration_pack_unresolved_decision_count=collaboration_pack["unresolved_decision_count"],
         collaboration_pack_next_safe_command_count=collaboration_pack["next_safe_command_count"],
         collaboration_pack_top_command=collaboration_pack["top_command"],
+        refresh_run_exists=bool(refresh_run["present"]),
+        refresh_run_status=str(refresh_run["status"]),
+        refresh_run_step_count=refresh_run["step_count"],
+        refresh_run_failed_step_count=refresh_run["failed_step_count"],
+        refresh_run_top_failed_step=refresh_run["top_failed_step"],
+        refresh_run_top_command=refresh_run["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

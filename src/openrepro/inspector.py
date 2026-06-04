@@ -28,6 +28,7 @@ from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
 from .protocol_preflight import protocol_preflight_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
+from .refresh import refresh_run_summary
 from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
 from .review_decisions import review_decision_summary
@@ -197,6 +198,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     review_site = review_site_summary(project_dir)
     project_timeline = project_timeline_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
+    refresh_run = refresh_run_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -348,6 +350,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "collaboration_pack_unresolved_decision_count": collaboration_pack["unresolved_decision_count"],
         "collaboration_pack_next_safe_command_count": collaboration_pack["next_safe_command_count"],
         "collaboration_pack_top_command": collaboration_pack["top_command"],
+        "refresh_run_status": refresh_run["status"],
+        "refresh_run_step_count": refresh_run["step_count"],
+        "refresh_run_failed_step_count": refresh_run["failed_step_count"],
+        "refresh_run_top_failed_step": refresh_run["top_failed_step"],
+        "refresh_run_top_command": refresh_run["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,
