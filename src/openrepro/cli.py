@@ -51,6 +51,7 @@ from .project_profile import generate_project_profile
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .readiness_review import generate_readiness_review
+from .readiness_review_validation import validate_readiness_review
 from .refresh import generate_refresh_run
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
@@ -1385,6 +1386,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Acceptance needs work": summary["acceptance_criteria_needs_work_count"],
         "Readiness review": summary["readiness_review_status"],
         "Readiness blockers": summary["readiness_review_blocker_count"],
+        "Readiness validation": summary["readiness_review_validation_status"],
+        "Readiness validation issues": summary["readiness_review_validation_issue_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1777,6 +1780,25 @@ def readiness_review_cmd(
     _success("Readiness review generated.")
 
 
+@app.command("validate-readiness-review")
+def validate_readiness_review_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate readiness review freshness and consistency."""
+    project_dir = require_project(project_name)
+    validation = validate_readiness_review(project_dir)
+    table = Table(title="Readiness Review Validation")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "valid", "issue_count", "warning_count", "top_command"]:
+        table.add_row(key, str(validation.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'reports' / 'readiness_review_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'READINESS_REVIEW_VALIDATION.md'}")
+    if validation["status"] == "passed":
+        _success("Readiness review validation passed.")
+    else:
+        _warn("Readiness review validation failed.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1903,6 +1925,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Acceptance needs work": status.acceptance_criteria_needs_work_count,
         "Readiness review": status.readiness_review_status,
         "Readiness blockers": status.readiness_review_blocker_count,
+        "Readiness validation": status.readiness_review_validation_status,
+        "Readiness validation issues": status.readiness_review_validation_issue_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

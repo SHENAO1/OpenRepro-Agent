@@ -85,6 +85,7 @@ python -m openrepro.cli refresh $Project --zip
 python -m openrepro.cli freshness $Project
 python -m openrepro.cli dashboard $Project --zip
 python -m openrepro.cli readiness-review $Project --zip
+python -m openrepro.cli validate-readiness-review $Project
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null

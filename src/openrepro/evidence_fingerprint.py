@@ -20,6 +20,8 @@ EXCLUDED_REPORT_PREFIXES = {
     "readiness_review.json",
     "READINESS_REVIEW.md",
     "readiness_review.zip",
+    "readiness_review_validation.json",
+    "READINESS_REVIEW_VALIDATION.md",
 }
 EXCLUDED_REPORT_DIRS = {"review_site", "dashboard"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {

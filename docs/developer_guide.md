@@ -366,6 +366,13 @@ pack after source evidence has been finalized. Generated readiness review files
 are excluded from evidence-package freshness fingerprints because they are
 downstream reports, not source evidence.
 
+v1.21.1 adds `readiness_review_validation.py`. Readiness review validation
+should compare a stored readiness review against the current built review using
+a stable fingerprint that ignores volatile fields such as timestamps and output
+paths. Generated readiness review validation files are excluded from
+evidence-package freshness fingerprints because they validate a downstream
+report, not source evidence.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

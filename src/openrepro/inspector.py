@@ -33,6 +33,7 @@ from .protocol_preflight import protocol_preflight_summary
 from .project_profile import project_profile_summary
 from .quality_gate import latest_experiment_quality_gate_summary, latest_quality_gate_summary, quality_gate_summaries
 from .readiness_review import readiness_review_summary
+from .readiness_review_validation import readiness_review_validation_summary
 from .refresh import refresh_run_summary
 from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
@@ -209,6 +210,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     project_profile = project_profile_summary(project_dir)
     acceptance = acceptance_criteria_summary(project_dir)
     readiness_review = readiness_review_summary(project_dir)
+    readiness_review_validation = readiness_review_validation_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -390,6 +392,10 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "readiness_review_blocker_count": readiness_review["blocker_count"],
         "readiness_review_open_action_count": readiness_review["open_action_count"],
         "readiness_review_top_command": readiness_review["top_command"],
+        "readiness_review_validation_status": readiness_review_validation["status"],
+        "readiness_review_validation_issue_count": readiness_review_validation["issue_count"],
+        "readiness_review_validation_warning_count": readiness_review_validation["warning_count"],
+        "readiness_review_validation_top_command": readiness_review_validation["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

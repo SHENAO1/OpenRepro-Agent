@@ -480,6 +480,16 @@ Released in v1.20.1 with project-level acceptance criteria.
 
 Released in v1.21.0 with final readiness review reports.
 
+## v1.21.1 — Readiness review validation
+
+- [x] Add `openrepro validate-readiness-review`.
+- [x] Write `reports/readiness_review_validation.json` and `reports/READINESS_REVIEW_VALIDATION.md`.
+- [x] Validate readiness review freshness against current project state and check internal count/status consistency.
+- [x] Surface readiness review validation status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep readiness review validation as report freshness evidence, not scientific proof.
+
+Released in v1.21.1 with readiness review freshness validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
