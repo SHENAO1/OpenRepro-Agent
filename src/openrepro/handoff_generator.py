@@ -127,6 +127,7 @@ def _code_status(project_dir: Path) -> str:
     readiness_review_validation = read_json(project_dir / "reports" / "readiness_review_validation.json", default={}) or {}
     review_action_plan = read_json(project_dir / "workspace" / "review_action_plan.json", default={}) or {}
     delivery_bundle = read_json(project_dir / "reports" / "delivery_bundle.json", default={}) or {}
+    multi_agent_plan = read_json(project_dir / "workspace" / "multi_agent_plan.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -134,7 +135,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.22.1 命令入口。
+- `cli.py`：已完成 v1.23.0 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -173,6 +174,7 @@ def _code_status(project_dir: Path) -> str:
 - `readiness_review_validation.py`：已完成 final readiness review validation。
 - `review_action_plan.py`：已完成 role-based review action plan。
 - `delivery_bundle.py`：已完成 final workflow delivery bundle。
+- `multi_agent_plan.py`：已完成 guarded multi-agent coordination plan。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -372,6 +374,12 @@ def _code_status(project_dir: Path) -> str:
 {delivery_bundle}
 ```
 
+## Multi-Agent Plan 状态
+
+```json
+{multi_agent_plan}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -446,7 +454,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.22.1 闭环检查
+## v1.23.0 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -489,6 +497,7 @@ def _next_steps(project_dir: Path) -> str:
 - validate-readiness-review: {'已完成' if status.readiness_review_validation_exists else '未完成'}
 - review-action-plan: {'已完成' if status.review_action_plan_exists else '未完成'}
 - delivery-bundle: {'已完成' if status.delivery_bundle_exists else '未完成'}
+- multi-agent-plan: {'已完成' if status.multi_agent_plan_exists else '未完成'}
 
 ## 下一阶段建议
 
@@ -564,6 +573,7 @@ def _agent_handoff(project_dir: Path) -> str:
     claim_evidence_report_validation = read_json(project_dir / "reports" / "claim_evidence_report_validation.json", default={}) or {}
     reviewer_packet = read_json(project_dir / "reports" / "reviewer_packet.json", default={}) or {}
     delivery_bundle = read_json(project_dir / "reports" / "delivery_bundle.json", default={}) or {}
+    multi_agent_plan = read_json(project_dir / "workspace" / "multi_agent_plan.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -701,6 +711,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {delivery_bundle}
+```
+
+## Multi-Agent Plan 摘要
+
+```json
+{multi_agent_plan}
 ```
 
 ## Readiness Scorecard 摘要

@@ -510,8 +510,19 @@ Released in v1.22.0 with role-based review action plans.
 
 Released in v1.22.1 with final workflow delivery bundles.
 
+## v1.23.0 — Multi-agent coordination plan
+
+- [x] Add `openrepro multi-agent-plan`.
+- [x] Write `workspace/multi_agent_plan.json` and `workspace/MULTI_AGENT_PLAN.md`.
+- [x] Define maintainer, reviewer, experimenter, and next-agent roles with task ownership.
+- [x] Convert review actions, collaboration checklists, delivery bundle state, and project status into guarded agent tasks.
+- [x] Surface multi-agent plan status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep multi-agent plans advisory: they do not execute agents, run experiments, close decisions, or add signoffs.
+
+Released in v1.23.0 with guarded multi-agent coordination plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
-- Multi-agent task orchestration.
+- Multi-agent execution adapters for externally supervised agent runners.
 - Dataset and environment provenance tracking.

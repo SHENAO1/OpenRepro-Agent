@@ -44,6 +44,7 @@ from .gaps import generate_reproduction_gaps
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
+from .multi_agent_plan import generate_multi_agent_plan
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -1394,6 +1395,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Review actions": summary["review_action_plan_open_action_count"],
         "Delivery bundle": summary["delivery_bundle_status"],
         "Delivery missing": summary["delivery_bundle_missing_file_count"],
+        "Multi-agent plan": summary["multi_agent_plan_status"],
+        "Multi-agent tasks": summary["multi_agent_plan_open_task_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1842,6 +1845,22 @@ def delivery_bundle_cmd(
     _success("Delivery bundle generated.")
 
 
+@app.command("multi-agent-plan")
+def multi_agent_plan_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a guarded multi-agent coordination plan."""
+    project_dir = require_project(project_name)
+    plan = generate_multi_agent_plan(project_dir)
+    table = Table(title="Multi-Agent Plan")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "agent_count", "task_count", "open_task_count", "top_agent", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'multi_agent_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'MULTI_AGENT_PLAN.md'}")
+    _success("Multi-agent plan generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1974,6 +1993,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Review actions": status.review_action_plan_open_action_count,
         "Delivery bundle": status.delivery_bundle_status,
         "Delivery missing": status.delivery_bundle_missing_file_count,
+        "Multi-agent plan": status.multi_agent_plan_status,
+        "Multi-agent tasks": status.multi_agent_plan_open_task_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

@@ -387,6 +387,13 @@ fabricate missing scientific artifacts. Generated delivery bundle files are
 excluded from evidence-package freshness fingerprints because they are
 downstream handoff artifacts.
 
+v1.23.0 adds `multi_agent_plan.py`. Multi-agent plans should define role
+ownership and assign open workflow tasks from existing artifacts such as review
+action plans, collaboration packs, delivery bundles, and project status. They
+must remain advisory unless a future explicitly supervised execution adapter is
+added. Generated multi-agent plan files are excluded from evidence-package
+freshness fingerprints because they are downstream coordination artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

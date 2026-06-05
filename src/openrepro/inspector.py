@@ -27,6 +27,7 @@ from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
 from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
+from .multi_agent_plan import multi_agent_plan_summary
 from .project_manager import get_status
 from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
@@ -215,6 +216,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     readiness_review_validation = readiness_review_validation_summary(project_dir)
     review_action_plan = review_action_plan_summary(project_dir)
     delivery_bundle = delivery_bundle_summary(project_dir)
+    multi_agent_plan = multi_agent_plan_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -410,6 +412,12 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "delivery_bundle_present_file_count": delivery_bundle["present_file_count"],
         "delivery_bundle_missing_file_count": delivery_bundle["missing_file_count"],
         "delivery_bundle_top_command": delivery_bundle["top_command"],
+        "multi_agent_plan_status": multi_agent_plan["status"],
+        "multi_agent_plan_agent_count": multi_agent_plan["agent_count"],
+        "multi_agent_plan_task_count": multi_agent_plan["task_count"],
+        "multi_agent_plan_open_task_count": multi_agent_plan["open_task_count"],
+        "multi_agent_plan_top_agent": multi_agent_plan["top_agent"],
+        "multi_agent_plan_top_command": multi_agent_plan["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,
