@@ -93,6 +93,7 @@ python -m openrepro.cli validate-multi-agent-plan $Project
 python -m openrepro.cli agent-board $Project --zip
 python -m openrepro.cli agent-dispatch $Project
 python -m openrepro.cli agent-exec-plan $Project --dry-run
+python -m openrepro.cli paper-lineage $Project
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null

@@ -590,6 +590,26 @@ def _agent_exec_plan_block(project_dir: Path) -> str:
     )
 
 
+def _paper_lineage_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "paper_lineage.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 paper lineage。运行 `openrepro paper-lineage <project>` 后会生成 claim/method/data/experiment/metric 谱系图。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- node_count: {data.get('node_count', 0)}",
+            f"- edge_count: {data.get('edge_count', 0)}",
+            f"- claim_count: {data.get('claim_count', 0)}",
+            f"- method_count: {data.get('method_count', 0)}",
+            f"- data_count: {data.get('data_count', 0)}",
+            f"- experiment_count: {data.get('experiment_count', 0)}",
+            f"- metric_count: {data.get('metric_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _project_profile_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -689,6 +709,7 @@ def generate_report(project_dir: Path) -> Path:
     agent_board_block = _agent_board_block(project_dir)
     agent_dispatch_block = _agent_dispatch_block(project_dir)
     agent_exec_plan_block = _agent_exec_plan_block(project_dir)
+    paper_lineage_block = _paper_lineage_block(project_dir)
     project_profile_block = _project_profile_block(project_dir)
     acceptance_criteria_block = _acceptance_criteria_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
@@ -896,30 +917,34 @@ OpenRepro-Agent v{__version__}
 
 {agent_exec_plan_block}
 
-## 42. Project Profile 摘要
+## 42. Paper Lineage 摘要
+
+{paper_lineage_block}
+
+## 43. Project Profile 摘要
 
 {project_profile_block}
 
-## 43. Acceptance Criteria 摘要
+## 44. Acceptance Criteria 摘要
 
 {acceptance_criteria_block}
 
-## 44. Reproduction Readiness Scorecard 摘要
+## 45. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 45. Reproduction Gaps 摘要
+## 46. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 46. 当前局限
+## 47. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 47. 下一阶段建议
+## 48. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

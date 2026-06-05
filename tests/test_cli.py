@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.25.0" in result.output
+    assert "OpenRepro-Agent v1.26.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -133,6 +133,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["agent-board", "boc_demo", "--zip"],
         ["agent-dispatch", "boc_demo"],
         ["agent-exec-plan", "boc_demo", "--dry-run"],
+        ["paper-lineage", "boc_demo"],
         ["status", "boc_demo"],
     ]
     for command in commands:
@@ -249,6 +250,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "agents" / "maintainer" / "TASKS.md").exists()
     assert (project / "workspace" / "agent_exec_plan.json").exists()
     assert (project / "workspace" / "AGENT_EXEC_PLAN.md").exists()
+    assert (project / "workspace" / "paper_lineage.json").exists()
+    assert (project / "workspace" / "PAPER_LINEAGE.md").exists()
     run_dirs = list((project / "outputs").iterdir())
     assert len(run_dirs) == 4
     assert any((run_dir / "figures" / "correlation.png").exists() for run_dir in run_dirs)

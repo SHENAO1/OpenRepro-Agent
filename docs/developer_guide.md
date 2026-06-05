@@ -427,6 +427,13 @@ remain blocked. Generated execution-plan files are excluded from
 evidence-package freshness fingerprints because they are downstream
 coordination artifacts.
 
+v1.26.0 adds `paper_lineage.py`. Paper lineage graphs should organize existing
+workflow evidence into claim, method, data, experiment, and metric nodes. They
+must not infer missing paper content, verify scientific correctness, run
+experiments, fabricate metrics, or claim reproduction success. Generated
+paper-lineage files are excluded from evidence-package freshness fingerprints
+because they are downstream evidence-organization artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

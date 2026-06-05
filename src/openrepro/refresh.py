@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.25.0"
+REFRESH_RUN_SCHEMA_VERSION = "1.26.0"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -42,6 +42,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .lineage import generate_run_lineage
     from .multi_agent_plan import generate_multi_agent_plan
     from .multi_agent_plan_validation import validate_multi_agent_plan
+    from .paper_lineage import generate_paper_lineage
     from .protocol_coverage import generate_protocol_coverage
     from .protocol_plan import generate_protocol_plan
     from .protocol_preflight import generate_protocol_preflight
@@ -216,6 +217,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     result = _build_result(project_dir, export_zip, records)
     write_json(workspace / "refresh_run.json", result)
     safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "paper_lineage",
+            "Refresh paper-level lineage graph.",
+            lambda: generate_paper_lineage(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
     if export_zip:
         result["zip_path"] = str(_export_zip(project_dir, result))
         write_json(workspace / "refresh_run.json", result)
@@ -319,6 +330,8 @@ def _summary(output: Any) -> dict[str, Any]:
         "warning_count",
         "safe_step_count",
         "blocked_task_count",
+        "node_count",
+        "edge_count",
         "item_count",
         "step_count",
         "failed_step_count",

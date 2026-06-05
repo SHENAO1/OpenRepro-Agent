@@ -32,6 +32,7 @@ from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
 from .multi_agent_plan import multi_agent_plan_summary
 from .multi_agent_plan_validation import multi_agent_plan_validation_summary
+from .paper_lineage import paper_lineage_summary
 from .project_manager import get_status
 from .protocol_coverage import protocol_coverage_summary
 from .protocol_plan import protocol_plan_summary
@@ -225,6 +226,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     agent_board = agent_board_summary(project_dir)
     agent_dispatch = agent_dispatch_summary(project_dir)
     agent_exec_plan = agent_exec_plan_summary(project_dir)
+    paper_lineage = paper_lineage_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -451,6 +453,15 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "agent_exec_plan_safe_step_count": agent_exec_plan["safe_step_count"],
         "agent_exec_plan_blocked_task_count": agent_exec_plan["blocked_task_count"],
         "agent_exec_plan_top_command": agent_exec_plan["top_command"],
+        "paper_lineage_status": paper_lineage["status"],
+        "paper_lineage_node_count": paper_lineage["node_count"],
+        "paper_lineage_edge_count": paper_lineage["edge_count"],
+        "paper_lineage_claim_count": paper_lineage["claim_count"],
+        "paper_lineage_method_count": paper_lineage["method_count"],
+        "paper_lineage_data_count": paper_lineage["data_count"],
+        "paper_lineage_experiment_count": paper_lineage["experiment_count"],
+        "paper_lineage_metric_count": paper_lineage["metric_count"],
+        "paper_lineage_top_command": paper_lineage["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

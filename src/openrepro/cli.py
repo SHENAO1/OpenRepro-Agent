@@ -49,6 +49,7 @@ from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .multi_agent_plan import generate_multi_agent_plan
 from .multi_agent_plan_validation import validate_multi_agent_plan
+from .paper_lineage import generate_paper_lineage
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -1409,6 +1410,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Agent dispatch tasks": summary["agent_dispatch_open_task_count"],
         "Agent exec plan": summary["agent_exec_plan_status"],
         "Agent exec safe steps": summary["agent_exec_plan_safe_step_count"],
+        "Paper lineage": summary["paper_lineage_status"],
+        "Paper lineage nodes": summary["paper_lineage_node_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1953,6 +1956,22 @@ def agent_exec_plan_cmd(
     _success("Agent execution dry-run plan generated.")
 
 
+@app.command("paper-lineage")
+def paper_lineage_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a paper-level claim/method/data/experiment/metric lineage graph."""
+    project_dir = require_project(project_name)
+    lineage = generate_paper_lineage(project_dir)
+    table = Table(title="Paper Lineage")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "node_count", "edge_count", "claim_count", "method_count", "data_count", "experiment_count", "metric_count", "top_command"]:
+        table.add_row(key, str(lineage.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'paper_lineage.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PAPER_LINEAGE.md'}")
+    _success("Paper lineage generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -2095,6 +2114,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Agent dispatch tasks": status.agent_dispatch_open_task_count,
         "Agent exec plan": status.agent_exec_plan_status,
         "Agent exec safe steps": status.agent_exec_plan_safe_step_count,
+        "Paper lineage": status.paper_lineage_status,
+        "Paper lineage nodes": status.paper_lineage_node_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

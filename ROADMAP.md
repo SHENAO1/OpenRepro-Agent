@@ -561,6 +561,16 @@ Released in v1.24.1 with per-agent task dispatch packs.
 
 Released in v1.25.0 with safe agent execution dry-run plans.
 
+## v1.26.0 — Paper lineage graph
+
+- [x] Add `openrepro paper-lineage`.
+- [x] Write `workspace/paper_lineage.json` and `workspace/PAPER_LINEAGE.md`.
+- [x] Build a claim -> method -> data -> experiment -> metric graph from existing workflow artifacts.
+- [x] Surface paper lineage status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep paper lineage as evidence organization only, not scientific reproduction proof.
+
+Released in v1.26.0 with paper-level lineage graphs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
