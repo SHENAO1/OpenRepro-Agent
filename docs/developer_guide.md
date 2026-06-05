@@ -373,6 +373,13 @@ paths. Generated readiness review validation files are excluded from
 evidence-package freshness fingerprints because they validate a downstream
 report, not source evidence.
 
+v1.22.0 adds `review_action_plan.py`. Review action plans should turn blocked
+readiness review checks into role-based advisory tasks with priorities and
+commands. They must not execute commands, close human decisions, or mutate
+scientific evidence. Generated review action plan files are excluded from
+evidence-package freshness fingerprints because they are downstream planning
+artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

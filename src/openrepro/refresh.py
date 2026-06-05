@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.21.1"
+REFRESH_RUN_SCHEMA_VERSION = "1.22.0"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -46,6 +46,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .report_generator import generate_report
     from .reproduction_protocol import generate_reproduction_protocol
     from .review_board import generate_review_board
+    from .review_action_plan import generate_review_action_plan
     from .review_decisions import generate_review_decisions
     from .review_site import generate_review_site
     from .reviewer_packet import generate_reviewer_packet
@@ -134,6 +135,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "readiness_review_validation",
             "Validate final readiness review.",
             lambda: validate_readiness_review(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "review_action_plan",
+            "Refresh role-based review action plan.",
+            lambda: generate_review_action_plan(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

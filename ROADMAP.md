@@ -490,6 +490,16 @@ Released in v1.21.0 with final readiness review reports.
 
 Released in v1.21.1 with readiness review freshness validation.
 
+## v1.22.0 — Review action plan
+
+- [x] Add `openrepro review-action-plan`.
+- [x] Write `workspace/review_action_plan.json` and `workspace/REVIEW_ACTION_PLAN.md`.
+- [x] Convert blocked readiness review checks into role-based actions with priority, command, status, and source check.
+- [x] Surface review action plan status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep review action plans advisory: they do not execute commands or close human decisions.
+
+Released in v1.22.0 with role-based review action plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

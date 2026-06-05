@@ -57,6 +57,7 @@ from .repair import apply_repair_actions, create_repair_plan, preview_repair_act
 from .report_generator import generate_report
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
+from .review_action_plan import generate_review_action_plan
 from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
 from .review_site import generate_review_site
 from .reviewer_packet import generate_reviewer_packet
@@ -1388,6 +1389,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Readiness blockers": summary["readiness_review_blocker_count"],
         "Readiness validation": summary["readiness_review_validation_status"],
         "Readiness validation issues": summary["readiness_review_validation_issue_count"],
+        "Review action plan": summary["review_action_plan_status"],
+        "Review actions": summary["review_action_plan_open_action_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1799,6 +1802,22 @@ def validate_readiness_review_cmd(project_name: str = typer.Argument(..., help="
         _warn("Readiness review validation failed.")
 
 
+@app.command("review-action-plan")
+def review_action_plan_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate a role-based action plan from readiness review blockers."""
+    project_dir = require_project(project_name)
+    plan = generate_review_action_plan(project_dir)
+    table = Table(title="Review Action Plan")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "action_count", "open_action_count", "top_role", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'review_action_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REVIEW_ACTION_PLAN.md'}")
+    _success("Review action plan generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1927,6 +1946,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Readiness blockers": status.readiness_review_blocker_count,
         "Readiness validation": status.readiness_review_validation_status,
         "Readiness validation issues": status.readiness_review_validation_issue_count,
+        "Review action plan": status.review_action_plan_status,
+        "Review actions": status.review_action_plan_open_action_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

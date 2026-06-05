@@ -37,7 +37,7 @@ def test_generate_refresh_run_complete_with_zip(tmp_path: Path):
     status = get_status(project)
     evidence_status = evidence_package_status(project)
 
-    assert run["schema_version"] == "1.21.1"
+    assert run["schema_version"] == "1.22.0"
     assert run["status"] == "complete"
     assert run["failed_step_count"] == 0
     assert run["top_command"] is None

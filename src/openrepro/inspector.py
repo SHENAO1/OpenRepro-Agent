@@ -37,6 +37,7 @@ from .readiness_review_validation import readiness_review_validation_summary
 from .refresh import refresh_run_summary
 from .reproduction_protocol import protocol_summary
 from .review_board import review_board_summary
+from .review_action_plan import review_action_plan_summary
 from .review_decisions import review_decision_summary
 from .review_site import review_site_summary
 from .reviewer_packet import reviewer_packet_summary
@@ -211,6 +212,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     acceptance = acceptance_criteria_summary(project_dir)
     readiness_review = readiness_review_summary(project_dir)
     readiness_review_validation = readiness_review_validation_summary(project_dir)
+    review_action_plan = review_action_plan_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -396,6 +398,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "readiness_review_validation_issue_count": readiness_review_validation["issue_count"],
         "readiness_review_validation_warning_count": readiness_review_validation["warning_count"],
         "readiness_review_validation_top_command": readiness_review_validation["top_command"],
+        "review_action_plan_status": review_action_plan["status"],
+        "review_action_plan_action_count": review_action_plan["action_count"],
+        "review_action_plan_open_action_count": review_action_plan["open_action_count"],
+        "review_action_plan_top_command": review_action_plan["top_command"],
+        "review_action_plan_top_role": review_action_plan["top_role"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,
