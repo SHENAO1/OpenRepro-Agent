@@ -573,6 +573,23 @@ def _agent_dispatch_block(project_dir: Path) -> str:
     )
 
 
+def _agent_exec_plan_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "agent_exec_plan.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 agent execution plan。运行 `openrepro agent-exec-plan <project> --dry-run` 后会生成安全执行 dry-run 计划。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- dry_run: {data.get('dry_run')}",
+            f"- task_count: {data.get('task_count', 0)}",
+            f"- safe_step_count: {data.get('safe_step_count', 0)}",
+            f"- blocked_task_count: {data.get('blocked_task_count', 0)}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _project_profile_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -671,6 +688,7 @@ def generate_report(project_dir: Path) -> Path:
     multi_agent_plan_validation_block = _multi_agent_plan_validation_block(project_dir)
     agent_board_block = _agent_board_block(project_dir)
     agent_dispatch_block = _agent_dispatch_block(project_dir)
+    agent_exec_plan_block = _agent_exec_plan_block(project_dir)
     project_profile_block = _project_profile_block(project_dir)
     acceptance_criteria_block = _acceptance_criteria_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
@@ -874,30 +892,34 @@ OpenRepro-Agent v{__version__}
 
 {agent_dispatch_block}
 
-## 41. Project Profile 摘要
+## 41. Agent Execution Dry-Run Plan 摘要
+
+{agent_exec_plan_block}
+
+## 42. Project Profile 摘要
 
 {project_profile_block}
 
-## 42. Acceptance Criteria 摘要
+## 43. Acceptance Criteria 摘要
 
 {acceptance_criteria_block}
 
-## 43. Reproduction Readiness Scorecard 摘要
+## 44. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 44. Reproduction Gaps 摘要
+## 45. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 45. 当前局限
+## 46. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 46. 下一阶段建议
+## 47. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

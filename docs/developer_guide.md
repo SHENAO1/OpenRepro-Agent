@@ -419,6 +419,14 @@ decisions, add signoffs, or fabricate scientific artifacts. Generated dispatch
 files are excluded from evidence-package freshness fingerprints because they
 are downstream coordination artifacts.
 
+v1.25.0 adds `agent_exec_plan.py`. Execution plans are dry-run classifiers for
+dispatch tasks. They may mark safe derived-artifact commands as would-run
+steps, but must never execute commands. Experiments, reruns, review decisions,
+claim signoffs, repair apply, human-input tasks, and placeholder commands must
+remain blocked. Generated execution-plan files are excluded from
+evidence-package freshness fingerprints because they are downstream
+coordination artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

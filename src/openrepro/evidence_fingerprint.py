@@ -47,6 +47,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/multi_agent_plan_validation.json",
     "workspace/AGENT_DISPATCH.md",
     "workspace/agent_dispatch.json",
+    "workspace/AGENT_EXEC_PLAN.md",
+    "workspace/agent_exec_plan.json",
 }
 EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
 

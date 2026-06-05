@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.24.1"
+REFRESH_RUN_SCHEMA_VERSION = "1.25.0"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -22,6 +22,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .advance import generate_advance_plan
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
+    from .agent_exec_plan import generate_agent_exec_plan
     from .acceptance_criteria import generate_acceptance_criteria
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
@@ -205,6 +206,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     result = _build_result(project_dir, export_zip, records)
     write_json(workspace / "refresh_run.json", result)
     safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "agent_exec_plan",
+            "Refresh safe agent execution dry-run plan.",
+            lambda: generate_agent_exec_plan(project_dir, dry_run=True),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
     if export_zip:
         result["zip_path"] = str(_export_zip(project_dir, result))
         write_json(workspace / "refresh_run.json", result)
@@ -306,6 +317,8 @@ def _summary(output: Any) -> dict[str, Any]:
         "open_task_count",
         "issue_count",
         "warning_count",
+        "safe_step_count",
+        "blocked_task_count",
         "item_count",
         "step_count",
         "failed_step_count",

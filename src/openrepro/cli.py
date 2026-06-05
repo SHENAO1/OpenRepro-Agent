@@ -13,6 +13,7 @@ from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
 from .agent_board import generate_agent_board
 from .agent_dispatch import generate_agent_dispatch
+from .agent_exec_plan import generate_agent_exec_plan
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
@@ -1406,6 +1407,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Agent board tasks": summary["agent_board_open_task_count"],
         "Agent dispatch": summary["agent_dispatch_status"],
         "Agent dispatch tasks": summary["agent_dispatch_open_task_count"],
+        "Agent exec plan": summary["agent_exec_plan_status"],
+        "Agent exec safe steps": summary["agent_exec_plan_safe_step_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1927,6 +1930,29 @@ def agent_dispatch_cmd(project_name: str = typer.Argument(..., help="Project dir
     _success("Agent dispatch pack generated.")
 
 
+@app.command("agent-exec-plan")
+def agent_exec_plan_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    dry_run: bool = typer.Option(True, "--dry-run", help="Generate a dry-run execution plan only."),
+) -> None:
+    """Generate a safe dry-run execution plan for derived agent tasks."""
+    project_dir = require_project(project_name)
+    try:
+        plan = generate_agent_exec_plan(project_dir, dry_run=dry_run)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title="Agent Execution Plan")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "dry_run", "task_count", "safe_step_count", "blocked_task_count", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_exec_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_EXEC_PLAN.md'}")
+    _success("Agent execution dry-run plan generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -2067,6 +2093,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Agent board tasks": status.agent_board_open_task_count,
         "Agent dispatch": status.agent_dispatch_status,
         "Agent dispatch tasks": status.agent_dispatch_open_task_count,
+        "Agent exec plan": status.agent_exec_plan_status,
+        "Agent exec safe steps": status.agent_exec_plan_safe_step_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

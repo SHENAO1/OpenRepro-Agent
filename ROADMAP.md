@@ -551,6 +551,16 @@ Released in v1.24.0 with a static multi-agent task board.
 
 Released in v1.24.1 with per-agent task dispatch packs.
 
+## v1.25.0 — Safe agent execution dry-run
+
+- [x] Add `openrepro agent-exec-plan --dry-run`.
+- [x] Write `workspace/agent_exec_plan.json` and `workspace/AGENT_EXEC_PLAN.md`.
+- [x] Classify dispatch tasks into safe derived-artifact dry-run steps versus blocked tasks.
+- [x] Allow only safe derived artifact commands and block experiments, reruns, claim signoffs, review decisions, repair apply, human-input tasks, and placeholder commands.
+- [x] Surface execution dry-run status in status, inspect, reports, handoff, refresh runs, and CLI output.
+
+Released in v1.25.0 with safe agent execution dry-run plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
