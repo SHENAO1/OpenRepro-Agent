@@ -20,6 +20,7 @@ from .claim_trace import claim_trace_summary
 from .collaboration_pack import collaboration_pack_summary
 from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
+from .delivery_bundle import delivery_bundle_summary
 from .diagnostics import diagnose_project
 from .document_loader import load_source_index
 from .experiment_spec import inspect_experiment_specs
@@ -213,6 +214,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     readiness_review = readiness_review_summary(project_dir)
     readiness_review_validation = readiness_review_validation_summary(project_dir)
     review_action_plan = review_action_plan_summary(project_dir)
+    delivery_bundle = delivery_bundle_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -403,6 +405,11 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "review_action_plan_open_action_count": review_action_plan["open_action_count"],
         "review_action_plan_top_command": review_action_plan["top_command"],
         "review_action_plan_top_role": review_action_plan["top_role"],
+        "delivery_bundle_status": delivery_bundle["status"],
+        "delivery_bundle_required_file_count": delivery_bundle["required_file_count"],
+        "delivery_bundle_present_file_count": delivery_bundle["present_file_count"],
+        "delivery_bundle_missing_file_count": delivery_bundle["missing_file_count"],
+        "delivery_bundle_top_command": delivery_bundle["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

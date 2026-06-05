@@ -21,6 +21,7 @@ from .collaboration_pack import collaboration_pack_summary
 from .config import create_project_config, load_project_config, save_project_config
 from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
+from .delivery_bundle import delivery_bundle_summary
 from .evidence_fingerprint import evidence_package_status
 from .experiment_spec import inspect_experiment_specs
 from .experiment_templates import inspect_experiment_scaffolds
@@ -220,6 +221,12 @@ class ProjectStatus:
     review_action_plan_open_action_count: int
     review_action_plan_top_command: str | None
     review_action_plan_top_role: str | None
+    delivery_bundle_exists: bool
+    delivery_bundle_status: str
+    delivery_bundle_required_file_count: int
+    delivery_bundle_present_file_count: int
+    delivery_bundle_missing_file_count: int
+    delivery_bundle_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -585,6 +592,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             review_action_plan_open_action_count=0,
             review_action_plan_top_command=None,
             review_action_plan_top_role=None,
+            delivery_bundle_exists=False,
+            delivery_bundle_status="missing",
+            delivery_bundle_required_file_count=0,
+            delivery_bundle_present_file_count=0,
+            delivery_bundle_missing_file_count=0,
+            delivery_bundle_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -647,6 +660,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     readiness_review = readiness_review_summary(project_dir)
     readiness_review_validation = readiness_review_validation_summary(project_dir)
     review_action_plan = review_action_plan_summary(project_dir)
+    delivery_bundle = delivery_bundle_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -821,8 +835,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif review_action_plan["status"] not in {"complete", "ready"}:
         command = str(review_action_plan["top_command"] or f"openrepro review-action-plan {project_dir}")
         next_step = f"Run: {command}"
+    elif not delivery_bundle["present"]:
+        next_step = f"Run: openrepro delivery-bundle {project_dir} --zip"
+    elif delivery_bundle["status"] != "ready":
+        command = str(delivery_bundle["top_command"] or f"openrepro delivery-bundle {project_dir} --zip")
+        next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.22.0 workflow is complete. Review the role-based action plan, validated readiness review, acceptance criteria, project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.22.1 workflow is complete. Review the final delivery bundle, role-based action plan, validated readiness review, acceptance criteria, project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -990,6 +1009,12 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         review_action_plan_open_action_count=int(review_action_plan["open_action_count"] or 0),
         review_action_plan_top_command=review_action_plan["top_command"],
         review_action_plan_top_role=review_action_plan["top_role"],
+        delivery_bundle_exists=bool(delivery_bundle["present"]),
+        delivery_bundle_status=str(delivery_bundle["status"]),
+        delivery_bundle_required_file_count=int(delivery_bundle["required_file_count"] or 0),
+        delivery_bundle_present_file_count=int(delivery_bundle["present_file_count"] or 0),
+        delivery_bundle_missing_file_count=int(delivery_bundle["missing_file_count"] or 0),
+        delivery_bundle_top_command=delivery_bundle["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

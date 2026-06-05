@@ -500,6 +500,16 @@ Released in v1.21.1 with readiness review freshness validation.
 
 Released in v1.22.0 with role-based review action plans.
 
+## v1.22.1 — Final delivery bundle
+
+- [x] Add `openrepro delivery-bundle`.
+- [x] Write `reports/delivery_bundle.json`, `reports/DELIVERY_BUNDLE.md`, and optional `reports/delivery_bundle.zip`.
+- [x] Check final handoff, evidence package, reviewer packet, review site, dashboard, collaboration pack, readiness review validation, and review action plan files.
+- [x] Surface delivery bundle status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep delivery bundles as workflow handoff manifests, not scientific proof.
+
+Released in v1.22.1 with final workflow delivery bundles.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.22.0"
+REFRESH_RUN_SCHEMA_VERSION = "1.22.1"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -30,6 +30,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .claim_trace import generate_claim_trace, validate_claim_trace
     from .collaboration_pack import generate_collaboration_pack
     from .dashboard import generate_dashboard
+    from .delivery_bundle import generate_delivery_bundle
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
@@ -150,6 +151,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     result = _build_result(project_dir, export_zip, records)
     write_json(workspace / "refresh_run.json", result)
     safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "delivery_bundle",
+            "Refresh final workflow delivery bundle.",
+            lambda: generate_delivery_bundle(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
     if export_zip:
         result["zip_path"] = str(_export_zip(project_dir, result))
         write_json(workspace / "refresh_run.json", result)
@@ -251,6 +262,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "item_count",
         "step_count",
         "failed_step_count",
+        "missing_file_count",
         "top_command",
         "top_suggested_command",
     ]

@@ -37,15 +37,20 @@ def test_generate_refresh_run_complete_with_zip(tmp_path: Path):
     status = get_status(project)
     evidence_status = evidence_package_status(project)
 
-    assert run["schema_version"] == "1.22.0"
+    assert run["schema_version"] == "1.22.1"
     assert run["status"] == "complete"
     assert run["failed_step_count"] == 0
     assert run["top_command"] is None
     assert (project / "workspace" / "refresh_run.json").exists()
     assert (project / "workspace" / "REFRESH_RUN.md").exists()
     assert (project / "workspace" / "refresh_run.zip").exists()
+    assert (project / "reports" / "delivery_bundle.json").exists()
+    assert (project / "reports" / "DELIVERY_BUNDLE.md").exists()
+    assert (project / "reports" / "delivery_bundle.zip").exists()
     assert status.refresh_run_exists is True
     assert status.refresh_run_status == "complete"
+    assert status.delivery_bundle_exists is True
+    assert status.delivery_bundle_status == "ready"
     assert status.collaboration_pack_next_safe_command_count == 0
     assert evidence_status["status"] == "current"
 

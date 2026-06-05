@@ -27,6 +27,7 @@ from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
 from .dashboard import generate_dashboard
+from .delivery_bundle import generate_delivery_bundle
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
@@ -1391,6 +1392,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Readiness validation issues": summary["readiness_review_validation_issue_count"],
         "Review action plan": summary["review_action_plan_status"],
         "Review actions": summary["review_action_plan_open_action_count"],
+        "Delivery bundle": summary["delivery_bundle_status"],
+        "Delivery missing": summary["delivery_bundle_missing_file_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1818,6 +1821,27 @@ def review_action_plan_cmd(project_name: str = typer.Argument(..., help="Project
     _success("Review action plan generated.")
 
 
+@app.command("delivery-bundle")
+def delivery_bundle_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/delivery_bundle.zip."),
+) -> None:
+    """Generate the final workflow delivery bundle."""
+    project_dir = require_project(project_name)
+    bundle = generate_delivery_bundle(project_dir, export_zip=export_zip)
+    table = Table(title="Delivery Bundle")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "top_command", "required_file_count", "present_file_count", "missing_file_count"]:
+        table.add_row(key, str(bundle.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'reports' / 'delivery_bundle.json'}")
+    console.print(f"Markdown: {project_dir / 'reports' / 'DELIVERY_BUNDLE.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'delivery_bundle.zip'}")
+    _success("Delivery bundle generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1948,6 +1972,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Readiness validation issues": status.readiness_review_validation_issue_count,
         "Review action plan": status.review_action_plan_status,
         "Review actions": status.review_action_plan_open_action_count,
+        "Delivery bundle": status.delivery_bundle_status,
+        "Delivery missing": status.delivery_bundle_missing_file_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

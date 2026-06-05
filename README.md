@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.22.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.22.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.22.0 workflow is:
+The v1.22.1 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → status
 ```
 
 ## What v0.4.0 supports
@@ -448,6 +448,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Surface review action plan status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
 - Keep review action plans advisory: they do not execute commands or close human decisions.
 
+## What v1.22.1 adds
+
+- Add `openrepro delivery-bundle`.
+- Write `reports/delivery_bundle.json`, `reports/DELIVERY_BUNDLE.md`, and optional `reports/delivery_bundle.zip`.
+- Check final handoff, evidence package, reviewer packet, review site, dashboard, collaboration pack, readiness review, validation, and review action plan files.
+- Surface delivery bundle status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
+- Keep delivery bundles as workflow handoff manifests, not scientific reproduction proof.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -565,6 +573,10 @@ openrepro collaboration-pack boc_demo --zip
 openrepro refresh boc_demo --zip
 openrepro freshness boc_demo
 openrepro dashboard boc_demo --zip
+openrepro readiness-review boc_demo --zip
+openrepro validate-readiness-review boc_demo
+openrepro review-action-plan boc_demo
+openrepro delivery-bundle boc_demo --zip
 openrepro status boc_demo
 ```
 
@@ -1213,6 +1225,57 @@ The dashboard combines readiness, freshness, refresh, collaboration, timeline,
 reviewer packet, review site, evidence package, and handoff links for project
 handoff.
 
+### `openrepro readiness-review <project_name> [--zip]`
+
+Generates the final human-review readiness report and writes:
+
+```text
+reports/readiness_review.json
+reports/READINESS_REVIEW.md
+reports/readiness_review.zip
+```
+
+Readiness reviews check final workflow handoff state. They do not claim
+scientific reproduction success.
+
+### `openrepro validate-readiness-review <project_name>`
+
+Validates the stored readiness review against the current project state and
+writes:
+
+```text
+reports/readiness_review_validation.json
+reports/READINESS_REVIEW_VALIDATION.md
+```
+
+Validation reports freshness and consistency issues for the readiness review.
+
+### `openrepro review-action-plan <project_name>`
+
+Generates role-based follow-up actions from blocked readiness checks and writes:
+
+```text
+workspace/review_action_plan.json
+workspace/REVIEW_ACTION_PLAN.md
+```
+
+Action plans are advisory task lists only. They do not execute commands or
+close human decisions.
+
+### `openrepro delivery-bundle <project_name> [--zip]`
+
+Generates the final delivery manifest and optional zip package:
+
+```text
+reports/delivery_bundle.json
+reports/DELIVERY_BUNDLE.md
+reports/delivery_bundle.zip
+```
+
+Delivery bundles collect final workflow handoff files, reviewer artifacts,
+readiness validation, and the review action plan. They are handoff manifests,
+not scientific reproduction proof.
+
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
 Runs the same verified experiment scaffold again and records another normal
@@ -1615,12 +1678,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.21.0: final readiness review for human handoff.
 - v1.21.1: readiness review freshness and consistency validation.
 - v1.22.0: role-based review action plans.
+- v1.22.1: final workflow delivery bundle.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.22.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.22.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

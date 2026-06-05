@@ -80,6 +80,7 @@ python -m openrepro.cli dashboard "$PROJECT" --zip
 python -m openrepro.cli readiness-review "$PROJECT" --zip
 python -m openrepro.cli validate-readiness-review "$PROJECT"
 python -m openrepro.cli review-action-plan "$PROJECT"
+python -m openrepro.cli delivery-bundle "$PROJECT" --zip
 python -m openrepro.cli status "$PROJECT"
 
 mkdir -p .codex_tmp/pytest-basetemp

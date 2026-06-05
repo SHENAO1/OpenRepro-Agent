@@ -380,6 +380,13 @@ scientific evidence. Generated review action plan files are excluded from
 evidence-package freshness fingerprints because they are downstream planning
 artifacts.
 
+v1.22.1 adds `delivery_bundle.py`. Delivery bundles should collect existing
+final workflow handoff files into a JSON/Markdown manifest and optional zip.
+They must not run experiments, close review decisions, add signoffs, or
+fabricate missing scientific artifacts. Generated delivery bundle files are
+excluded from evidence-package freshness fingerprints because they are
+downstream handoff artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports
