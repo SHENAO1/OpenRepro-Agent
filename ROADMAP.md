@@ -531,6 +531,16 @@ Released in v1.23.0 with guarded multi-agent coordination plans.
 
 Released in v1.23.1 with guarded multi-agent plan validation.
 
+## v1.24.0 — Static agent board
+
+- [x] Add `openrepro agent-board`.
+- [x] Write `reports/agent_board/index.html`, `reports/agent_board_manifest.json`, and optional `reports/agent_board.zip`.
+- [x] Display guarded tasks by maintainer, reviewer, experimenter, and next-agent lanes.
+- [x] Surface agent board status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep agent boards as static workflow views: they do not dispatch agents or execute task commands.
+
+Released in v1.24.0 with a static multi-agent task board.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -11,6 +11,7 @@ from rich.table import Table
 from . import __version__
 from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
+from .agent_board import generate_agent_board
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
@@ -1400,6 +1401,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Multi-agent tasks": summary["multi_agent_plan_open_task_count"],
         "Multi-agent validation": summary["multi_agent_plan_validation_status"],
         "Multi-agent validation issues": summary["multi_agent_plan_validation_issue_count"],
+        "Agent board": summary["agent_board_status"],
+        "Agent board tasks": summary["agent_board_open_task_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1883,6 +1886,27 @@ def validate_multi_agent_plan_cmd(project_name: str = typer.Argument(..., help="
         _warn("Multi-agent plan validation failed.")
 
 
+@app.command("agent-board")
+def agent_board_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/agent_board.zip."),
+) -> None:
+    """Generate a static multi-agent task board."""
+    project_dir = require_project(project_name)
+    board = generate_agent_board(project_dir, export_zip=export_zip)
+    table = Table(title="Agent Board")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "agent_count", "task_count", "open_task_count", "human_input_task_count", "top_command"]:
+        table.add_row(key, str(board.get(key)))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'agent_board' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'agent_board_manifest.json'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'agent_board.zip'}")
+    _success("Agent board generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -2019,6 +2043,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Multi-agent tasks": status.multi_agent_plan_open_task_count,
         "Multi-agent validation": status.multi_agent_plan_validation_status,
         "Multi-agent validation issues": status.multi_agent_plan_validation_issue_count,
+        "Agent board": status.agent_board_status,
+        "Agent board tasks": status.agent_board_open_task_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

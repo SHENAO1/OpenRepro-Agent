@@ -90,6 +90,7 @@ python -m openrepro.cli review-action-plan $Project
 python -m openrepro.cli delivery-bundle $Project --zip
 python -m openrepro.cli multi-agent-plan $Project
 python -m openrepro.cli validate-multi-agent-plan $Project
+python -m openrepro.cli agent-board $Project --zip
 python -m openrepro.cli status $Project
 
 New-Item -ItemType Directory -Force .codex_tmp\pytest-basetemp | Out-Null

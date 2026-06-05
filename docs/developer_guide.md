@@ -403,6 +403,14 @@ scientific artifacts. Generated validation files are excluded from
 evidence-package freshness fingerprints because they are downstream
 coordination artifacts.
 
+v1.24.0 adds `agent_board.py`. Agent boards should render the guarded
+multi-agent plan as a static HTML/JSON handoff view with one lane per role.
+They may generate missing upstream plan/validation artifacts, but must not
+dispatch agents, execute task commands, run experiments, close human
+decisions, add signoffs, or fabricate scientific artifacts. Generated board
+files are excluded from evidence-package freshness fingerprints because they
+are downstream coordination artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

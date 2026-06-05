@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.23.1**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.24.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.23.1 workflow is:
+The v1.24.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → status
 ```
 
 ## What v0.4.0 supports
@@ -472,6 +472,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Detect missing, stale, structurally inconsistent, or unsafe multi-agent plan tasks.
 - Surface validation status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
 - Keep validation read-only: it does not execute agents, repair plans, run experiments, close decisions, or add signoffs.
+
+## What v1.24.0 adds
+
+- Add `openrepro agent-board`.
+- Write `reports/agent_board/index.html`, `reports/agent_board_manifest.json`, and optional `reports/agent_board.zip`.
+- Display multi-agent tasks by maintainer, reviewer, experimenter, and next-agent lanes.
+- Surface agent board status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
+- Keep agent boards as static workflow views: they do not dispatch agents or execute task commands.
 
 ## Current limitations
 
@@ -1303,6 +1311,9 @@ workspace/multi_agent_plan.json
 workspace/MULTI_AGENT_PLAN.md
 workspace/multi_agent_plan_validation.json
 workspace/MULTI_AGENT_PLAN_VALIDATION.md
+reports/agent_board/index.html
+reports/agent_board_manifest.json
+reports/agent_board.zip
 ```
 
 The plan defines maintainer, reviewer, experimenter, and next-agent roles, then
@@ -1322,6 +1333,20 @@ workspace/MULTI_AGENT_PLAN_VALIDATION.md
 The validation checks required fields, task counts, current-project freshness,
 agent IDs, priorities, task status, and unsafe commands. It is read-only and
 does not run or dispatch agents.
+
+### `openrepro agent-board <project_name> [--zip]`
+
+Generates a static multi-agent task board and writes:
+
+```text
+reports/agent_board/index.html
+reports/agent_board_manifest.json
+reports/agent_board.zip
+```
+
+The board displays guarded tasks by maintainer, reviewer, experimenter, and
+next-agent lanes. It is a static workflow view only and does not dispatch
+agents or execute commands.
 
 ### `openrepro rerun-experiment <project_name> --experiment-id ID --confirm`
 
@@ -1728,12 +1753,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.22.1: final workflow delivery bundle.
 - v1.23.0: guarded multi-agent coordination plans.
 - v1.23.1: multi-agent plan validation.
+- v1.24.0: static multi-agent task board.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.23.1 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.24.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

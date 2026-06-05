@@ -8,6 +8,7 @@ from typing import Any
 
 from .acceptance_criteria import acceptance_criteria_summary
 from .advance import advance_summary
+from .agent_board import agent_board_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
@@ -219,6 +220,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     delivery_bundle = delivery_bundle_summary(project_dir)
     multi_agent_plan = multi_agent_plan_summary(project_dir)
     multi_agent_plan_validation = multi_agent_plan_validation_summary(project_dir)
+    agent_board = agent_board_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -425,6 +427,13 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "multi_agent_plan_validation_issue_count": multi_agent_plan_validation["issue_count"],
         "multi_agent_plan_validation_warning_count": multi_agent_plan_validation["warning_count"],
         "multi_agent_plan_validation_top_command": multi_agent_plan_validation["top_command"],
+        "agent_board_status": agent_board["status"],
+        "agent_board_agent_count": agent_board["agent_count"],
+        "agent_board_task_count": agent_board["task_count"],
+        "agent_board_open_task_count": agent_board["open_task_count"],
+        "agent_board_human_input_task_count": agent_board["human_input_task_count"],
+        "agent_board_validation_status": agent_board["validation_status"],
+        "agent_board_top_command": agent_board["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

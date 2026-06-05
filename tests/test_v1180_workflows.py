@@ -37,7 +37,7 @@ def test_generate_refresh_run_complete_with_zip(tmp_path: Path):
     status = get_status(project)
     evidence_status = evidence_package_status(project)
 
-    assert run["schema_version"] == "1.23.1"
+    assert run["schema_version"] == "1.24.0"
     assert run["status"] == "complete"
     assert run["failed_step_count"] == 0
     assert run["top_command"] is None
@@ -51,6 +51,9 @@ def test_generate_refresh_run_complete_with_zip(tmp_path: Path):
     assert (project / "workspace" / "MULTI_AGENT_PLAN.md").exists()
     assert (project / "workspace" / "multi_agent_plan_validation.json").exists()
     assert (project / "workspace" / "MULTI_AGENT_PLAN_VALIDATION.md").exists()
+    assert (project / "reports" / "agent_board" / "index.html").exists()
+    assert (project / "reports" / "agent_board_manifest.json").exists()
+    assert (project / "reports" / "agent_board.zip").exists()
     assert status.refresh_run_exists is True
     assert status.refresh_run_status == "complete"
     assert status.delivery_bundle_exists is True
@@ -59,6 +62,8 @@ def test_generate_refresh_run_complete_with_zip(tmp_path: Path):
     assert status.multi_agent_plan_status == "complete"
     assert status.multi_agent_plan_validation_exists is True
     assert status.multi_agent_plan_validation_status == "passed"
+    assert status.agent_board_exists is True
+    assert status.agent_board_status == "complete"
     assert status.collaboration_pack_next_safe_command_count == 0
     assert evidence_status["status"] == "current"
 
