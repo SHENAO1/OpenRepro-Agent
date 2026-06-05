@@ -541,6 +541,16 @@ Released in v1.23.1 with guarded multi-agent plan validation.
 
 Released in v1.24.0 with a static multi-agent task board.
 
+## v1.24.1 — Agent dispatch pack
+
+- [x] Add `openrepro agent-dispatch`.
+- [x] Write `workspace/agent_dispatch.json`, `workspace/AGENT_DISPATCH.md`, and per-role `workspace/agents/<agent>/TASKS.md` files.
+- [x] Split guarded multi-agent tasks into maintainer, reviewer, experimenter, and next-agent task packs.
+- [x] Surface dispatch pack status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep dispatch packs advisory: they do not dispatch agents or execute task commands.
+
+Released in v1.24.1 with per-agent task dispatch packs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

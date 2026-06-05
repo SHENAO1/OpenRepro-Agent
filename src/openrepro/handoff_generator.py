@@ -130,6 +130,7 @@ def _code_status(project_dir: Path) -> str:
     multi_agent_plan = read_json(project_dir / "workspace" / "multi_agent_plan.json", default={}) or {}
     multi_agent_plan_validation = read_json(project_dir / "workspace" / "multi_agent_plan_validation.json", default={}) or {}
     agent_board = read_json(project_dir / "reports" / "agent_board_manifest.json", default={}) or {}
+    agent_dispatch = read_json(project_dir / "workspace" / "agent_dispatch.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -137,7 +138,7 @@ def _code_status(project_dir: Path) -> str:
 
 ## CLI 模块状态
 
-- `cli.py`：已完成 v1.24.0 命令入口。
+- `cli.py`：已完成 v1.24.1 命令入口。
 - `project_manager.py`：已完成 init/status。
 - `document_loader.py`：已完成 Markdown/txt 导入和 PDF 文本抽取。
 - `analyzer.py`：已完成规则分析、公式候选和参数候选抽取。
@@ -179,6 +180,7 @@ def _code_status(project_dir: Path) -> str:
 - `multi_agent_plan.py`：已完成 guarded multi-agent coordination plan。
 - `multi_agent_plan_validation.py`：已完成 guarded multi-agent plan validation。
 - `agent_board.py`：已完成 static multi-agent task board。
+- `agent_dispatch.py`：已完成 per-agent task dispatch pack。
 - `scorecard.py`：已完成 workflow readiness scorecard。
 - `gaps.py`：已完成 actionable reproduction gaps。
 - `doctor.py`：已完成项目健康检查。
@@ -396,6 +398,12 @@ def _code_status(project_dir: Path) -> str:
 {agent_board}
 ```
 
+## Agent Dispatch Pack 状态
+
+```json
+{agent_dispatch}
+```
+
 ## Readiness Scorecard 状态
 
 ```json
@@ -470,7 +478,7 @@ def _next_steps(project_dir: Path) -> str:
 
 {status.next_step}
 
-## v1.24.0 闭环检查
+## v1.24.1 闭环检查
 
 - ingest: {'已完成' if status.ingested else '未完成'}
 - analyze: {'已完成' if status.analyzed else '未完成'}
@@ -516,6 +524,7 @@ def _next_steps(project_dir: Path) -> str:
 - multi-agent-plan: {'已完成' if status.multi_agent_plan_exists else '未完成'}
 - validate-multi-agent-plan: {'已完成' if status.multi_agent_plan_validation_exists else '未完成'}
 - agent-board: {'已完成' if status.agent_board_exists else '未完成'}
+- agent-dispatch: {'已完成' if status.agent_dispatch_exists else '未完成'}
 
 ## 下一阶段建议
 
@@ -594,6 +603,7 @@ def _agent_handoff(project_dir: Path) -> str:
     multi_agent_plan = read_json(project_dir / "workspace" / "multi_agent_plan.json", default={}) or {}
     multi_agent_plan_validation = read_json(project_dir / "workspace" / "multi_agent_plan_validation.json", default={}) or {}
     agent_board = read_json(project_dir / "reports" / "agent_board_manifest.json", default={}) or {}
+    agent_dispatch = read_json(project_dir / "workspace" / "agent_dispatch.json", default={}) or {}
     scorecard = read_json(project_dir / "workspace" / "reproduction_scorecard.json", default={}) or {}
     gaps = read_json(project_dir / "workspace" / "reproduction_gaps.json", default={}) or {}
     experiment_inputs = _experiment_inputs_summary(project_dir)
@@ -749,6 +759,12 @@ def _agent_handoff(project_dir: Path) -> str:
 
 ```json
 {agent_board}
+```
+
+## Agent Dispatch Pack 摘要
+
+```json
+{agent_dispatch}
 ```
 
 ## Readiness Scorecard 摘要

@@ -555,6 +555,24 @@ def _agent_board_block(project_dir: Path) -> str:
     )
 
 
+def _agent_dispatch_block(project_dir: Path) -> str:
+    data = read_json(project_dir / "workspace" / "agent_dispatch.json", default={}) or {}
+    if not isinstance(data, dict) or not data:
+        return "暂无 agent dispatch pack。运行 `openrepro agent-dispatch <project>` 后会生成按角色拆分的任务分发包。"
+    return "\n".join(
+        [
+            f"- status: {data.get('status')}",
+            f"- agent_count: {data.get('agent_count', 0)}",
+            f"- task_count: {data.get('task_count', 0)}",
+            f"- open_task_count: {data.get('open_task_count', 0)}",
+            f"- human_input_task_count: {data.get('human_input_task_count', 0)}",
+            f"- validation_status: {data.get('validation_status')}",
+            f"- top_command: {data.get('top_command')}",
+            f"- policy: {data.get('policy')}",
+        ]
+    )
+
+
 def _project_profile_block(project_dir: Path) -> str:
     data = read_json(project_dir / "workspace" / "project_profile.json", default={}) or {}
     if not isinstance(data, dict) or not data:
@@ -652,6 +670,7 @@ def generate_report(project_dir: Path) -> Path:
     multi_agent_plan_block = _multi_agent_plan_block(project_dir)
     multi_agent_plan_validation_block = _multi_agent_plan_validation_block(project_dir)
     agent_board_block = _agent_board_block(project_dir)
+    agent_dispatch_block = _agent_dispatch_block(project_dir)
     project_profile_block = _project_profile_block(project_dir)
     acceptance_criteria_block = _acceptance_criteria_block(project_dir)
     scorecard_block = _scorecard_block(project_dir)
@@ -851,30 +870,34 @@ OpenRepro-Agent v{__version__}
 
 {agent_board_block}
 
-## 40. Project Profile 摘要
+## 40. Agent Dispatch Pack 摘要
+
+{agent_dispatch_block}
+
+## 41. Project Profile 摘要
 
 {project_profile_block}
 
-## 41. Acceptance Criteria 摘要
+## 42. Acceptance Criteria 摘要
 
 {acceptance_criteria_block}
 
-## 42. Reproduction Readiness Scorecard 摘要
+## 43. Reproduction Readiness Scorecard 摘要
 
 {scorecard_block}
 
-## 43. Reproduction Gaps 摘要
+## 44. Reproduction Gaps 摘要
 
 {gaps_block}
 
-## 44. 当前局限
+## 45. 当前局限
 
 - 资料分析基于规则与 Mock LLM 占位。
 - PDF 抽取依赖可读文本层，扫描件或复杂排版可能需要人工补录。
 - Demo 是 lightweight BOC-like 自相关实验，不是完整论文复现。
 - 没有声明 benchmark 成绩、用户数、Token 消耗或效率提升。
 
-## 45. 下一阶段建议
+## 46. 下一阶段建议
 
 - 补充论文原始 Markdown/txt/PDF 资料并人工核对模型账本。
 - 将真实公式、参数表和实验设置写入 EXPERIMENT_PLAN.md。

@@ -84,6 +84,7 @@ python -m openrepro.cli delivery-bundle "$PROJECT" --zip
 python -m openrepro.cli multi-agent-plan "$PROJECT"
 python -m openrepro.cli validate-multi-agent-plan "$PROJECT"
 python -m openrepro.cli agent-board "$PROJECT" --zip
+python -m openrepro.cli agent-dispatch "$PROJECT"
 python -m openrepro.cli status "$PROJECT"
 
 mkdir -p .codex_tmp/pytest-basetemp

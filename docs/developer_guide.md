@@ -411,6 +411,14 @@ decisions, add signoffs, or fabricate scientific artifacts. Generated board
 files are excluded from evidence-package freshness fingerprints because they
 are downstream coordination artifacts.
 
+v1.24.1 adds `agent_dispatch.py`. Dispatch packs should split guarded
+multi-agent tasks into per-role Markdown task files plus a JSON/Markdown
+manifest. They may generate missing upstream plan/validation artifacts, but
+must not launch agents, execute task commands, run experiments, close human
+decisions, add signoffs, or fabricate scientific artifacts. Generated dispatch
+files are excluded from evidence-package freshness fingerprints because they
+are downstream coordination artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -45,7 +45,10 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/multi_agent_plan.json",
     "workspace/MULTI_AGENT_PLAN_VALIDATION.md",
     "workspace/multi_agent_plan_validation.json",
+    "workspace/AGENT_DISPATCH.md",
+    "workspace/agent_dispatch.json",
 }
+EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
 
 
 def _included_files(project_dir: Path) -> list[Path]:
@@ -66,6 +69,8 @@ def _included_files(project_dir: Path) -> list[Path]:
                 continue
             relative = path.relative_to(project_dir).as_posix()
             if relative in EXCLUDED_PROJECT_RELATIVE_PATHS:
+                continue
+            if any(relative.startswith(f"{directory}/") for directory in EXCLUDED_PROJECT_RELATIVE_DIRS):
                 continue
             if path.is_relative_to(project_dir / "reports"):
                 report_parts = path.relative_to(project_dir / "reports").parts

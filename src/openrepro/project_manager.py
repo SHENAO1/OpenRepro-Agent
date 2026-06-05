@@ -10,6 +10,7 @@ from . import __version__
 from .acceptance_criteria import acceptance_criteria_summary
 from .advance import advance_summary
 from .agent_board import agent_board_summary
+from .agent_dispatch import agent_dispatch_summary
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .checkpoints import checkpoint_summary
 from .claim_evidence_binder import claim_evidence_binder_summary, claim_evidence_binder_validation_summary
@@ -249,6 +250,13 @@ class ProjectStatus:
     agent_board_open_task_count: int
     agent_board_human_input_task_count: int
     agent_board_top_command: str | None
+    agent_dispatch_exists: bool
+    agent_dispatch_status: str
+    agent_dispatch_agent_count: int
+    agent_dispatch_task_count: int
+    agent_dispatch_open_task_count: int
+    agent_dispatch_human_input_task_count: int
+    agent_dispatch_top_command: str | None
     latest_run_dir: str | None
     lineage_exists: bool
     report_exists: bool
@@ -639,6 +647,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             agent_board_open_task_count=0,
             agent_board_human_input_task_count=0,
             agent_board_top_command=None,
+            agent_dispatch_exists=False,
+            agent_dispatch_status="missing",
+            agent_dispatch_agent_count=0,
+            agent_dispatch_task_count=0,
+            agent_dispatch_open_task_count=0,
+            agent_dispatch_human_input_task_count=0,
+            agent_dispatch_top_command=None,
             latest_run_dir=None,
             lineage_exists=False,
             report_exists=False,
@@ -705,6 +720,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     multi_agent_plan = multi_agent_plan_summary(project_dir)
     multi_agent_plan_validation = multi_agent_plan_validation_summary(project_dir)
     agent_board = agent_board_summary(project_dir)
+    agent_dispatch = agent_dispatch_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
     handoff_complete = all((project_dir / "handoff" / name).exists() for name in required_handoff_files())
@@ -899,8 +915,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     elif agent_board["status"] not in {"complete", "ready"}:
         command = str(agent_board["top_command"] or f"openrepro agent-board {project_dir} --zip")
         next_step = f"Run: {command}"
+    elif not agent_dispatch["present"]:
+        next_step = f"Run: openrepro agent-dispatch {project_dir}"
+    elif agent_dispatch["status"] not in {"complete", "ready"}:
+        command = str(agent_dispatch["top_command"] or f"openrepro agent-dispatch {project_dir}")
+        next_step = f"Run: {command}"
     else:
-        next_step = "Project v1.24.0 workflow is complete. Review the agent board, validated multi-agent plan, final delivery bundle, role-based action plan, validated readiness review, acceptance criteria, project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
+        next_step = "Project v1.24.1 workflow is complete. Review the agent dispatch pack, agent board, validated multi-agent plan, final delivery bundle, role-based action plan, validated readiness review, acceptance criteria, project profile, static dashboard, artifact freshness graph, refresh run, collaboration pack, project timeline, static review site, reviewer packet, validated claim evidence reports, validated claim signoffs, the validated claim evidence binder, protocol preflight, protocol action plan, protocol coverage, reproduction protocol, human review decisions, review board, advance dry-run plan, workflow checkpoints, reproduction gaps, the readiness scorecard, validated claim traceability, quality gate repair plans, batch quality gates, registered data provenance, fresh experiment specs, section-aware paper evidence, caption indexes, high-risk candidates, the fresh evidence package, experiment comparisons, repeat lineage, calibrated inputs, environment snapshots, templates, runs, reports, and handoff files."
 
     return ProjectStatus(
         project_name=detected_name,
@@ -1093,6 +1114,13 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         agent_board_open_task_count=int(agent_board["open_task_count"] or 0),
         agent_board_human_input_task_count=int(agent_board["human_input_task_count"] or 0),
         agent_board_top_command=agent_board["top_command"],
+        agent_dispatch_exists=bool(agent_dispatch["present"]),
+        agent_dispatch_status=str(agent_dispatch["status"]),
+        agent_dispatch_agent_count=int(agent_dispatch["agent_count"] or 0),
+        agent_dispatch_task_count=int(agent_dispatch["task_count"] or 0),
+        agent_dispatch_open_task_count=int(agent_dispatch["open_task_count"] or 0),
+        agent_dispatch_human_input_task_count=int(agent_dispatch["human_input_task_count"] or 0),
+        agent_dispatch_top_command=agent_dispatch["top_command"],
         latest_run_dir=str(latest) if latest else None,
         lineage_exists=lineage_exists,
         report_exists=report_exists,

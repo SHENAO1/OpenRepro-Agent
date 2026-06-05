@@ -9,6 +9,7 @@ from typing import Any
 from .acceptance_criteria import acceptance_criteria_summary
 from .advance import advance_summary
 from .agent_board import agent_board_summary
+from .agent_dispatch import agent_dispatch_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
@@ -221,6 +222,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     multi_agent_plan = multi_agent_plan_summary(project_dir)
     multi_agent_plan_validation = multi_agent_plan_validation_summary(project_dir)
     agent_board = agent_board_summary(project_dir)
+    agent_dispatch = agent_dispatch_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
     summary = {
@@ -434,6 +436,13 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "agent_board_human_input_task_count": agent_board["human_input_task_count"],
         "agent_board_validation_status": agent_board["validation_status"],
         "agent_board_top_command": agent_board["top_command"],
+        "agent_dispatch_status": agent_dispatch["status"],
+        "agent_dispatch_agent_count": agent_dispatch["agent_count"],
+        "agent_dispatch_task_count": agent_dispatch["task_count"],
+        "agent_dispatch_open_task_count": agent_dispatch["open_task_count"],
+        "agent_dispatch_human_input_task_count": agent_dispatch["human_input_task_count"],
+        "agent_dispatch_validation_status": agent_dispatch["validation_status"],
+        "agent_dispatch_top_command": agent_dispatch["top_command"],
         "latest_run_dir": str(latest) if latest else None,
         "latest_manifest_status": latest_manifest_status,
         "latest_manifest_valid": latest_validation.get("valid") if latest_validation else None,

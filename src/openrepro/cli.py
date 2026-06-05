@@ -12,6 +12,7 @@ from . import __version__
 from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
 from .agent_board import generate_agent_board
+from .agent_dispatch import generate_agent_dispatch
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
@@ -1403,6 +1404,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Multi-agent validation issues": summary["multi_agent_plan_validation_issue_count"],
         "Agent board": summary["agent_board_status"],
         "Agent board tasks": summary["agent_board_open_task_count"],
+        "Agent dispatch": summary["agent_dispatch_status"],
+        "Agent dispatch tasks": summary["agent_dispatch_open_task_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1907,6 +1910,23 @@ def agent_board_cmd(
     _success("Agent board generated.")
 
 
+@app.command("agent-dispatch")
+def agent_dispatch_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate per-agent task dispatch files."""
+    project_dir = require_project(project_name)
+    dispatch = generate_agent_dispatch(project_dir)
+    table = Table(title="Agent Dispatch Pack")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "agent_count", "task_count", "open_task_count", "human_input_task_count", "top_command"]:
+        table.add_row(key, str(dispatch.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_dispatch.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_DISPATCH.md'}")
+    console.print(f"Agent tasks: {project_dir / 'workspace' / 'agents'}")
+    _success("Agent dispatch pack generated.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -2045,6 +2065,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Multi-agent validation issues": status.multi_agent_plan_validation_issue_count,
         "Agent board": status.agent_board_status,
         "Agent board tasks": status.agent_board_open_task_count,
+        "Agent dispatch": status.agent_dispatch_status,
+        "Agent dispatch tasks": status.agent_dispatch_open_task_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

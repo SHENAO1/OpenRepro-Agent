@@ -10,7 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .artifact_manager import sha256_file
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-REFRESH_RUN_SCHEMA_VERSION = "1.24.0"
+REFRESH_RUN_SCHEMA_VERSION = "1.24.1"
 
 
 def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -21,6 +21,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
 
     from .advance import generate_advance_plan
     from .agent_board import generate_agent_board
+    from .agent_dispatch import generate_agent_dispatch
     from .acceptance_criteria import generate_acceptance_criteria
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
@@ -189,6 +190,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "agent_board",
             "Refresh static multi-agent task board.",
             lambda: generate_agent_board(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "agent_dispatch",
+            "Refresh per-agent task dispatch pack.",
+            lambda: generate_agent_dispatch(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)
