@@ -195,7 +195,12 @@ def _tasks_from_delivery_bundle(bundle: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _tasks_from_project_status(project_dir: Path, status: dict[str, Any]) -> list[dict[str, Any]]:
     command = str(status.get("next_step") or "").removeprefix("Run: ").strip()
-    if not command or command.startswith("Project v") or command.startswith("openrepro multi-agent-plan"):
+    if (
+        not command
+        or command.startswith("Project v")
+        or command.startswith("openrepro multi-agent-plan")
+        or command.startswith("openrepro validate-multi-agent-plan")
+    ):
         return []
     return [
         _task(

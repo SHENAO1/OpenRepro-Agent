@@ -41,6 +41,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/review_action_plan.json",
     "workspace/MULTI_AGENT_PLAN.md",
     "workspace/multi_agent_plan.json",
+    "workspace/MULTI_AGENT_PLAN_VALIDATION.md",
+    "workspace/multi_agent_plan_validation.json",
 }
 
 

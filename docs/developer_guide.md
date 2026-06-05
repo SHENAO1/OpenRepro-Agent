@@ -394,6 +394,15 @@ must remain advisory unless a future explicitly supervised execution adapter is
 added. Generated multi-agent plan files are excluded from evidence-package
 freshness fingerprints because they are downstream coordination artifacts.
 
+v1.23.1 adds `multi_agent_plan_validation.py`. Multi-agent plan validation
+should check required fields, task counts, freshness against current project
+status, role IDs, priorities, task status, and unsafe commands. It must remain
+read-only: validation should not regenerate plans, execute agents, run
+experiments, close human decisions, add signoffs, or fabricate missing
+scientific artifacts. Generated validation files are excluded from
+evidence-package freshness fingerprints because they are downstream
+coordination artifacts.
+
 v0.9.3 adds `experiment_compare.py`. `rerun-experiment` should reuse the same
 execution guardrails as `run-experiment`, while `compare-experiments` should
 compare only runs that belong to the requested experiment id. Comparison reports

@@ -45,6 +45,7 @@ from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
 from .multi_agent_plan import generate_multi_agent_plan
+from .multi_agent_plan_validation import validate_multi_agent_plan
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -1397,6 +1398,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Delivery missing": summary["delivery_bundle_missing_file_count"],
         "Multi-agent plan": summary["multi_agent_plan_status"],
         "Multi-agent tasks": summary["multi_agent_plan_open_task_count"],
+        "Multi-agent validation": summary["multi_agent_plan_validation_status"],
+        "Multi-agent validation issues": summary["multi_agent_plan_validation_issue_count"],
         "Runs": summary["run_count"],
         "Latest manifest status": summary["latest_manifest_status"],
         "Benchmark runs": summary["benchmark_run_count"],
@@ -1861,6 +1864,25 @@ def multi_agent_plan_cmd(project_name: str = typer.Argument(..., help="Project d
     _success("Multi-agent plan generated.")
 
 
+@app.command("validate-multi-agent-plan")
+def validate_multi_agent_plan_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate the guarded multi-agent coordination plan."""
+    project_dir = require_project(project_name)
+    validation = validate_multi_agent_plan(project_dir)
+    table = Table(title="Multi-Agent Plan Validation")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "valid", "issue_count", "warning_count", "top_command"]:
+        table.add_row(key, str(validation.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'multi_agent_plan_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'MULTI_AGENT_PLAN_VALIDATION.md'}")
+    if validation["valid"]:
+        _success("Multi-agent plan validation passed.")
+    else:
+        _warn("Multi-agent plan validation failed.")
+
+
 @app.command("profile")
 def profile_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
     """Generate a project reproduction profile."""
@@ -1995,6 +2017,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Delivery missing": status.delivery_bundle_missing_file_count,
         "Multi-agent plan": status.multi_agent_plan_status,
         "Multi-agent tasks": status.multi_agent_plan_open_task_count,
+        "Multi-agent validation": status.multi_agent_plan_validation_status,
+        "Multi-agent validation issues": status.multi_agent_plan_validation_issue_count,
         "Latest run dir": status.latest_run_dir or "None",
         "Lineage exists": status.lineage_exists,
         "Report exists": status.report_exists,

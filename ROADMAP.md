@@ -521,6 +521,16 @@ Released in v1.22.1 with final workflow delivery bundles.
 
 Released in v1.23.0 with guarded multi-agent coordination plans.
 
+## v1.23.1 — Multi-agent plan validation
+
+- [x] Add `openrepro validate-multi-agent-plan`.
+- [x] Write `workspace/multi_agent_plan_validation.json` and `workspace/MULTI_AGENT_PLAN_VALIDATION.md`.
+- [x] Check required fields, task counts, current-project freshness, agent IDs, priorities, task status, and unsafe commands.
+- [x] Surface validation status in status, inspect, reports, handoff, refresh runs, and CLI output.
+- [x] Keep validation read-only: it does not execute agents, repair plans, run experiments, close decisions, or add signoffs.
+
+Released in v1.23.1 with guarded multi-agent plan validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
