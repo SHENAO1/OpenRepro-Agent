@@ -571,6 +571,17 @@ Released in v1.25.0 with safe agent execution dry-run plans.
 
 Released in v1.26.0 with paper-level lineage graphs.
 
+## v1.27.0 — Workflow registry and DAG state
+
+- [x] Add `openrepro workflow status`.
+- [x] Add `openrepro workflow explain`.
+- [x] Add `openrepro workflow run` and `openrepro workflow resume` with dry-run-by-default behavior.
+- [x] Write `workspace/workflow_state.json`, `workspace/WORKFLOW_STATE.md`, `workspace/workflow_run.json`, and `workspace/WORKFLOW_RUN.md`.
+- [x] Register major workflow steps with declared dependencies, outputs, safety flags, and command hints.
+- [x] Keep workflow-managed execution limited to safe derived artifacts and block experiments, human decisions, repair apply, and input-gathering steps.
+
+Released in v1.27.0 with a registered workflow DAG and safe derived-step execution shell.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

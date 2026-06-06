@@ -71,6 +71,7 @@ from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
 from .scorecard import generate_reproduction_scorecard
 from .timeline import generate_project_timeline
+from .workflow_registry import explain_workflow_step, generate_workflow_state, run_workflow
 
 app = typer.Typer(
     name="openrepro",
@@ -78,6 +79,8 @@ app = typer.Typer(
     no_args_is_help=True,
     invoke_without_command=True,
 )
+workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workflow DAG.", no_args_is_help=True)
+app.add_typer(workflow_app, name="workflow")
 console = Console()
 
 
@@ -1742,6 +1745,109 @@ def refresh_cmd(
         _warn("Refresh completed with failed steps.")
         raise typer.Exit(1)
     _success("Refresh run completed.")
+
+
+@workflow_app.command("status")
+def workflow_status_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Write and show the registered workflow DAG state."""
+    project_dir = require_project(project_name)
+    state = generate_workflow_state(project_dir)
+    table = Table(title=f"Workflow State: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "status",
+        "step_count",
+        "complete_step_count",
+        "pending_step_count",
+        "blocked_step_count",
+        "stale_step_count",
+        "runnable_step_count",
+        "top_command",
+    ]:
+        table.add_row(key, str(state.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'workflow_state.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'WORKFLOW_STATE.md'}")
+    _success("Workflow state generated.")
+
+
+@workflow_app.command("explain")
+def workflow_explain_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    step_id: str = typer.Argument(..., help="Workflow step id to explain."),
+) -> None:
+    """Explain one registered workflow step and its current dependency state."""
+    project_dir = require_project(project_name)
+    explanation = explain_workflow_step(project_dir, step_id)
+    step = explanation["step"]
+    table = Table(title=f"Workflow Step: {step_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["title", "stage", "status", "safe", "execution", "command"]:
+        table.add_row(key, str(step.get(key)))
+    table.add_row("dependencies", ", ".join(step.get("dependencies", [])) or "None")
+    table.add_row("missing dependencies", ", ".join(step.get("missing_dependencies", [])) or "None")
+    table.add_row("missing outputs", ", ".join(step.get("missing_outputs", [])) or "None")
+    console.print(table)
+
+
+@workflow_app.command("run")
+def workflow_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    step_id: str | None = typer.Option(None, "--step", help="Specific workflow step id to run or dry-run."),
+    confirm: bool = typer.Option(False, "--confirm", help="Execute instead of writing a dry-run plan."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export zip artifacts for steps that support it."),
+) -> None:
+    """Run or dry-run one safe registered workflow step."""
+    project_dir = require_project(project_name)
+    result = run_workflow(project_dir, step_id=step_id, confirm=confirm, resume=False, export_zip=export_zip)
+    _print_workflow_run(project_dir, project_name, result)
+    if confirm and result["status"] in {"blocked", "failed"}:
+        raise typer.Exit(1)
+
+
+@workflow_app.command("resume")
+def workflow_resume_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    confirm: bool = typer.Option(False, "--confirm", help="Execute instead of writing a dry-run plan."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export zip artifacts for steps that support it."),
+) -> None:
+    """Run or dry-run all currently runnable safe workflow steps."""
+    project_dir = require_project(project_name)
+    result = run_workflow(project_dir, confirm=confirm, resume=True, export_zip=export_zip)
+    _print_workflow_run(project_dir, project_name, result)
+    if confirm and result["status"] in {"blocked", "failed"}:
+        raise typer.Exit(1)
+
+
+def _print_workflow_run(project_dir: Path, project_name: str, result: dict) -> None:
+    table = Table(title=f"Workflow Run: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "mode",
+        "confirmed",
+        "status",
+        "selected_step_count",
+        "passed_step_count",
+        "blocked_step_count",
+        "failed_step_count",
+        "top_blocked_step",
+        "top_failed_step",
+    ]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'workflow_run.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'WORKFLOW_RUN.md'}")
+    if result["status"] == "dry_run":
+        _warn("Workflow run was a dry run. Pass --confirm to execute safe derived steps.")
+    elif result["status"] == "complete":
+        _success("Workflow run completed.")
+    elif result["status"] == "blocked":
+        _warn("Workflow run is blocked.")
+    else:
+        _warn("Workflow run failed.")
 
 
 @app.command("freshness")

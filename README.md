@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.26.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.27.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.26.0 workflow is:
+The v1.27.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → paper-lineage → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → paper-lineage → workflow status/explain/run/resume → status
 ```
 
 ## What v0.4.0 supports
@@ -504,6 +504,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Build a claim → method → data → experiment → metric graph from claim trace, data registry, experiment specs, and run metrics.
 - Surface paper lineage status in `inspect`, `status`, reports, handoff, refresh runs, and CLI output.
 - Keep paper lineage as evidence organization: it does not verify scientific correctness or claim reproduction success.
+
+## What v1.27.0 adds
+
+- Add `openrepro workflow status|explain|run|resume`.
+- Write `workspace/workflow_state.json` and `workspace/WORKFLOW_STATE.md`.
+- Register the major workflow steps as a dependency-aware DAG with declared outputs, safety flags, and command hints.
+- Write `workspace/workflow_run.json` and `workspace/WORKFLOW_RUN.md` for workflow dry-runs and confirmed safe derived-step execution.
+- Keep workflow execution limited to safe derived artifacts; experiments, human decisions, repair apply, and source/data input steps remain explicit commands.
 
 ## Current limitations
 
@@ -1249,6 +1257,35 @@ workspace/refresh_run.zip
 Refresh records each step, failed step count, top failed step, and guardrails.
 It can refresh downstream zip artifacts when `--zip` is passed.
 
+### `openrepro workflow status <project_name>`
+
+Builds the registered workflow DAG state and writes:
+
+```text
+workspace/workflow_state.json
+workspace/WORKFLOW_STATE.md
+```
+
+The state records each workflow step, declared outputs, dependencies, safety
+classification, runnable status, and the top suggested command.
+
+### `openrepro workflow explain <project_name> <step_id>`
+
+Explains one registered workflow step, including its stage, command,
+dependencies, missing dependencies, and missing outputs.
+
+### `openrepro workflow run <project_name> [--step STEP_ID] [--confirm] [--zip]`
+
+Plans or executes one safe registered workflow step. Without `--confirm`, it
+writes a dry-run plan only. With `--confirm`, it can run safe derived-artifact
+steps backed by existing OpenRepro generators.
+
+### `openrepro workflow resume <project_name> [--confirm] [--zip]`
+
+Plans or executes all currently runnable safe workflow steps. It never runs
+experiments, records human decisions, applies repairs, or ingests missing
+source/data inputs.
+
 ### `openrepro freshness <project_name>`
 
 Explains stale or missing derived artifacts and writes:
@@ -1831,12 +1868,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.24.1: per-agent task dispatch packs.
 - v1.25.0: safe agent execution dry-run plans.
 - v1.26.0: paper-level claim/method/data/experiment/metric lineage graph.
+- v1.27.0: registered workflow DAG with status, explain, safe run, and resume commands.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.26.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.27.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

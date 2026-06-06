@@ -33,6 +33,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .claim_trace import generate_claim_trace, validate_claim_trace
     from .collaboration_pack import generate_collaboration_pack
     from .dashboard import generate_dashboard
+    from .data_registry import validate_data_index
     from .delivery_bundle import generate_delivery_bundle
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
@@ -61,6 +62,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .timeline import generate_project_timeline
 
     steps: list[tuple[str, str, Callable[[], Any]]] = [
+        ("data_validation", "Validate registered data before refreshing run evidence.", lambda: validate_data_index(project_dir)),
         ("quality_gates", "Evaluate quality gates for existing runs.", lambda: evaluate_all_quality_gates(project_dir)),
         ("lineage", "Refresh run lineage.", lambda: generate_run_lineage(project_dir)),
         ("claim_trace", "Refresh claim trace.", lambda: generate_claim_trace(project_dir)),
