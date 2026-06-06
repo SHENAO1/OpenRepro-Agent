@@ -126,6 +126,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
     paths = [
         project_dir / "workspace" / "ARTIFACT_FRESHNESS.md",
         project_dir / "workspace" / "REFRESH_RUN.md",
+        project_dir / "workspace" / "REPRO_LOCK.md",
+        project_dir / "workspace" / "REPRO_LOCK_VALIDATION.md",
         project_dir / "workspace" / "RUN_INDEX.md",
         project_dir / "reports" / "run_explorer" / "index.html",
         project_dir / "handoff" / "COLLABORATION_PACK.md",

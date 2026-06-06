@@ -21,6 +21,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `inspector.py`: project observability summary for humans and agents.
 - `diagnostics.py`: failure classification and repair suggestions.
 - `repair.py`: advisory repair plan generation.
+- `repro_lock.py`: reproducibility lockfile generation and validation for config, data, dependencies, and experiment contracts.
 - `run_compare.py`: run metric and manifest comparison.
 - `run_index.py`: run-output indexing, static run explorer generation, and indexed run comparisons.
 - `lineage.py`: run lineage hashes for manifests, configs, source index, and verified candidates.
@@ -41,6 +42,7 @@ sources/ + project_config.yaml
   → workspace/candidate_reviews.json + CANDIDATE_REVIEWS.md
   → workspace/verified_candidates.json + VERIFIED_CANDIDATES.md
   → experiments/<experiment_id>/...
+  → openrepro.lock.json + workspace/repro_lock_validation.json
   → outputs/<timestamp>_<project>_<experiment_id>/...
   → outputs/<timestamp>_<project>/...
   → outputs/<timestamp>_<project>/manifest.json

@@ -62,6 +62,7 @@ from .readiness_review_validation import validate_readiness_review
 from .refresh import generate_refresh_run
 from .repair import apply_repair_actions, create_repair_plan, preview_repair_actions
 from .report_generator import generate_report
+from .repro_lock import generate_repro_lock, validate_repro_lock
 from .reproduction_protocol import generate_reproduction_protocol
 from .review_board import generate_review_board
 from .review_action_plan import generate_review_action_plan
@@ -1089,6 +1090,53 @@ def validate_data_cmd(project_name: str = typer.Argument(..., help="Project dire
     if not result["valid"]:
         raise typer.Exit(1)
     _success("Registered data is valid.")
+
+
+@app.command("lock")
+def lock_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate the project reproducibility lockfile."""
+    project_dir = require_project(project_name)
+    lock = generate_repro_lock(project_dir)
+    table = Table(title=f"Repro Lock: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    rows = {
+        "status": lock["status"],
+        "registered_data": lock["data"]["registered_count"],
+        "data_invalid": lock["data"]["invalid_count"],
+        "experiments": lock["experiment_count"],
+        "python": lock["environment"]["python"]["version"],
+    }
+    for key, value in rows.items():
+        table.add_row(key, str(value))
+    console.print(table)
+    console.print(f"Lockfile: {project_dir / 'openrepro.lock.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPRO_LOCK.md'}")
+    if lock["status"] != "locked":
+        _warn("Repro lock generated with invalid data state.")
+        raise typer.Exit(1)
+    _success("Repro lock generated.")
+
+
+@app.command("validate-lock")
+def validate_lock_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    strict_dependencies: bool = typer.Option(False, "--strict-dependencies", help="Treat Python/dependency drift as errors."),
+) -> None:
+    """Validate the project reproducibility lockfile."""
+    project_dir = require_project(project_name)
+    result = validate_repro_lock(project_dir, strict_dependencies=strict_dependencies)
+    table = Table(title=f"Repro Lock Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["valid", "strict_dependencies", "error_count", "warning_count", "errors", "warnings"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'repro_lock_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'REPRO_LOCK_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Repro lock is valid.")
 
 
 @app.command("scaffold-experiment")

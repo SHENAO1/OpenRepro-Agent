@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.28.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.29.0"
 
 
 @dataclass(frozen=True)
@@ -144,13 +144,31 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("scaffold",),
     ),
     WorkflowStep(
+        "repro_lock",
+        "Repro lock",
+        "environment",
+        "Lock registered data, project config, experiment contracts, and dependency versions.",
+        "openrepro lock <project>",
+        ("openrepro.lock.json", "workspace/REPRO_LOCK.md"),
+        ("data_validation", "spec_validation"),
+    ),
+    WorkflowStep(
+        "repro_lock_validation",
+        "Validate repro lock",
+        "environment",
+        "Validate the current project against the reproducibility lockfile.",
+        "openrepro validate-lock <project>",
+        ("workspace/repro_lock_validation.json", "workspace/REPRO_LOCK_VALIDATION.md"),
+        ("repro_lock",),
+    ),
+    WorkflowStep(
         "run_experiment",
         "Run experiment",
         "execution",
         "Run a verified experiment scaffold with explicit confirmation.",
         "openrepro run-experiment <project> --experiment-id <id> --confirm",
         ("outputs/*/manifest.json",),
-        ("inputs", "spec_validation", "data_validation"),
+        ("inputs", "spec_validation", "data_validation", "repro_lock_validation"),
         safe=False,
         execution="runs_experiment",
     ),
@@ -790,6 +808,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .readiness_review import generate_readiness_review
     from .readiness_review_validation import validate_readiness_review
     from .report_generator import generate_report
+    from .repro_lock import generate_repro_lock, validate_repro_lock
     from .reproduction_protocol import generate_reproduction_protocol
     from .review_action_plan import generate_review_action_plan
     from .review_board import generate_review_board
@@ -802,6 +821,8 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
 
     return {
         "data_validation": validate_data_index,
+        "repro_lock": generate_repro_lock,
+        "repro_lock_validation": validate_repro_lock,
         "quality_gates": evaluate_all_quality_gates,
         "run_index": lambda project_dir: generate_run_index(project_dir, export_zip=export_zip),
         "lineage": generate_run_lineage,

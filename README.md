@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.28.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.29.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.28.0 workflow is:
+The v1.29.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → paper-lineage → workflow status/explain/run/resume → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → paper-lineage → workflow status/explain/run/resume → status
 ```
 
 ## What v0.4.0 supports
@@ -522,6 +522,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Write indexed run comparison artifacts in `workspace/run_index_comparison.json` and `workspace/RUN_INDEX_COMPARISON.md`.
 - Refresh now validates registered data and regenerates the run index before lineage.
 
+## What v1.29.0 adds
+
+- Add `openrepro lock` and `openrepro validate-lock`.
+- Write `openrepro.lock.json`, `workspace/REPRO_LOCK.md`, `workspace/repro_lock_validation.json`, and `workspace/REPRO_LOCK_VALIDATION.md`.
+- Lock project configuration, registered data hashes, Python/platform metadata, dependency versions, and experiment contract hashes.
+- Detect data hash drift, config drift, experiment contract drift, and optional strict dependency drift.
+- Refresh now regenerates and validates the lockfile before run evidence refresh.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -866,6 +874,32 @@ workspace/DATA_VALIDATION.md
 
 The validation is a file provenance check only; it does not verify the scientific
 meaning, labels, quality, or completeness of the dataset.
+
+### `openrepro lock <project_name>`
+
+Generates a project reproducibility lockfile and writes:
+
+```text
+openrepro.lock.json
+workspace/REPRO_LOCK.md
+```
+
+The lock records the project config hash, registered data hashes, Python and
+platform metadata, dependency versions, and experiment contract hashes when
+experiment scaffolds exist.
+
+### `openrepro validate-lock <project_name> [--strict-dependencies]`
+
+Validates the current project against `openrepro.lock.json` and writes:
+
+```text
+workspace/repro_lock_validation.json
+workspace/REPRO_LOCK_VALIDATION.md
+```
+
+Validation detects config, data, and experiment-contract drift. Dependency and
+Python-version drift are warnings by default and become errors when
+`--strict-dependencies` is passed.
 
 ### `openrepro list-candidates <project_name>`
 
@@ -1915,12 +1949,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.26.0: paper-level claim/method/data/experiment/metric lineage graph.
 - v1.27.0: registered workflow DAG with status, explain, safe run, and resume commands.
 - v1.28.0: run index, static run explorer, and indexed run comparisons.
+- v1.29.0: reproducibility lockfile and lock validation.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.28.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.29.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

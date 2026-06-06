@@ -52,6 +52,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .readiness_review import generate_readiness_review
     from .readiness_review_validation import validate_readiness_review
     from .report_generator import generate_report
+    from .repro_lock import generate_repro_lock, validate_repro_lock
     from .reproduction_protocol import generate_reproduction_protocol
     from .review_board import generate_review_board
     from .review_action_plan import generate_review_action_plan
@@ -64,6 +65,8 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
 
     steps: list[tuple[str, str, Callable[[], Any]]] = [
         ("data_validation", "Validate registered data before refreshing run evidence.", lambda: validate_data_index(project_dir)),
+        ("repro_lock", "Refresh project reproducibility lockfile.", lambda: generate_repro_lock(project_dir)),
+        ("repro_lock_validation", "Validate project reproducibility lockfile.", lambda: validate_repro_lock(project_dir)),
         ("quality_gates", "Evaluate quality gates for existing runs.", lambda: evaluate_all_quality_gates(project_dir)),
         ("run_index", "Refresh run index and static run explorer.", lambda: generate_run_index(project_dir, export_zip=export_zip)),
         ("lineage", "Refresh run lineage.", lambda: generate_run_lineage(project_dir)),

@@ -593,6 +593,17 @@ Released in v1.27.0 with a registered workflow DAG and safe derived-step executi
 
 Released in v1.28.0 with a local run index, static run explorer, and indexed run comparisons.
 
+## v1.29.0 — Reproducibility lockfile
+
+- [x] Add `openrepro lock`.
+- [x] Add `openrepro validate-lock`.
+- [x] Write `openrepro.lock.json`, `workspace/REPRO_LOCK.md`, `workspace/repro_lock_validation.json`, and `workspace/REPRO_LOCK_VALIDATION.md`.
+- [x] Lock project configuration, registered data hashes, Python/platform metadata, dependency versions, and experiment contract hashes.
+- [x] Detect data hash drift, config drift, experiment contract drift, and optional strict dependency drift.
+- [x] Refresh the lockfile and lock validation before run evidence refresh.
+
+Released in v1.29.0 with project reproducibility lockfiles and validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
