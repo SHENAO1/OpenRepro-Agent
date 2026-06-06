@@ -19,6 +19,8 @@ EXCLUDED_REPORT_PREFIXES = {
     "dashboard.zip",
     "agent_board_manifest.json",
     "agent_board.zip",
+    "evidence_explorer_manifest.json",
+    "evidence_explorer.zip",
     "readiness_review.json",
     "READINESS_REVIEW.md",
     "readiness_review.zip",
@@ -28,7 +30,7 @@ EXCLUDED_REPORT_PREFIXES = {
     "DELIVERY_BUNDLE.md",
     "delivery_bundle.zip",
 }
-EXCLUDED_REPORT_DIRS = {"review_site", "dashboard", "agent_board"}
+EXCLUDED_REPORT_DIRS = {"review_site", "dashboard", "agent_board", "evidence_explorer"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "handoff/EVIDENCE_PACKAGE.md",
     "handoff/COLLABORATION_PACK.md",

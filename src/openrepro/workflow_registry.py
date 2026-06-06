@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.30.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.31.0"
 
 
 @dataclass(frozen=True)
@@ -570,6 +570,15 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("workspace/paper_lineage.json",),
         ("agent_adapter_validation",),
     ),
+    WorkflowStep(
+        "evidence_explorer",
+        "Evidence explorer",
+        "delivery",
+        "Generate a static paper evidence review explorer.",
+        "openrepro evidence-explorer <project>",
+        ("reports/evidence_explorer/index.html", "reports/evidence_explorer_manifest.json"),
+        ("paper_lineage",),
+    ),
 )
 
 
@@ -811,6 +820,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .dashboard import generate_dashboard
     from .data_registry import validate_data_index
     from .delivery_bundle import generate_delivery_bundle
+    from .evidence_explorer import generate_evidence_explorer
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
@@ -885,6 +895,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "agent_adapter": generate_agent_adapter,
         "agent_adapter_validation": validate_agent_adapter,
         "paper_lineage": generate_paper_lineage,
+        "evidence_explorer": lambda project_dir: generate_evidence_explorer(project_dir, export_zip=export_zip),
     }
 
 

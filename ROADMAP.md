@@ -615,6 +615,16 @@ Released in v1.29.0 with project reproducibility lockfiles and validation.
 
 Released in v1.30.0 with supervised external-agent adapter specs.
 
+## v1.31.0 — Static evidence explorer
+
+- [x] Add `openrepro evidence-explorer`.
+- [x] Write `reports/evidence_explorer/index.html`, `reports/evidence_explorer_manifest.json`, and optional `reports/evidence_explorer.zip`.
+- [x] Combine paper lineage, claim evidence binder records, registered data, run index rows, and artifact links into a static reviewer-facing evidence browser.
+- [x] Refresh the evidence explorer after paper lineage.
+- [x] Keep evidence explorers as navigation for workflow evidence only, not scientific verification.
+
+Released in v1.31.0 with a static paper evidence explorer.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

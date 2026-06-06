@@ -14,6 +14,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, opt-in OpenAI-compatible provider, and request-hash cache.
+- `evidence_explorer.py`: static reviewer-facing evidence explorer for lineage, claims, data, runs, and artifact links.
 - `candidate_review.py`: candidate listing and human review lifecycle.
 - `experiment_scaffold.py`: human-gated experiment scaffolds from candidate evidence.
 - `experiment_runner.py`: controlled execution for verified experiment scaffolds.
@@ -52,6 +53,7 @@ sources/ + project_config.yaml
   → workspace/repair_dry_run.json + REPAIR_DRY_RUN.md
   → workspace/run_lineage.json + RUN_LINEAGE.md
   → workspace/agent_adapter.json + agent_trajectory.jsonl
+  → reports/evidence_explorer/index.html
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md

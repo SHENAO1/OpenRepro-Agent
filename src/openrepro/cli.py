@@ -36,6 +36,7 @@ from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_r
 from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
+from .evidence_explorer import generate_evidence_explorer
 from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
@@ -1850,6 +1851,27 @@ def review_site_cmd(
     if export_zip:
         console.print(f"Zip: {project_dir / 'reports' / 'review_site.zip'}")
     _success("Review site generated.")
+
+
+@app.command("evidence-explorer")
+def evidence_explorer_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/evidence_explorer.zip."),
+) -> None:
+    """Generate a static paper evidence explorer."""
+    project_dir = require_project(project_name)
+    explorer = generate_evidence_explorer(project_dir, export_zip=export_zip)
+    table = Table(title=f"Evidence Explorer: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "claim_count", "data_count", "experiment_count", "metric_count", "run_count"]:
+        table.add_row(key, str(explorer.get(key)))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'evidence_explorer' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'evidence_explorer_manifest.json'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'evidence_explorer.zip'}")
+    _success("Evidence explorer generated.")
 
 
 @app.command("timeline")
