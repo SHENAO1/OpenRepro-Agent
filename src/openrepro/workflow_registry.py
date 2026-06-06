@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.27.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.28.0"
 
 
 @dataclass(frozen=True)
@@ -164,13 +164,22 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("run_experiment",),
     ),
     WorkflowStep(
+        "run_index",
+        "Run index",
+        "evidence",
+        "Index run outputs, metrics, manifests, and quality gates.",
+        "openrepro runs index <project>",
+        ("workspace/run_index.json", "reports/run_explorer/index.html"),
+        ("quality_gates",),
+    ),
+    WorkflowStep(
         "lineage",
         "Run lineage",
         "evidence",
         "Build run lineage hashes and repeat groups.",
         "openrepro lineage <project>",
         ("workspace/run_lineage.json",),
-        ("quality_gates",),
+        ("run_index",),
     ),
     WorkflowStep(
         "claim_trace",
@@ -787,12 +796,14 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .review_decisions import generate_review_decisions
     from .review_site import generate_review_site
     from .reviewer_packet import generate_reviewer_packet
+    from .run_index import generate_run_index
     from .scorecard import generate_reproduction_scorecard
     from .timeline import generate_project_timeline
 
     return {
         "data_validation": validate_data_index,
         "quality_gates": evaluate_all_quality_gates,
+        "run_index": lambda project_dir: generate_run_index(project_dir, export_zip=export_zip),
         "lineage": generate_run_lineage,
         "claim_trace": generate_claim_trace,
         "claim_trace_validation": validate_claim_trace,

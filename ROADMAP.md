@@ -582,6 +582,17 @@ Released in v1.26.0 with paper-level lineage graphs.
 
 Released in v1.27.0 with a registered workflow DAG and safe derived-step execution shell.
 
+## v1.28.0 — Run index and explorer
+
+- [x] Add `openrepro runs index`.
+- [x] Add `openrepro runs list`, `openrepro runs show`, and `openrepro runs compare`.
+- [x] Write `workspace/run_index.json`, `workspace/RUN_INDEX.md`, `reports/run_explorer/index.html`, and `reports/run_explorer_manifest.json`.
+- [x] Add optional `reports/run_explorer.zip` export.
+- [x] Summarize run manifests, commands, experiments, quality gates, metrics, artifact links, and SHA-256 fingerprints.
+- [x] Refresh registered data validation and run index before lineage.
+
+Released in v1.28.0 with a local run index, static run explorer, and indexed run comparisons.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

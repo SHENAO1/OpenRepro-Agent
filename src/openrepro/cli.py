@@ -69,6 +69,7 @@ from .review_decisions import ALLOWED_REVIEW_DECISIONS, record_review_decision
 from .review_site import generate_review_site
 from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
+from .run_index import compare_indexed_runs, generate_run_index, indexed_run
 from .scorecard import generate_reproduction_scorecard
 from .timeline import generate_project_timeline
 from .workflow_registry import explain_workflow_step, generate_workflow_state, run_workflow
@@ -81,6 +82,8 @@ app = typer.Typer(
 )
 workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workflow DAG.", no_args_is_help=True)
 app.add_typer(workflow_app, name="workflow")
+runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
+app.add_typer(runs_app, name="runs")
 console = Console()
 
 
@@ -1538,6 +1541,120 @@ def compare_runs_cmd(
     for item in comparison["metric_deltas"]:
         table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["delta"]))
     console.print(table)
+
+
+@runs_app.command("index")
+def runs_index_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/run_explorer.zip."),
+) -> None:
+    """Generate the run index and static run explorer."""
+    project_dir = require_project(project_name)
+    index = generate_run_index(project_dir, export_zip=export_zip)
+    table = Table(title=f"Run Index: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "run_count", "valid_manifest_count", "quality_gate_passed_count"]:
+        table.add_row(key, str(index.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'run_index.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'RUN_INDEX.md'}")
+    console.print(f"Explorer: {project_dir / 'reports' / 'run_explorer' / 'index.html'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'run_explorer.zip'}")
+    _success("Run index generated.")
+
+
+@runs_app.command("list")
+def runs_list_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """List indexed run outputs."""
+    project_dir = require_project(project_name)
+    index = generate_run_index(project_dir)
+    table = Table(title=f"Runs: {project_name}")
+    table.add_column("Run")
+    table.add_column("Command")
+    table.add_column("Experiment")
+    table.add_column("Manifest")
+    table.add_column("Gate")
+    table.add_column("Metrics")
+    for run in index["runs"]:
+        metrics = ", ".join(f"{key}={value}" for key, value in list(run.get("metrics", {}).items())[:4])
+        table.add_row(
+            str(run.get("run_id")),
+            str(run.get("command")),
+            str(run.get("experiment_id")),
+            str(run.get("manifest_valid")),
+            str(run.get("quality_gate_status")),
+            metrics,
+        )
+    console.print(table)
+
+
+@runs_app.command("show")
+def runs_show_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    run_id: str = typer.Argument(..., help="Run directory name."),
+) -> None:
+    """Show one indexed run record."""
+    project_dir = require_project(project_name)
+    try:
+        run = indexed_run(project_dir, run_id)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Run: {run_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "run_id",
+        "command",
+        "created_at",
+        "experiment_id",
+        "template",
+        "execution_status",
+        "exit_code",
+        "manifest_valid",
+        "quality_gate_status",
+        "quality_gate_failed_check_count",
+        "metric_count",
+        "run_dir",
+    ]:
+        table.add_row(key, str(run.get(key)))
+    console.print(table)
+    if run.get("metrics"):
+        metric_table = Table(title="Metrics")
+        metric_table.add_column("Metric")
+        metric_table.add_column("Value")
+        for key, value in run["metrics"].items():
+            metric_table.add_row(str(key), str(value))
+        console.print(metric_table)
+
+
+@runs_app.command("compare")
+def runs_compare_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    left_run: str = typer.Option(..., "--left", help="Left run id."),
+    right_run: str = typer.Option(..., "--right", help="Right run id."),
+) -> None:
+    """Compare two indexed run records."""
+    project_dir = require_project(project_name)
+    try:
+        comparison = compare_indexed_runs(project_dir, left_run_id=left_run, right_run_id=right_run)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Indexed Run Comparison: {project_name}")
+    table.add_column("Metric")
+    table.add_column("Left")
+    table.add_column("Right")
+    table.add_column("Delta")
+    table.add_column("Equal")
+    for item in comparison["metric_deltas"]:
+        table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["delta"]), str(item["equal"]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'run_index_comparison.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'RUN_INDEX_COMPARISON.md'}")
+    _success("Indexed run comparison written.")
 
 
 @app.command("lineage")

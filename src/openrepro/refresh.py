@@ -58,12 +58,14 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .review_decisions import generate_review_decisions
     from .review_site import generate_review_site
     from .reviewer_packet import generate_reviewer_packet
+    from .run_index import generate_run_index
     from .scorecard import generate_reproduction_scorecard
     from .timeline import generate_project_timeline
 
     steps: list[tuple[str, str, Callable[[], Any]]] = [
         ("data_validation", "Validate registered data before refreshing run evidence.", lambda: validate_data_index(project_dir)),
         ("quality_gates", "Evaluate quality gates for existing runs.", lambda: evaluate_all_quality_gates(project_dir)),
+        ("run_index", "Refresh run index and static run explorer.", lambda: generate_run_index(project_dir, export_zip=export_zip)),
         ("lineage", "Refresh run lineage.", lambda: generate_run_lineage(project_dir)),
         ("claim_trace", "Refresh claim trace.", lambda: generate_claim_trace(project_dir)),
         ("claim_trace_validation", "Validate claim trace.", lambda: validate_claim_trace(project_dir)),
