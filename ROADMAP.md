@@ -604,6 +604,17 @@ Released in v1.28.0 with a local run index, static run explorer, and indexed run
 
 Released in v1.29.0 with project reproducibility lockfiles and validation.
 
+## v1.30.0 — Supervised agent adapter
+
+- [x] Add `openrepro agent-adapter`.
+- [x] Add `openrepro validate-agent-adapter`.
+- [x] Write `workspace/agent_adapter.json`, `workspace/AGENT_ADAPTER.md`, `workspace/agent_adapter_validation.json`, `workspace/AGENT_ADAPTER_VALIDATION.md`, and `workspace/agent_trajectory.jsonl`.
+- [x] Convert safe dry-run agent execution steps into externally supervised runner handoff records.
+- [x] Require approval and external supervision for every adapter step.
+- [x] Keep experiments, repairs, human decisions, claim signoffs, and blocked tasks out of adapter execution.
+
+Released in v1.30.0 with supervised external-agent adapter specs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

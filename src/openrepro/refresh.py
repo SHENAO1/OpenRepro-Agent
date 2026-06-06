@@ -20,6 +20,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
     from .advance import generate_advance_plan
+    from .agent_adapter import generate_agent_adapter, validate_agent_adapter
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
@@ -219,6 +220,23 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "agent_exec_plan",
             "Refresh safe agent execution dry-run plan.",
             lambda: generate_agent_exec_plan(project_dir, dry_run=True),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "agent_adapter",
+            "Refresh supervised external-agent adapter.",
+            lambda: generate_agent_adapter(project_dir),
+        )
+    )
+    records.append(
+        _run_step(
+            "agent_adapter_validation",
+            "Validate supervised external-agent adapter.",
+            lambda: validate_agent_adapter(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

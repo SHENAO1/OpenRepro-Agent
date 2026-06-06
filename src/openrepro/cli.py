@@ -11,6 +11,7 @@ from rich.table import Table
 from . import __version__
 from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
+from .agent_adapter import generate_agent_adapter, validate_agent_adapter
 from .agent_board import generate_agent_board
 from .agent_dispatch import generate_agent_dispatch
 from .agent_exec_plan import generate_agent_exec_plan
@@ -2225,6 +2226,45 @@ def agent_exec_plan_cmd(
     console.print(f"JSON: {project_dir / 'workspace' / 'agent_exec_plan.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_EXEC_PLAN.md'}")
     _success("Agent execution dry-run plan generated.")
+
+
+@app.command("agent-adapter")
+def agent_adapter_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    runner: str = typer.Option("external-supervised", "--runner", help="External supervised runner label."),
+    max_steps: int = typer.Option(20, "--max-steps", help="Maximum safe steps to include."),
+) -> None:
+    """Generate a supervised external-agent adapter spec without executing tasks."""
+    project_dir = require_project(project_name)
+    adapter = generate_agent_adapter(project_dir, runner=runner, max_steps=max_steps)
+    table = Table(title="Agent Adapter")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "runner", "adapter_step_count", "blocked_task_count", "max_steps"]:
+        table.add_row(key, str(adapter.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_adapter.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_ADAPTER.md'}")
+    console.print(f"Trajectory: {project_dir / 'workspace' / 'agent_trajectory.jsonl'}")
+    _success("Agent adapter generated.")
+
+
+@app.command("validate-agent-adapter")
+def validate_agent_adapter_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate the supervised external-agent adapter spec."""
+    project_dir = require_project(project_name)
+    validation = validate_agent_adapter(project_dir)
+    table = Table(title="Agent Adapter Validation")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["valid", "error_count", "warning_count", "errors", "warnings"]:
+        table.add_row(key, str(validation.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_adapter_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_ADAPTER_VALIDATION.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Agent adapter is valid.")
 
 
 @app.command("paper-lineage")

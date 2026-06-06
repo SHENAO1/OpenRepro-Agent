@@ -20,6 +20,7 @@ OpenRepro-Agent v0.4.0 uses a small modular CLI architecture.
 - `benchmark_runner.py`: workflow-compliance benchmark and benchmark-suite execution.
 - `inspector.py`: project observability summary for humans and agents.
 - `diagnostics.py`: failure classification and repair suggestions.
+- `agent_adapter.py`: externally supervised agent runner adapter specs, validation, and trajectory handoff logs.
 - `repair.py`: advisory repair plan generation.
 - `repro_lock.py`: reproducibility lockfile generation and validation for config, data, dependencies, and experiment contracts.
 - `run_compare.py`: run metric and manifest comparison.
@@ -50,6 +51,7 @@ sources/ + project_config.yaml
   → workspace/repair_plan.json + run_comparison.json
   → workspace/repair_dry_run.json + REPAIR_DRY_RUN.md
   → workspace/run_lineage.json + RUN_LINEAGE.md
+  → workspace/agent_adapter.json + agent_trajectory.jsonl
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md

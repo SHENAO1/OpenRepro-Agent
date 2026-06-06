@@ -49,6 +49,11 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/agent_dispatch.json",
     "workspace/AGENT_EXEC_PLAN.md",
     "workspace/agent_exec_plan.json",
+    "workspace/AGENT_ADAPTER.md",
+    "workspace/agent_adapter.json",
+    "workspace/AGENT_ADAPTER_VALIDATION.md",
+    "workspace/agent_adapter_validation.json",
+    "workspace/agent_trajectory.jsonl",
     "workspace/PAPER_LINEAGE.md",
     "workspace/paper_lineage.json",
 }

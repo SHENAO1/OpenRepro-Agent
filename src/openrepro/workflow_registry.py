@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.29.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.30.0"
 
 
 @dataclass(frozen=True)
@@ -544,13 +544,31 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("agent_dispatch",),
     ),
     WorkflowStep(
+        "agent_adapter",
+        "Agent adapter",
+        "agent",
+        "Generate a supervised external-agent adapter spec.",
+        "openrepro agent-adapter <project>",
+        ("workspace/agent_adapter.json", "workspace/agent_trajectory.jsonl"),
+        ("agent_exec_plan",),
+    ),
+    WorkflowStep(
+        "agent_adapter_validation",
+        "Validate agent adapter",
+        "agent",
+        "Validate supervised external-agent adapter guardrails.",
+        "openrepro validate-agent-adapter <project>",
+        ("workspace/agent_adapter_validation.json", "workspace/AGENT_ADAPTER_VALIDATION.md"),
+        ("agent_adapter",),
+    ),
+    WorkflowStep(
         "paper_lineage",
         "Paper lineage",
         "delivery",
         "Build the claim -> method -> data -> experiment -> metric graph.",
         "openrepro paper-lineage <project>",
         ("workspace/paper_lineage.json",),
-        ("agent_exec_plan",),
+        ("agent_adapter_validation",),
     ),
 )
 
@@ -778,6 +796,7 @@ def _run_result(
 def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], Any]]:
     from .acceptance_criteria import generate_acceptance_criteria
     from .advance import generate_advance_plan
+    from .agent_adapter import generate_agent_adapter, validate_agent_adapter
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
@@ -863,6 +882,8 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "agent_board": lambda project_dir: generate_agent_board(project_dir, export_zip=export_zip),
         "agent_dispatch": generate_agent_dispatch,
         "agent_exec_plan": lambda project_dir: generate_agent_exec_plan(project_dir, dry_run=True),
+        "agent_adapter": generate_agent_adapter,
+        "agent_adapter_validation": validate_agent_adapter,
         "paper_lineage": generate_paper_lineage,
     }
 
