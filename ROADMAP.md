@@ -645,6 +645,16 @@ Released in v1.32.0 with searchable evidence query artifacts.
 
 Released in v1.33.0 with registered data profile artifacts and schema warnings.
 
+## v1.34.0 — Workflow preset plans
+
+- [x] Add `openrepro workflow preset`.
+- [x] Write `workspace/workflow_preset.json` and `workspace/WORKFLOW_PRESET.md`.
+- [x] Provide `data`, `review`, `delivery`, `agent`, and `full` presets as ordered views over the registered workflow DAG.
+- [x] Report preset status, runnable counts, blocked/stale counts, and the next safe workflow command.
+- [x] Refresh the default `delivery` workflow preset after evidence query.
+
+Released in v1.34.0 with goal-oriented workflow preset plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

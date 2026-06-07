@@ -66,6 +66,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .run_index import generate_run_index
     from .scorecard import generate_reproduction_scorecard
     from .timeline import generate_project_timeline
+    from .workflow_preset import generate_workflow_preset
 
     steps: list[tuple[str, str, Callable[[], Any]]] = [
         ("data_validation", "Validate registered data before refreshing run evidence.", lambda: validate_data_index(project_dir)),
@@ -271,6 +272,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "evidence_query",
             "Refresh default evidence query artifacts.",
             lambda: query_evidence(project_dir, kind="all", limit=50),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "workflow_preset",
+            "Refresh default delivery workflow preset.",
+            lambda: generate_workflow_preset(project_dir, preset="delivery"),
         )
     )
     result = _build_result(project_dir, export_zip, records)

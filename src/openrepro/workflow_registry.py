@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.33.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.34.0"
 
 
 @dataclass(frozen=True)
@@ -597,6 +597,15 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("workspace/evidence_query.json", "workspace/EVIDENCE_QUERY.md"),
         ("evidence_explorer",),
     ),
+    WorkflowStep(
+        "workflow_preset",
+        "Workflow preset",
+        "delivery",
+        "Generate a goal-oriented workflow preset plan from the registered DAG.",
+        "openrepro workflow preset <project> --preset delivery",
+        ("workspace/workflow_preset.json", "workspace/WORKFLOW_PRESET.md"),
+        ("evidence_query",),
+    ),
 )
 
 
@@ -867,6 +876,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .run_index import generate_run_index
     from .scorecard import generate_reproduction_scorecard
     from .timeline import generate_project_timeline
+    from .workflow_preset import generate_workflow_preset
 
     return {
         "data_validation": validate_data_index,
@@ -918,6 +928,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "paper_lineage": generate_paper_lineage,
         "evidence_explorer": lambda project_dir: generate_evidence_explorer(project_dir, export_zip=export_zip),
         "evidence_query": lambda project_dir: query_evidence(project_dir, kind="all", limit=50),
+        "workflow_preset": lambda project_dir: generate_workflow_preset(project_dir, preset="delivery"),
     }
 
 

@@ -77,6 +77,7 @@ from .run_compare import compare_runs
 from .run_index import compare_indexed_runs, generate_run_index, indexed_run
 from .scorecard import generate_reproduction_scorecard
 from .timeline import generate_project_timeline
+from .workflow_preset import generate_workflow_preset
 from .workflow_registry import explain_workflow_step, generate_workflow_state, run_workflow
 
 app = typer.Typer(
@@ -2035,6 +2036,40 @@ def workflow_explain_cmd(
     table.add_row("missing dependencies", ", ".join(step.get("missing_dependencies", [])) or "None")
     table.add_row("missing outputs", ", ".join(step.get("missing_outputs", [])) or "None")
     console.print(table)
+
+
+@workflow_app.command("preset")
+def workflow_preset_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    preset: str = typer.Option("delivery", "--preset", help="Preset: data, review, delivery, agent, or full."),
+    runnable_only: bool = typer.Option(False, "--runnable-only", help="Only include currently runnable safe steps."),
+) -> None:
+    """Write a goal-oriented workflow preset plan."""
+    project_dir = require_project(project_name)
+    try:
+        plan = generate_workflow_preset(project_dir, preset=preset, runnable_only=runnable_only)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Workflow Preset: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "preset",
+        "status",
+        "selected_step_count",
+        "complete_step_count",
+        "pending_step_count",
+        "blocked_step_count",
+        "stale_step_count",
+        "runnable_step_count",
+        "top_command",
+    ]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'workflow_preset.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'WORKFLOW_PRESET.md'}")
+    _success("Workflow preset generated.")
 
 
 @workflow_app.command("run")

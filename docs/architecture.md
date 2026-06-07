@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.33.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.34.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -30,6 +30,7 @@ OpenRepro-Agent v1.33.0 uses a small modular CLI architecture.
 - `run_index.py`: run-output indexing, static run explorer generation, and indexed run comparisons.
 - `lineage.py`: run lineage hashes for manifests, configs, source index, and verified candidates.
 - `workflow_registry.py`: registered workflow DAG metadata, state generation, step explanation, and safe derived-step execution.
+- `workflow_preset.py`: goal-oriented workflow preset plans over the registered DAG.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
 - `config.py`: dataclass-based configuration defaults and YAML IO.
@@ -58,6 +59,7 @@ sources/ + project_config.yaml
   → workspace/agent_adapter.json + agent_trajectory.jsonl
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
+  → workspace/workflow_preset.json + WORKFLOW_PRESET.md
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md
