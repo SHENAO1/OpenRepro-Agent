@@ -58,6 +58,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/agent_trajectory.jsonl",
     "workspace/PAPER_LINEAGE.md",
     "workspace/paper_lineage.json",
+    "workspace/EVIDENCE_QUERY.md",
+    "workspace/evidence_query.json",
 }
 EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
 

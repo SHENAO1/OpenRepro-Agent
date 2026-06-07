@@ -37,6 +37,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .data_registry import validate_data_index
     from .delivery_bundle import generate_delivery_bundle
     from .evidence_explorer import generate_evidence_explorer
+    from .evidence_query import query_evidence
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
@@ -258,6 +259,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "evidence_explorer",
             "Refresh static paper evidence explorer.",
             lambda: generate_evidence_explorer(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "evidence_query",
+            "Refresh default evidence query artifacts.",
+            lambda: query_evidence(project_dir, kind="all", limit=50),
         )
     )
     result = _build_result(project_dir, export_zip, records)

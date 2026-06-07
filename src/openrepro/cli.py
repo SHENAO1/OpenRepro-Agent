@@ -37,6 +37,7 @@ from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
 from .evidence_explorer import generate_evidence_explorer
+from .evidence_query import query_evidence
 from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
@@ -1872,6 +1873,40 @@ def evidence_explorer_cmd(
     if export_zip:
         console.print(f"Zip: {project_dir / 'reports' / 'evidence_explorer.zip'}")
     _success("Evidence explorer generated.")
+
+
+@app.command("evidence-query")
+def evidence_query_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    kind: str = typer.Option("all", "--kind", help="Filter kind: all, claim, node, run, data, or artifact."),
+    text: str | None = typer.Option(None, "--text", help="Case-insensitive text to search across evidence fields."),
+    limit: int = typer.Option(50, "--limit", help="Maximum result count, capped at 200."),
+) -> None:
+    """Search paper evidence explorer records and write query artifacts."""
+    project_dir = require_project(project_name)
+    try:
+        query = query_evidence(project_dir, kind=kind, text=text, limit=limit)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Evidence Query: {project_name}")
+    table.add_column("Kind")
+    table.add_column("ID")
+    table.add_column("Title")
+    table.add_column("Status")
+    table.add_column("Source")
+    for result in query["results"]:
+        table.add_row(
+            str(result.get("kind", "")),
+            str(result.get("id", "")),
+            str(result.get("title", ""))[:90],
+            str(result.get("status", "")),
+            str(result.get("source", ""))[:90],
+        )
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'evidence_query.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EVIDENCE_QUERY.md'}")
+    _success(f"Evidence query generated with {query['result_count']} result(s).")
 
 
 @app.command("timeline")

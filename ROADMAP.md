@@ -625,6 +625,16 @@ Released in v1.30.0 with supervised external-agent adapter specs.
 
 Released in v1.31.0 with a static paper evidence explorer.
 
+## v1.32.0 — Evidence query layer
+
+- [x] Add `openrepro evidence-query`.
+- [x] Write `workspace/evidence_query.json` and `workspace/EVIDENCE_QUERY.md`.
+- [x] Search evidence explorer claims, lineage nodes, indexed runs, registered data, and artifact links by kind and text.
+- [x] Refresh default evidence query artifacts after the evidence explorer.
+- [x] Keep evidence queries as navigation for workflow evidence only, not scientific verification.
+
+Released in v1.32.0 with searchable evidence query artifacts.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
