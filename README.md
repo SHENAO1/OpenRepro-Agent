@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.32.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.33.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.32.0 workflow is:
+The v1.33.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/run/resume → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/run/resume → status
 ```
 
 ## What v0.4.0 supports
@@ -554,6 +554,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Refresh now writes a default evidence query after the evidence explorer.
 - Keep evidence queries as evidence navigation only; they do not verify scientific correctness or reproduction success.
 
+## What v1.33.0 adds
+
+- Add `openrepro data-profile`.
+- Write `workspace/data_profile.json` and `workspace/DATA_PROFILE.md`.
+- Profile registered CSV, TSV, JSON, and JSONL files for columns, inferred value types, null ratios, distinct sampled values, and numeric ranges.
+- Surface lightweight schema warnings for mixed types, highly null columns, constant columns, duplicate delimited headers, unsupported formats, and sampled profiles.
+- Refresh now profiles data after validation and before the repro lock.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -615,6 +623,7 @@ openrepro approve-candidates boc_demo --all --reviewer human
 # Optional: register local data files before scaffolding so specs capture data provenance.
 openrepro register-data boc_demo --path path/to/dataset.csv --role dataset
 openrepro validate-data boc_demo
+openrepro data-profile boc_demo
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
@@ -898,6 +907,22 @@ workspace/DATA_VALIDATION.md
 
 The validation is a file provenance check only; it does not verify the scientific
 meaning, labels, quality, or completeness of the dataset.
+
+### `openrepro data-profile <project_name> [--max-rows 5000]`
+
+Profiles registered data files and writes:
+
+```text
+workspace/data_profile.json
+workspace/DATA_PROFILE.md
+```
+
+The profiler supports CSV, TSV, JSON, and JSONL. It records sampled row counts,
+columns, inferred value types, null ratios, sampled distinct counts, and numeric
+ranges. It also reports lightweight schema warnings such as mixed types, highly
+null columns, constant columns, duplicate delimited headers, unsupported formats,
+and sampled profiles. This is a structure check only; it does not validate data
+semantics, labels, or scientific quality.
 
 ### `openrepro lock <project_name>`
 
@@ -2033,12 +2058,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.30.0: supervised external-agent adapter specs and validation.
 - v1.31.0: static paper evidence explorer for reviewer-facing navigation.
 - v1.32.0: searchable evidence query artifacts over explorer evidence records.
+- v1.33.0: registered data profiles and lightweight schema warnings.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.32.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.33.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

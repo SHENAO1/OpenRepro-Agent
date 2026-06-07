@@ -59,6 +59,7 @@ WORKSPACE_ARTIFACTS = [
     "experiment_input_validation.json",
     "data_index.json",
     "data_validation.json",
+    "data_profile.json",
     "quality_gate_summary.json",
     "claim_trace.json",
     "claim_trace_validation.json",

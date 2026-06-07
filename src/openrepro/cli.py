@@ -30,6 +30,7 @@ from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_registry import register_data, validate_data_index
+from .data_profile import generate_data_profile
 from .dashboard import generate_dashboard
 from .delivery_bundle import generate_delivery_bundle
 from .diagnostics import diagnose_error, diagnose_project, diagnose_validation_result
@@ -1093,6 +1094,27 @@ def validate_data_cmd(project_name: str = typer.Argument(..., help="Project dire
     if not result["valid"]:
         raise typer.Exit(1)
     _success("Registered data is valid.")
+
+
+@app.command("data-profile")
+def data_profile_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    max_rows: int = typer.Option(5000, "--max-rows", help="Maximum rows sampled per data source."),
+) -> None:
+    """Profile registered data columns and lightweight schema warnings."""
+    project_dir = require_project(project_name)
+    profile = generate_data_profile(project_dir, max_rows=max_rows)
+    table = Table(title=f"Data Profile: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "source_count", "profiled_source_count", "column_count", "warning_count", "error_count"]:
+        table.add_row(key, str(profile.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_profile.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_PROFILE.md'}")
+    if profile["status"] == "failed":
+        raise typer.Exit(1)
+    _success("Data profile generated.")
 
 
 @app.command("lock")

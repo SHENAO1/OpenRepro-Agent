@@ -635,6 +635,16 @@ Released in v1.31.0 with a static paper evidence explorer.
 
 Released in v1.32.0 with searchable evidence query artifacts.
 
+## v1.33.0 — Data profile and schema warnings
+
+- [x] Add `openrepro data-profile`.
+- [x] Write `workspace/data_profile.json` and `workspace/DATA_PROFILE.md`.
+- [x] Profile registered CSV, TSV, JSON, and JSONL files for columns, inferred value types, null ratios, sampled distinct values, and numeric ranges.
+- [x] Surface lightweight schema warnings for mixed types, highly null columns, constant columns, duplicate headers, unsupported formats, and sampled profiles.
+- [x] Refresh data profiles after data validation and before the repro lock.
+
+Released in v1.33.0 with registered data profile artifacts and schema warnings.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

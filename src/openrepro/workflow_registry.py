@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.32.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.33.0"
 
 
 @dataclass(frozen=True)
@@ -115,6 +115,15 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("data_registry",),
     ),
     WorkflowStep(
+        "data_profile",
+        "Profile data",
+        "data",
+        "Profile registered data structure and lightweight schema warnings.",
+        "openrepro data-profile <project>",
+        ("workspace/data_profile.json", "workspace/DATA_PROFILE.md"),
+        ("data_validation",),
+    ),
+    WorkflowStep(
         "scaffold",
         "Scaffold experiment",
         "experiment",
@@ -150,7 +159,7 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         "Lock registered data, project config, experiment contracts, and dependency versions.",
         "openrepro lock <project>",
         ("openrepro.lock.json", "workspace/REPRO_LOCK.md"),
-        ("data_validation", "spec_validation"),
+        ("data_profile", "spec_validation"),
     ),
     WorkflowStep(
         "repro_lock_validation",
@@ -828,6 +837,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .collaboration_pack import generate_collaboration_pack
     from .dashboard import generate_dashboard
     from .data_registry import validate_data_index
+    from .data_profile import generate_data_profile
     from .delivery_bundle import generate_delivery_bundle
     from .evidence_explorer import generate_evidence_explorer
     from .evidence_query import query_evidence
@@ -860,6 +870,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
 
     return {
         "data_validation": validate_data_index,
+        "data_profile": generate_data_profile,
         "repro_lock": generate_repro_lock,
         "repro_lock_validation": validate_repro_lock,
         "quality_gates": evaluate_all_quality_gates,
