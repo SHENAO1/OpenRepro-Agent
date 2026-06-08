@@ -58,6 +58,10 @@ CATALOG_OUTPUTS = {
     "workspace/PROMOTION_REGISTRY.md",
     "workspace/github_pr_summary.json",
     "workspace/GITHUB_PR_SUMMARY.md",
+    "workspace/security_policy.json",
+    "workspace/SECURITY_POLICY.md",
+    "workspace/security_audit.json",
+    "workspace/SECURITY_AUDIT.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

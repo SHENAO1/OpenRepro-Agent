@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.49.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.50.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.49.0 workflow is:
+The v1.50.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → promote plan/record/summary → github pr-summary/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → promote plan/record/summary → github pr-summary/summary → security init/audit/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
 ```
 
 ## What v0.4.0 supports
@@ -690,6 +690,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Include local git branch/commit metadata when available.
 - Keep PR summaries local: they do not call GitHub APIs or infer remote CI success.
 
+## What v1.50.0 adds
+
+- Add `openrepro security init/audit/summary`.
+- Write `workspace/security_policy.json`, `workspace/SECURITY_POLICY.md`, `workspace/security_audit.json`, and `workspace/SECURITY_AUDIT.md`.
+- Scan configured project text roots for likely secrets, unsafe workflow triggers, failed local validations, and unsafe plugin path references.
+- Add security audit status to the local UI, evidence package, asset catalog, dashboard links, evidence explorer links, and local PR summary checks.
+- Report secret pattern names and file locations only; matched secret values are never written to audit outputs.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -826,6 +834,8 @@ openrepro multi-agent-plan boc_demo
 openrepro agent run boc_demo --role maintainer --max-steps 1
 openrepro ci init boc_demo
 openrepro ci validate boc_demo
+openrepro security init boc_demo
+openrepro security audit boc_demo
 openrepro pipeline export boc_demo
 openrepro pipeline plan boc_demo
 openrepro pipeline validate boc_demo
@@ -2079,6 +2089,36 @@ local git metadata when available.
 
 Shows the current local GitHub PR summary status.
 
+### `openrepro security init <project_name> [--overwrite]`
+
+Initializes the default local security policy and writes:
+
+```text
+workspace/security_policy.json
+workspace/SECURITY_POLICY.md
+```
+
+The default policy scans project text artifacts for likely secrets and local
+workflow risks. It does not execute project code or call remote services.
+
+### `openrepro security audit <project_name> [--strict]`
+
+Runs the local static security audit and writes:
+
+```text
+workspace/security_audit.json
+workspace/SECURITY_AUDIT.md
+```
+
+The audit checks configured scan roots, local validation summaries, GitHub
+workflow trigger declarations, and plugin registry paths. Secret findings
+include pattern names and locations only; matched values are not written.
+With `--strict`, medium-severity findings fail the audit.
+
+### `openrepro security summary <project_name>`
+
+Shows the current local security audit summary.
+
 ### `openrepro run-demo <project_name>`
 
 Creates a timestamped output directory, for example:
@@ -2664,12 +2704,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.47.0: declarative plugin registry and validation.
 - v1.48.0: promotion gates and release-state registry.
 - v1.49.0: local GitHub PR summary and comment draft.
+- v1.50.0: local security policy and static audit artifacts.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.49.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.50.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

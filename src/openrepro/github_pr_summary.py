@@ -14,6 +14,7 @@ from .evidence_fingerprint import evidence_package_status
 from .local_ui import local_ui_summary
 from .plugin_registry import plugin_registry_summary
 from .promotion import promotion_summary
+from .security_policy import security_summary
 from .utils import iso_now, read_json, safe_write_text, write_json
 
 GITHUB_PR_SUMMARY_SCHEMA_VERSION = "1.49.0"
@@ -36,10 +37,11 @@ def generate_github_pr_summary(
     asset_build = asset_build_summary(project_dir)
     plugins = plugin_registry_summary(project_dir)
     promotion = promotion_summary(project_dir)
+    security = security_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
     freshness = evidence_package_status(project_dir)
     git = _git_context(repo_dir, base_ref=base_ref, head_ref=head_ref)
-    checks = _checks(ci, ci_validation, local_ui, asset_build, plugins, promotion, freshness)
+    checks = _checks(ci, ci_validation, local_ui, asset_build, plugins, promotion, security, freshness)
     failed = [check for check in checks if check["required"] and not check["passed"]]
     warnings = [check for check in checks if not check["required"] and not check["passed"]]
     result = {
@@ -63,6 +65,7 @@ def generate_github_pr_summary(
             "asset_build": asset_build,
             "plugins": plugins,
             "promotion": promotion,
+            "security": security,
             "dashboard": dashboard,
             "evidence_freshness": freshness,
         },
@@ -122,6 +125,7 @@ def _checks(
     asset_build: dict[str, Any],
     plugins: dict[str, Any],
     promotion: dict[str, Any],
+    security: dict[str, Any],
     freshness: dict[str, Any],
 ) -> list[dict[str, Any]]:
     return [
@@ -132,6 +136,7 @@ def _checks(
         _check("asset_build_not_blocked", asset_build.get("status") not in {"blocked", "failed"}, "Asset build plan is not blocked.", required=False),
         _check("plugin_validation_not_failed", plugins.get("validation_status") != "failed", "Plugin validation is not failed.", required=False),
         _check("promotion_recorded", promotion.get("latest_state") in {"validated", "accepted", "released"}, "Promotion registry has a reviewed state.", required=False),
+        _check("security_audit_not_failed", security.get("status") != "failed", "Security audit is not failed.", required=False),
     ]
 
 

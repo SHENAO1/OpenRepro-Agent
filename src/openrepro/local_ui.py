@@ -23,6 +23,7 @@ from .pipeline_spec import pipeline_spec_summary
 from .plugin_registry import plugin_registry_summary
 from .promotion import promotion_summary
 from .run_index import run_index_summary
+from .security_policy import security_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 from .workflow_executor import workflow_execution_summary
 from .workflow_preset import workflow_preset_summary
@@ -166,6 +167,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
                 ("CI", ci_summary, [("Present", "present"), ("Status", "status"), ("Test command", "test_command")]),
                 ("Plugins", plugin_registry_summary, [("Plugins", "plugin_count"), ("Enabled", "enabled_plugin_count"), ("Validation", "validation_status")]),
                 ("GitHub PR", _github_pr_summary, [("Checks", "check_count"), ("Failed", "failed_check_count"), ("Warnings", "warning_count")]),
+                ("Security", security_summary, [("Findings", "finding_count"), ("High", "high_count"), ("Valid", "valid")]),
             ],
             project_dir,
         ),
@@ -223,6 +225,8 @@ def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str,
         "path",
         "comment_path",
         "markdown_path",
+        "policy_path",
+        "policy_markdown_path",
         "index_path",
         "explorer_path",
         "manifest_path",
@@ -293,6 +297,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("Promotion registry", "workspace/PROMOTION_REGISTRY.md"),
         ("GitHub PR summary", "workspace/GITHUB_PR_SUMMARY.md"),
         ("GitHub PR comment", "reports/pr_comment.md"),
+        ("Security policy", "workspace/SECURITY_POLICY.md"),
+        ("Security audit", "workspace/SECURITY_AUDIT.md"),
         ("GitHub Actions workflow", ".github/workflows/openrepro-ci.yml"),
     ]
     links = []

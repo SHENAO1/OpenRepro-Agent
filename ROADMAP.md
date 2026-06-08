@@ -805,6 +805,16 @@ Released in v1.48.0 with explicit promotion gates and release-state records.
 
 Released in v1.49.0 with local PR review comment generation.
 
+## v1.50.0 — Local security policy and audit
+
+- [x] Add `openrepro security init/audit/summary`.
+- [x] Write `workspace/security_policy.json`, `workspace/SECURITY_POLICY.md`, `workspace/security_audit.json`, and `workspace/SECURITY_AUDIT.md`.
+- [x] Scan configured project text roots for likely secrets, unsafe workflow triggers, failed local validations, and unsafe plugin path references.
+- [x] Add security status to local UI, evidence package, asset catalog, dashboard links, evidence explorer links, and PR summary checks.
+- [x] Keep audit findings value-safe: report pattern names and locations without writing matched secret values.
+
+Released in v1.50.0 with local static security audit guardrails.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

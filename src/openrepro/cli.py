@@ -90,6 +90,7 @@ from .reviewer_packet import generate_reviewer_packet
 from .run_compare import compare_runs
 from .run_index import compare_indexed_runs, generate_run_index, indexed_run
 from .scorecard import generate_reproduction_scorecard
+from .security_policy import init_security_policy, run_security_audit, security_summary
 from .timeline import generate_project_timeline
 from .workflow_preset import generate_workflow_preset
 from .workflow_executor import execute_workflow
@@ -129,6 +130,8 @@ promote_app = typer.Typer(help="Plan and record promotion gate decisions.", no_a
 app.add_typer(promote_app, name="promote")
 github_app = typer.Typer(help="Generate local GitHub review artifacts.", no_args_is_help=True)
 app.add_typer(github_app, name="github")
+security_app = typer.Typer(help="Initialize and run local security audits.", no_args_is_help=True)
+app.add_typer(security_app, name="security")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -843,6 +846,60 @@ def github_summary_cmd(project_name: str = typer.Argument(..., help="Project dir
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "pr_number", "check_count", "failed_check_count", "warning_count", "comment_path", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
+
+
+@security_app.command("init")
+def security_init_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite an existing security policy."),
+) -> None:
+    """Initialize the default local security policy."""
+    project_dir = require_project(project_name)
+    policy = init_security_policy(project_dir, overwrite=overwrite)
+    table = Table(title=f"Security Policy: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["schema_version", "scan_roots", "exclude_dirs", "max_file_bytes"]:
+        table.add_row(key, str(policy.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'security_policy.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'SECURITY_POLICY.md'}")
+    _success("Security policy initialized.")
+
+
+@security_app.command("audit")
+def security_audit_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    strict: bool = typer.Option(False, "--strict", help="Treat medium findings as failing."),
+) -> None:
+    """Run the local security audit."""
+    project_dir = require_project(project_name)
+    result = run_security_audit(project_dir, strict=strict)
+    table = Table(title=f"Security Audit: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "valid", "strict", "finding_count", "critical_count", "high_count", "medium_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'security_audit.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'SECURITY_AUDIT.md'}")
+    if not result["valid"]:
+        _warn("Security audit failed.")
+        raise typer.Exit(1)
+    _success("Security audit passed.")
+
+
+@security_app.command("summary")
+def security_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the current security audit summary."""
+    project_dir = require_project(project_name)
+    summary = security_summary(project_dir)
+    table = Table(title=f"Security Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "valid", "finding_count", "critical_count", "high_count", "medium_count", "sha256"]:
         table.add_row(key, str(summary.get(key)))
     console.print(table)
 
