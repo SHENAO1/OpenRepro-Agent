@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.35.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.36.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.35.0 workflow is:
+The v1.36.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → status
 ```
 
 ## What v0.4.0 supports
@@ -578,6 +578,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Refresh now writes the unified asset catalog after workflow preset.
 - Keep asset catalogs as project navigation and provenance indexes; they do not verify scientific correctness.
 
+## What v1.36.0 adds
+
+- Add `openrepro data-expectations init/run`.
+- Write `workspace/data_expectations.json`, `workspace/DATA_EXPECTATIONS.md`, `workspace/data_expectation_results.json`, and `workspace/DATA_EXPECTATION_RESULTS.md`.
+- Derive default expectations from data profiles, including row count minimums, not-null checks, inferred type checks, and observed numeric ranges.
+- Reuse existing expectation suites unless `--overwrite` is passed.
+- Refresh now runs data expectations after data profile and before the repro lock.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -640,6 +648,8 @@ openrepro approve-candidates boc_demo --all --reviewer human
 openrepro register-data boc_demo --path path/to/dataset.csv --role dataset
 openrepro validate-data boc_demo
 openrepro data-profile boc_demo
+openrepro data-expectations init boc_demo
+openrepro data-expectations run boc_demo
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
@@ -940,6 +950,32 @@ ranges. It also reports lightweight schema warnings such as mixed types, highly
 null columns, constant columns, duplicate delimited headers, unsupported formats,
 and sampled profiles. This is a structure check only; it does not validate data
 semantics, labels, or scientific quality.
+
+### `openrepro data-expectations init <project_name> [--overwrite] [--max-rows 5000]`
+
+Initializes a lightweight expectation suite from the current data profile and
+writes:
+
+```text
+workspace/data_expectations.json
+workspace/DATA_EXPECTATIONS.md
+```
+
+Defaults include row count minimums, not-null checks for columns without nulls,
+inferred type checks, and observed numeric ranges. Existing suites are reused
+unless `--overwrite` is passed.
+
+### `openrepro data-expectations run <project_name> [--max-rows 100000]`
+
+Runs the expectation suite and writes:
+
+```text
+workspace/data_expectation_results.json
+workspace/DATA_EXPECTATION_RESULTS.md
+```
+
+Expectation results are structural data contract evidence only. They do not
+verify labels, scientific semantics, or dataset suitability for a paper claim.
 
 ### `openrepro lock <project_name>`
 
@@ -2120,12 +2156,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.33.0: registered data profiles and lightweight schema warnings.
 - v1.34.0: goal-oriented workflow preset plans over the registered DAG.
 - v1.35.0: unified project asset catalog and graph artifacts.
+- v1.36.0: lightweight data expectation suites and validation results.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.35.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.36.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

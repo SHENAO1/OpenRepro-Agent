@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.35.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.36.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -35,6 +35,7 @@ OpenRepro-Agent v1.35.0 uses a small modular CLI architecture.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
 - `config.py`: dataclass-based configuration defaults and YAML IO.
+- `data_expectations.py`: lightweight data expectation suite generation and validation.
 - `utils.py`: shared helper functions.
 
 ## Data flow
@@ -48,6 +49,7 @@ sources/ + project_config.yaml
   → workspace/candidate_reviews.json + CANDIDATE_REVIEWS.md
   → workspace/verified_candidates.json + VERIFIED_CANDIDATES.md
   → workspace/data_profile.json + DATA_PROFILE.md
+  → workspace/data_expectations.json + DATA_EXPECTATION_RESULTS.md
   → experiments/<experiment_id>/...
   → openrepro.lock.json + workspace/repro_lock_validation.json
   → outputs/<timestamp>_<project>_<experiment_id>/...

@@ -665,6 +665,16 @@ Released in v1.34.0 with goal-oriented workflow preset plans.
 
 Released in v1.35.0 with a unified project asset catalog.
 
+## v1.36.0 — Data expectations
+
+- [x] Add `openrepro data-expectations init/run`.
+- [x] Write `workspace/data_expectations.json`, `workspace/DATA_EXPECTATIONS.md`, `workspace/data_expectation_results.json`, and `workspace/DATA_EXPECTATION_RESULTS.md`.
+- [x] Derive default row count, not-null, inferred type, and observed numeric range expectations from data profiles.
+- [x] Reuse existing expectation suites unless explicitly overwritten.
+- [x] Refresh data expectations after data profile and before the repro lock.
+
+Released in v1.36.0 with lightweight data expectation suites and results.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

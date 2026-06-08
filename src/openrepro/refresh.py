@@ -35,6 +35,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .claim_trace import generate_claim_trace, validate_claim_trace
     from .collaboration_pack import generate_collaboration_pack
     from .dashboard import generate_dashboard
+    from .data_expectations import run_data_expectations
     from .data_registry import validate_data_index
     from .data_profile import generate_data_profile
     from .delivery_bundle import generate_delivery_bundle
@@ -72,6 +73,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     steps: list[tuple[str, str, Callable[[], Any]]] = [
         ("data_validation", "Validate registered data before refreshing run evidence.", lambda: validate_data_index(project_dir)),
         ("data_profile", "Profile registered data structure and schema warnings.", lambda: generate_data_profile(project_dir)),
+        ("data_expectations", "Run lightweight data expectations.", lambda: run_data_expectations(project_dir)),
         ("repro_lock", "Refresh project reproducibility lockfile.", lambda: generate_repro_lock(project_dir)),
         ("repro_lock_validation", "Validate project reproducibility lockfile.", lambda: validate_repro_lock(project_dir)),
         ("quality_gates", "Evaluate quality gates for existing runs.", lambda: evaluate_all_quality_gates(project_dir)),
@@ -405,6 +407,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "edge_count",
         "item_count",
         "asset_count",
+        "expectation_count",
         "step_count",
         "failed_step_count",
         "missing_file_count",

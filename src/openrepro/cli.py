@@ -30,6 +30,7 @@ from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
+from .data_expectations import init_data_expectations, run_data_expectations
 from .data_registry import register_data, validate_data_index
 from .data_profile import generate_data_profile
 from .dashboard import generate_dashboard
@@ -93,6 +94,8 @@ runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
 app.add_typer(catalog_app, name="catalog")
+data_expectations_app = typer.Typer(help="Initialize and run lightweight data expectations.", no_args_is_help=True)
+app.add_typer(data_expectations_app, name="data-expectations")
 console = Console()
 
 
@@ -1119,6 +1122,47 @@ def data_profile_cmd(
     if profile["status"] == "failed":
         raise typer.Exit(1)
     _success("Data profile generated.")
+
+
+@data_expectations_app.command("init")
+def data_expectations_init_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite an existing expectation suite."),
+    max_rows: int = typer.Option(5000, "--max-rows", help="Maximum rows sampled while deriving defaults."),
+) -> None:
+    """Initialize a lightweight data expectation suite from the current data profile."""
+    project_dir = require_project(project_name)
+    suite = init_data_expectations(project_dir, overwrite=overwrite, max_rows=max_rows)
+    table = Table(title=f"Data Expectations: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "expectation_count"]:
+        table.add_row(key, str(suite.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_expectations.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_EXPECTATIONS.md'}")
+    _success("Data expectations initialized.")
+
+
+@data_expectations_app.command("run")
+def data_expectations_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    max_rows: int = typer.Option(100000, "--max-rows", help="Maximum rows validated per data source."),
+) -> None:
+    """Run lightweight data expectations."""
+    project_dir = require_project(project_name)
+    result = run_data_expectations(project_dir, max_rows=max_rows)
+    table = Table(title=f"Data Expectation Results: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "expectation_count", "passed_count", "failed_count", "top_failed_expectation"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_expectation_results.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_EXPECTATION_RESULTS.md'}")
+    if result["status"] == "failed":
+        raise typer.Exit(1)
+    _success("Data expectations passed.")
 
 
 @app.command("lock")
