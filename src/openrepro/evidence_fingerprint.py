@@ -62,6 +62,9 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/evidence_query.json",
     "workspace/WORKFLOW_PRESET.md",
     "workspace/workflow_preset.json",
+    "workspace/ASSET_CATALOG.md",
+    "workspace/ASSET_CATALOG_GRAPH.md",
+    "workspace/asset_catalog.json",
 }
 EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
 

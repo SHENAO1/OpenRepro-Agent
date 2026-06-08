@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.34.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.35.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -12,6 +12,7 @@ OpenRepro-Agent v1.34.0 uses a small modular CLI architecture.
 - `approval.py`: human approval artifacts for formula and parameter candidates.
 - `demo_runner.py`: lightweight BOC-like signal demo and parameter sweep.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
+- `asset_catalog.py`: unified source, data, experiment, run, report, handoff, workspace, and config asset catalog.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, opt-in OpenAI-compatible provider, and request-hash cache.
 - `data_profile.py`: registered data profiling and lightweight schema warnings for CSV, TSV, JSON, and JSONL.
@@ -60,6 +61,7 @@ sources/ + project_config.yaml
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
   → workspace/workflow_preset.json + WORKFLOW_PRESET.md
+  → workspace/asset_catalog.json + ASSET_CATALOG.md
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md

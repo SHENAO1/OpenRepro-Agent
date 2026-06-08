@@ -25,6 +25,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
     from .acceptance_criteria import generate_acceptance_criteria
+    from .asset_catalog import generate_asset_catalog
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
     from .claim_evidence_report import generate_claim_evidence_report
@@ -287,6 +288,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     result = _build_result(project_dir, export_zip, records)
     write_json(workspace / "refresh_run.json", result)
     safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "asset_catalog",
+            "Refresh unified project asset catalog.",
+            lambda: generate_asset_catalog(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
     if export_zip:
         result["zip_path"] = str(_export_zip(project_dir, result))
         write_json(workspace / "refresh_run.json", result)
@@ -393,6 +404,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "node_count",
         "edge_count",
         "item_count",
+        "asset_count",
         "step_count",
         "failed_step_count",
         "missing_file_count",

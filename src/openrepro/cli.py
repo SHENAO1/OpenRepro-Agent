@@ -17,6 +17,7 @@ from .agent_dispatch import generate_agent_dispatch
 from .agent_exec_plan import generate_agent_exec_plan
 from .analyzer import analyze_project
 from .approval import approve_candidates
+from .asset_catalog import generate_asset_catalog, generate_asset_catalog_graph, get_catalog_asset, list_catalog_assets
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
@@ -90,6 +91,8 @@ workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workfl
 app.add_typer(workflow_app, name="workflow")
 runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
 app.add_typer(runs_app, name="runs")
+catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
+app.add_typer(catalog_app, name="catalog")
 console = Console()
 
 
@@ -1729,6 +1732,70 @@ def runs_compare_cmd(
     console.print(f"JSON: {project_dir / 'workspace' / 'run_index_comparison.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'RUN_INDEX_COMPARISON.md'}")
     _success("Indexed run comparison written.")
+
+
+@catalog_app.command("build")
+def catalog_build_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Build the unified project asset catalog."""
+    project_dir = require_project(project_name)
+    catalog = generate_asset_catalog(project_dir)
+    table = Table(title=f"Asset Catalog: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "asset_count", "kind_counts"]:
+        table.add_row(key, str(catalog.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'asset_catalog.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ASSET_CATALOG.md'}")
+    console.print(f"Graph: {project_dir / 'workspace' / 'ASSET_CATALOG_GRAPH.md'}")
+    _success("Asset catalog generated.")
+
+
+@catalog_app.command("list")
+def catalog_list_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    kind: str = typer.Option("all", "--kind", help="Asset kind filter, or all."),
+) -> None:
+    """List assets from the project asset catalog."""
+    project_dir = require_project(project_name)
+    result = list_catalog_assets(project_dir, kind=kind)
+    table = Table(title=f"Assets: {project_name}")
+    table.add_column("Asset")
+    table.add_column("Kind")
+    table.add_column("Status")
+    table.add_column("Path")
+    for asset in result["assets"]:
+        table.add_row(str(asset.get("asset_id")), str(asset.get("kind")), str(asset.get("status")), str(asset.get("path")))
+    console.print(table)
+
+
+@catalog_app.command("show")
+def catalog_show_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    asset_id: str = typer.Argument(..., help="Asset id to show."),
+) -> None:
+    """Show one asset catalog record."""
+    project_dir = require_project(project_name)
+    try:
+        asset = get_catalog_asset(project_dir, asset_id)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Asset: {asset_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["asset_id", "kind", "label", "path", "present", "status", "size_bytes", "sha256", "metadata", "relations"]:
+        table.add_row(key, str(asset.get(key)))
+    console.print(table)
+
+
+@catalog_app.command("graph")
+def catalog_graph_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Regenerate the asset catalog graph markdown."""
+    project_dir = require_project(project_name)
+    graph = generate_asset_catalog_graph(project_dir)
+    console.print(f"Graph: {graph['path']}")
+    _success("Asset catalog graph generated.")
 
 
 @app.command("lineage")

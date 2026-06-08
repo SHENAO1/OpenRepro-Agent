@@ -655,6 +655,16 @@ Released in v1.33.0 with registered data profile artifacts and schema warnings.
 
 Released in v1.34.0 with goal-oriented workflow preset plans.
 
+## v1.35.0 — Unified asset catalog
+
+- [x] Add `openrepro catalog build/list/show/graph`.
+- [x] Write `workspace/asset_catalog.json`, `workspace/ASSET_CATALOG.md`, and `workspace/ASSET_CATALOG_GRAPH.md`.
+- [x] Catalog source, data, experiment, run, report, handoff, workspace, and config assets with IDs, paths, hashes, sizes, status, metadata, and simple relations.
+- [x] Refresh the asset catalog after workflow preset.
+- [x] Keep asset catalogs as project navigation and provenance indexes, not scientific verification.
+
+Released in v1.35.0 with a unified project asset catalog.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

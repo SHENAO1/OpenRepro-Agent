@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.34.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.35.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.34.0 workflow is:
+The v1.35.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → status
 ```
 
 ## What v0.4.0 supports
@@ -570,6 +570,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Report preset status, runnable counts, blocked/stale counts, and the next safe workflow command.
 - Refresh now writes the default `delivery` workflow preset after evidence query.
 
+## What v1.35.0 adds
+
+- Add `openrepro catalog build/list/show/graph`.
+- Write `workspace/asset_catalog.json`, `workspace/ASSET_CATALOG.md`, and `workspace/ASSET_CATALOG_GRAPH.md`.
+- Catalog source, data, experiment, run, report, handoff, workspace, and config assets with IDs, paths, hashes, sizes, status, metadata, and simple relations.
+- Refresh now writes the unified asset catalog after workflow preset.
+- Keep asset catalogs as project navigation and provenance indexes; they do not verify scientific correctness.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -652,6 +660,7 @@ openrepro run-sweep boc_demo --noise-std 0.0 --noise-std 0.1 --seed 42
 openrepro quality-gate boc_demo
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
+openrepro catalog build boc_demo
 openrepro quality-gate boc_demo --all
 openrepro lineage boc_demo
 openrepro trace-claims boc_demo --validate
@@ -1808,6 +1817,34 @@ workspace/RUN_INDEX_COMPARISON.md
 The comparison reports metric deltas plus manifest and quality-gate status
 matches. It is an engineering evidence comparison, not a scientific result.
 
+### `openrepro catalog build <project_name>`
+
+Builds the unified project asset catalog and writes:
+
+```text
+workspace/asset_catalog.json
+workspace/ASSET_CATALOG.md
+workspace/ASSET_CATALOG_GRAPH.md
+```
+
+The catalog indexes source, data, experiment, run, report, handoff, workspace,
+and config assets with IDs, paths, hashes, sizes, status, metadata, and simple
+relations.
+
+### `openrepro catalog list <project_name> [--kind KIND]`
+
+Lists catalog assets in the console. `--kind` can filter to a specific asset
+kind, or `all`.
+
+### `openrepro catalog show <project_name> <asset_id>`
+
+Shows one catalog asset record, including metadata and relations.
+
+### `openrepro catalog graph <project_name>`
+
+Regenerates `workspace/ASSET_CATALOG_GRAPH.md` with a Mermaid graph view of the
+catalog. The graph is navigation only; it does not verify scientific claims.
+
 ### `openrepro lineage <project_name>`
 
 Writes project run lineage artifacts:
@@ -2082,12 +2119,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.32.0: searchable evidence query artifacts over explorer evidence records.
 - v1.33.0: registered data profiles and lightweight schema warnings.
 - v1.34.0: goal-oriented workflow preset plans over the registered DAG.
+- v1.35.0: unified project asset catalog and graph artifacts.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.34.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.35.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

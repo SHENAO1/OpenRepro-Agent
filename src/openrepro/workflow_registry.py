@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.34.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.35.0"
 
 
 @dataclass(frozen=True)
@@ -606,6 +606,15 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("workspace/workflow_preset.json", "workspace/WORKFLOW_PRESET.md"),
         ("evidence_query",),
     ),
+    WorkflowStep(
+        "asset_catalog",
+        "Asset catalog",
+        "delivery",
+        "Build a unified catalog of source, data, experiment, run, report, handoff, and workspace assets.",
+        "openrepro catalog build <project>",
+        ("workspace/asset_catalog.json", "workspace/ASSET_CATALOG.md", "workspace/ASSET_CATALOG_GRAPH.md"),
+        ("workflow_preset",),
+    ),
 )
 
 
@@ -836,6 +845,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
+    from .asset_catalog import generate_asset_catalog
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
     from .claim_evidence_report import generate_claim_evidence_report
@@ -929,6 +939,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "evidence_explorer": lambda project_dir: generate_evidence_explorer(project_dir, export_zip=export_zip),
         "evidence_query": lambda project_dir: query_evidence(project_dir, kind="all", limit=50),
         "workflow_preset": lambda project_dir: generate_workflow_preset(project_dir, preset="delivery"),
+        "asset_catalog": generate_asset_catalog,
     }
 
 
