@@ -56,6 +56,7 @@ from .lineage import generate_run_lineage
 from .multi_agent_plan import generate_multi_agent_plan
 from .multi_agent_plan_validation import validate_multi_agent_plan
 from .paper_lineage import generate_paper_lineage
+from .pipeline_spec import export_pipeline_spec, plan_pipeline, validate_pipeline_spec
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -96,6 +97,8 @@ catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.",
 app.add_typer(catalog_app, name="catalog")
 data_expectations_app = typer.Typer(help="Initialize and run lightweight data expectations.", no_args_is_help=True)
 app.add_typer(data_expectations_app, name="data-expectations")
+pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepro pipeline specs.", no_args_is_help=True)
+app.add_typer(pipeline_app, name="pipeline")
 console = Console()
 
 
@@ -2102,6 +2105,64 @@ def refresh_cmd(
         _warn("Refresh completed with failed steps.")
         raise typer.Exit(1)
     _success("Refresh run completed.")
+
+
+@pipeline_app.command("export")
+def pipeline_export_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    preset: str = typer.Option("delivery", "--preset", help="Preset: data, review, delivery, agent, or full."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite openrepro.pipeline.yaml if it already exists."),
+) -> None:
+    """Export openrepro.pipeline.yaml from the registered workflow DAG."""
+    project_dir = require_project(project_name)
+    try:
+        spec = export_pipeline_spec(project_dir, preset=preset, overwrite=overwrite)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Pipeline Spec: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["schema_version", "preset"]:
+        table.add_row(key, str(spec.get(key)))
+    table.add_row("step_count", str(len(spec.get("steps", []))))
+    console.print(table)
+    console.print(f"YAML: {project_dir / 'openrepro.pipeline.yaml'}")
+    _success("Pipeline spec exported.")
+
+
+@pipeline_app.command("plan")
+def pipeline_plan_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Plan the current project against openrepro.pipeline.yaml."""
+    project_dir = require_project(project_name)
+    plan = plan_pipeline(project_dir)
+    table = Table(title=f"Pipeline Plan: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "step_count", "complete_step_count", "pending_step_count", "blocked_step_count", "runnable_step_count", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'pipeline_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PIPELINE_PLAN.md'}")
+    _success("Pipeline plan generated.")
+
+
+@pipeline_app.command("validate")
+def pipeline_validate_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate openrepro.pipeline.yaml against the registered workflow DAG."""
+    project_dir = require_project(project_name)
+    validation = validate_pipeline_spec(project_dir)
+    table = Table(title=f"Pipeline Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["valid", "step_count", "error_count", "warning_count", "errors", "warnings"]:
+        table.add_row(key, str(validation.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'pipeline_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PIPELINE_VALIDATION.md'}")
+    if not validation["valid"]:
+        raise typer.Exit(1)
+    _success("Pipeline spec is valid.")
 
 
 @workflow_app.command("status")

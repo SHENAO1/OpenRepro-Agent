@@ -50,6 +50,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .multi_agent_plan import generate_multi_agent_plan
     from .multi_agent_plan_validation import validate_multi_agent_plan
     from .paper_lineage import generate_paper_lineage
+    from .pipeline_spec import refresh_pipeline_spec
     from .protocol_coverage import generate_protocol_coverage
     from .protocol_plan import generate_protocol_plan
     from .protocol_preflight import generate_protocol_preflight
@@ -292,6 +293,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
     records.append(
         _run_step(
+            "pipeline_spec",
+            "Refresh declarative pipeline spec plan and validation.",
+            lambda: refresh_pipeline_spec(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
             "asset_catalog",
             "Refresh unified project asset catalog.",
             lambda: generate_asset_catalog(project_dir),
@@ -401,6 +412,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "open_task_count",
         "issue_count",
         "warning_count",
+        "error_count",
         "safe_step_count",
         "blocked_task_count",
         "node_count",
@@ -409,6 +421,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "asset_count",
         "expectation_count",
         "step_count",
+        "runnable_step_count",
         "failed_step_count",
         "missing_file_count",
         "top_command",

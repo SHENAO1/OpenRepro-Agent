@@ -125,6 +125,9 @@ def _logical_assets(project_dir: Path) -> list[dict[str, Any]]:
     config = project_dir / "project_config.yaml"
     if config.exists():
         assets.append(_file_asset(project_dir, config, kind="config", label="project_config.yaml"))
+    pipeline = project_dir / "openrepro.pipeline.yaml"
+    if pipeline.exists():
+        assets.append(_file_asset(project_dir, pipeline, kind="config", label="openrepro.pipeline.yaml"))
     data = data_index_summary(project_dir)
     for source in data.get("sources", []):
         assets.append(

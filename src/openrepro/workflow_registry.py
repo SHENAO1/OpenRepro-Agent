@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.36.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.37.0"
 
 
 @dataclass(frozen=True)
@@ -621,13 +621,28 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("evidence_query",),
     ),
     WorkflowStep(
+        "pipeline_spec",
+        "Pipeline spec",
+        "delivery",
+        "Export, plan, and validate the declarative OpenRepro pipeline spec.",
+        "openrepro pipeline plan <project>",
+        (
+            "openrepro.pipeline.yaml",
+            "workspace/pipeline_plan.json",
+            "workspace/PIPELINE_PLAN.md",
+            "workspace/pipeline_validation.json",
+            "workspace/PIPELINE_VALIDATION.md",
+        ),
+        ("workflow_preset",),
+    ),
+    WorkflowStep(
         "asset_catalog",
         "Asset catalog",
         "delivery",
         "Build a unified catalog of source, data, experiment, run, report, handoff, and workspace assets.",
         "openrepro catalog build <project>",
         ("workspace/asset_catalog.json", "workspace/ASSET_CATALOG.md", "workspace/ASSET_CATALOG_GRAPH.md"),
-        ("workflow_preset",),
+        ("pipeline_spec",),
     ),
 )
 
@@ -883,6 +898,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .multi_agent_plan import generate_multi_agent_plan
     from .multi_agent_plan_validation import validate_multi_agent_plan
     from .paper_lineage import generate_paper_lineage
+    from .pipeline_spec import refresh_pipeline_spec
     from .protocol_coverage import generate_protocol_coverage
     from .protocol_plan import generate_protocol_plan
     from .protocol_preflight import generate_protocol_preflight
@@ -955,6 +971,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "evidence_explorer": lambda project_dir: generate_evidence_explorer(project_dir, export_zip=export_zip),
         "evidence_query": lambda project_dir: query_evidence(project_dir, kind="all", limit=50),
         "workflow_preset": lambda project_dir: generate_workflow_preset(project_dir, preset="delivery"),
+        "pipeline_spec": refresh_pipeline_spec,
         "asset_catalog": generate_asset_catalog,
     }
 

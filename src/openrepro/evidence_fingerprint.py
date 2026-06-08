@@ -65,6 +65,10 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/ASSET_CATALOG.md",
     "workspace/ASSET_CATALOG_GRAPH.md",
     "workspace/asset_catalog.json",
+    "workspace/PIPELINE_PLAN.md",
+    "workspace/pipeline_plan.json",
+    "workspace/PIPELINE_VALIDATION.md",
+    "workspace/pipeline_validation.json",
 }
 EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
 

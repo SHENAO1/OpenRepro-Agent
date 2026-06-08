@@ -675,6 +675,16 @@ Released in v1.35.0 with a unified project asset catalog.
 
 Released in v1.36.0 with lightweight data expectation suites and results.
 
+## v1.37.0 — Declarative pipeline spec
+
+- [x] Add `openrepro pipeline export/plan/validate`.
+- [x] Write `openrepro.pipeline.yaml`, `workspace/pipeline_plan.json`, `workspace/PIPELINE_PLAN.md`, `workspace/pipeline_validation.json`, and `workspace/PIPELINE_VALIDATION.md`.
+- [x] Export declarative pipeline specs from registered workflow presets.
+- [x] Plan current project status against the pipeline spec and report next safe commands.
+- [x] Validate pipeline steps against the registered workflow DAG.
+
+Released in v1.37.0 with declarative pipeline specs.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

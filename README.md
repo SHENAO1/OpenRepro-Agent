@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.36.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.37.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.36.0 workflow is:
+The v1.37.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → pipeline export/plan/validate → status
 ```
 
 ## What v0.4.0 supports
@@ -586,6 +586,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Reuse existing expectation suites unless `--overwrite` is passed.
 - Refresh now runs data expectations after data profile and before the repro lock.
 
+## What v1.37.0 adds
+
+- Add `openrepro pipeline export/plan/validate`.
+- Write `openrepro.pipeline.yaml`, `workspace/pipeline_plan.json`, `workspace/PIPELINE_PLAN.md`, `workspace/pipeline_validation.json`, and `workspace/PIPELINE_VALIDATION.md`.
+- Export declarative pipeline specs from registered workflow presets.
+- Plan the current project against the pipeline spec and report next safe commands.
+- Validate pipeline steps against the registered workflow DAG.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -712,6 +720,9 @@ openrepro validate-readiness-review boc_demo
 openrepro review-action-plan boc_demo
 openrepro delivery-bundle boc_demo --zip
 openrepro multi-agent-plan boc_demo
+openrepro pipeline export boc_demo
+openrepro pipeline plan boc_demo
+openrepro pipeline validate boc_demo
 openrepro status boc_demo
 ```
 
@@ -1474,6 +1485,41 @@ Plans or executes all currently runnable safe workflow steps. It never runs
 experiments, records human decisions, applies repairs, or ingests missing
 source/data inputs.
 
+### `openrepro pipeline export <project_name> [--preset delivery] [--overwrite]`
+
+Exports a declarative pipeline spec:
+
+```text
+openrepro.pipeline.yaml
+```
+
+The spec is built from registered workflow DAG steps and preset selections. It
+is a declaration of intended workflow steps, not an execution command.
+
+### `openrepro pipeline plan <project_name>`
+
+Plans the current project against `openrepro.pipeline.yaml` and writes:
+
+```text
+workspace/pipeline_plan.json
+workspace/PIPELINE_PLAN.md
+```
+
+The plan reports current step status, runnable counts, and the next safe command
+when one exists.
+
+### `openrepro pipeline validate <project_name>`
+
+Validates `openrepro.pipeline.yaml` against the registered workflow DAG and writes:
+
+```text
+workspace/pipeline_validation.json
+workspace/PIPELINE_VALIDATION.md
+```
+
+Validation checks unknown steps, duplicate steps, safety flag drift, and ordering
+warnings for dependencies included in the spec.
+
 ### `openrepro freshness <project_name>`
 
 Explains stale or missing derived artifacts and writes:
@@ -2157,12 +2203,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.34.0: goal-oriented workflow preset plans over the registered DAG.
 - v1.35.0: unified project asset catalog and graph artifacts.
 - v1.36.0: lightweight data expectation suites and validation results.
+- v1.37.0: declarative pipeline spec export, planning, and validation.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.36.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.37.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
