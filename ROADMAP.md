@@ -705,6 +705,16 @@ Released in v1.38.0 with experiment-level tracking over indexed run evidence.
 
 Released in v1.39.0 with local content-addressed artifact caching.
 
+## v1.40.0 — Workflow executor
+
+- [x] Add `openrepro workflow execute`.
+- [x] Write `workspace/workflow_execution.json`, `workspace/WORKFLOW_EXECUTION.md`, and append `workspace/workflow_events.jsonl`.
+- [x] Capture per-step stdout/stderr logs under `workspace/workflow_logs/<execution_id>/`.
+- [x] Record dry-run, skipped, blocked, failed, retry, and changed-output summaries.
+- [x] Keep unsafe source input, human decisions, repairs, and experiment execution outside executor automation.
+
+Released in v1.40.0 with durable workflow execution sessions.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

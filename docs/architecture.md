@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.39.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.40.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -35,6 +35,7 @@ OpenRepro-Agent v1.39.0 uses a small modular CLI architecture.
 - `pipeline_spec.py`: declarative pipeline spec export, planning, validation, and refresh helper.
 - `workflow_registry.py`: registered workflow DAG metadata, state generation, step explanation, and safe derived-step execution.
 - `workflow_preset.py`: goal-oriented workflow preset plans over the registered DAG.
+- `workflow_executor.py`: durable workflow execution sessions with events, logs, retries, and output hashes.
 - `report_generator.py`: project-level report creation.
 - `handoff_generator.py`: multi-agent handoff generation.
 - `config.py`: dataclass-based configuration defaults and YAML IO.
@@ -67,6 +68,7 @@ sources/ + project_config.yaml
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
   → workspace/workflow_preset.json + WORKFLOW_PRESET.md
+  → workspace/workflow_execution.json + workflow_events.jsonl
   → openrepro.pipeline.yaml + workspace/pipeline_plan.json + pipeline_validation.json
   → workspace/asset_catalog.json + ASSET_CATALOG.md
   → workspace/artifact_cache.json + ARTIFACT_CACHE.md

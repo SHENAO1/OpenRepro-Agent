@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.39.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.40.0"
 
 
 @dataclass(frozen=True)

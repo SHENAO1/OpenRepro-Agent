@@ -62,6 +62,9 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/evidence_query.json",
     "workspace/WORKFLOW_PRESET.md",
     "workspace/workflow_preset.json",
+    "workspace/WORKFLOW_EXECUTION.md",
+    "workspace/workflow_execution.json",
+    "workspace/workflow_events.jsonl",
     "workspace/ASSET_CATALOG.md",
     "workspace/ASSET_CATALOG_GRAPH.md",
     "workspace/asset_catalog.json",
@@ -74,7 +77,7 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/PIPELINE_VALIDATION.md",
     "workspace/pipeline_validation.json",
 }
-EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents"}
+EXCLUDED_PROJECT_RELATIVE_DIRS = {"workspace/agents", "workspace/workflow_logs"}
 
 
 def _included_files(project_dir: Path) -> list[Path]:

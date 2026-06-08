@@ -83,6 +83,7 @@ from .run_index import compare_indexed_runs, generate_run_index, indexed_run
 from .scorecard import generate_reproduction_scorecard
 from .timeline import generate_project_timeline
 from .workflow_preset import generate_workflow_preset
+from .workflow_executor import execute_workflow
 from .workflow_registry import explain_workflow_step, generate_workflow_state, run_workflow
 
 app = typer.Typer(
@@ -2452,6 +2453,38 @@ def workflow_resume_cmd(
         raise typer.Exit(1)
 
 
+@workflow_app.command("execute")
+def workflow_execute_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    preset: str = typer.Option("delivery", "--preset", help="Preset: data, review, delivery, agent, or full."),
+    step_id: str | None = typer.Option(None, "--step", help="Specific workflow step id to execute or dry-run."),
+    confirm: bool = typer.Option(False, "--confirm", help="Execute instead of writing a dry-run execution session."),
+    retry_count: int = typer.Option(0, "--retry", min=0, help="Retries per failed safe step."),
+    max_steps: int | None = typer.Option(None, "--max-steps", min=0, help="Limit selected steps for this execution."),
+    continue_on_error: bool = typer.Option(False, "--continue-on-error", help="Continue after blocked or failed steps."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export zip artifacts for steps that support it."),
+) -> None:
+    """Execute a preset or step with durable events, logs, and output hashes."""
+    project_dir = require_project(project_name)
+    try:
+        result = execute_workflow(
+            project_dir,
+            preset=preset,
+            step_id=step_id,
+            confirm=confirm,
+            retry_count=retry_count,
+            max_steps=max_steps,
+            continue_on_error=continue_on_error,
+            export_zip=export_zip,
+        )
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _print_workflow_execution(project_dir, project_name, result)
+    if confirm and result["status"] in {"blocked", "failed"}:
+        raise typer.Exit(1)
+
+
 def _print_workflow_run(project_dir: Path, project_name: str, result: dict) -> None:
     table = Table(title=f"Workflow Run: {project_name}")
     table.add_column("Item", style="bold")
@@ -2479,6 +2512,41 @@ def _print_workflow_run(project_dir: Path, project_name: str, result: dict) -> N
         _warn("Workflow run is blocked.")
     else:
         _warn("Workflow run failed.")
+
+
+def _print_workflow_execution(project_dir: Path, project_name: str, result: dict) -> None:
+    table = Table(title=f"Workflow Execution: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "execution_id",
+        "preset",
+        "step_id",
+        "confirmed",
+        "status",
+        "selected_step_count",
+        "passed_step_count",
+        "blocked_step_count",
+        "failed_step_count",
+        "dry_run_step_count",
+        "skipped_step_count",
+        "top_blocked_step",
+        "top_failed_step",
+    ]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'workflow_execution.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'WORKFLOW_EXECUTION.md'}")
+    console.print(f"Events: {project_dir / 'workspace' / 'workflow_events.jsonl'}")
+    console.print(f"Logs: {project_dir / result['logs_dir']}")
+    if result["status"] == "dry_run":
+        _warn("Workflow execution was a dry run. Pass --confirm to execute safe derived steps.")
+    elif result["status"] == "complete":
+        _success("Workflow execution completed.")
+    elif result["status"] == "blocked":
+        _warn("Workflow execution is blocked.")
+    else:
+        _warn("Workflow execution failed.")
 
 
 @app.command("freshness")
