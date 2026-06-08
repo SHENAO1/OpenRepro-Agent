@@ -45,6 +45,7 @@ from .evidence_explorer import generate_evidence_explorer
 from .evidence_query import query_evidence
 from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
+from .experiment_evaluation import define_evaluation_suite, generate_experiment_leaderboard, run_evaluation_suite
 from .experiment_scaffold import scaffold_experiment
 from .experiment_tracking import compare_tracked_experiments, generate_experiment_tracking, list_tracked_experiments, tracked_experiment
 from .experiment_inputs import set_experiment_input, validate_experiment_inputs
@@ -105,6 +106,8 @@ pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepr
 app.add_typer(pipeline_app, name="pipeline")
 experiments_app = typer.Typer(help="Track and compare experiment-level run evidence.", no_args_is_help=True)
 app.add_typer(experiments_app, name="experiments")
+eval_app = typer.Typer(help="Define and run experiment metric evaluations.", no_args_is_help=True)
+app.add_typer(eval_app, name="eval")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -511,6 +514,95 @@ def experiments_compare_cmd(
     console.print(f"JSON: {project_dir / 'workspace' / 'experiment_tracking_comparison.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_TRACKING_COMPARISON.md'}")
     _success("Experiment tracking comparison written.")
+
+
+@experiments_app.command("leaderboard")
+def experiments_leaderboard_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    suite: str = typer.Option("default", "--suite", help="Evaluation suite name."),
+    metric: str | None = typer.Option(None, "--metric", help="Metric to rank. Defaults to the first suite criterion."),
+) -> None:
+    """Generate an experiment leaderboard from latest tracked metrics."""
+    project_dir = require_project(project_name)
+    try:
+        leaderboard = generate_experiment_leaderboard(project_dir, suite=suite, metric=metric)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Experiment Leaderboard: {project_name}")
+    table.add_column("Rank")
+    table.add_column("Experiment")
+    table.add_column("Run")
+    table.add_column("Metric")
+    table.add_column("Value")
+    for row in leaderboard["experiments"]:
+        table.add_row(str(row.get("rank")), str(row.get("experiment_id")), str(row.get("latest_run_id")), str(row.get("metric")), str(row.get("value")))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_leaderboard.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_LEADERBOARD.md'}")
+    _success("Experiment leaderboard generated.")
+
+
+@eval_app.command("define")
+def eval_define_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    suite: str = typer.Option("default", "--suite", help="Evaluation suite name."),
+    metric: str = typer.Option(..., "--metric", help="Metric key to evaluate."),
+    threshold: float = typer.Option(..., "--threshold", help="Metric threshold."),
+    operator: str = typer.Option(">=", "--operator", help="Comparison operator: >=, <=, >, <, ==, !="),
+    higher_is_better: bool = typer.Option(True, "--higher-is-better/--lower-is-better", help="Leaderboard sort direction."),
+    baseline_experiment: str | None = typer.Option(None, "--baseline-experiment", help="Optional baseline experiment id."),
+) -> None:
+    """Define or update an experiment evaluation suite."""
+    project_dir = require_project(project_name)
+    try:
+        registry = define_evaluation_suite(
+            project_dir,
+            suite=suite,
+            metric=metric,
+            threshold=threshold,
+            operator=operator,
+            higher_is_better=higher_is_better,
+            baseline_experiment=baseline_experiment,
+        )
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Evaluation Registry: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "suite_count"]:
+        table.add_row(key, str(registry.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'evaluation_registry.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EVALUATION_REGISTRY.md'}")
+    _success("Evaluation suite defined.")
+
+
+@eval_app.command("run")
+def eval_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    suite: str = typer.Option("default", "--suite", help="Evaluation suite name."),
+) -> None:
+    """Run an experiment evaluation suite."""
+    project_dir = require_project(project_name)
+    try:
+        result = run_evaluation_suite(project_dir, suite=suite)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Evaluation Results: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["suite", "status", "experiment_count", "passed_experiment_count", "failed_experiment_count", "missing_metric_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'evaluation_results.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EVALUATION_RESULTS.md'}")
+    console.print(f"Leaderboard: {project_dir / 'workspace' / 'EXPERIMENT_LEADERBOARD.md'}")
+    if result["status"] == "failed":
+        raise typer.Exit(1)
+    _success("Evaluation suite passed.")
 
 
 @app.command("trace-claims")

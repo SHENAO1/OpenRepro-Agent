@@ -725,6 +725,16 @@ Released in v1.40.0 with durable workflow execution sessions.
 
 Released in v1.41.0 with local remote cache transfer and restore planning.
 
+## v1.42.0 — Experiment evaluation registry
+
+- [x] Add `openrepro eval define/run`.
+- [x] Add `openrepro experiments leaderboard`.
+- [x] Write `workspace/evaluation_registry.json`, `workspace/EVALUATION_REGISTRY.md`, `workspace/evaluation_results.json`, and `workspace/EVALUATION_RESULTS.md`.
+- [x] Write `workspace/experiment_leaderboard.json` and `workspace/EXPERIMENT_LEADERBOARD.md`.
+- [x] Evaluate latest tracked metrics against declared thresholds without claiming scientific reproduction.
+
+Released in v1.42.0 with experiment evaluation suites and leaderboards.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

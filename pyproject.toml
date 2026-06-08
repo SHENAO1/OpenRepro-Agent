@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openrepro-agent"
-version = "1.41.0"
+version = "1.42.0"
 description = "A Python CLI workflow for paper reproduction setup, analysis, artifact validation, benchmarking, reporting, and multi-agent handoff."
 readme = "README.md"
 requires-python = ">=3.10"
