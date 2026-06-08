@@ -21,6 +21,7 @@ from .experiment_evaluation import evaluation_registry_summary, evaluation_resul
 from .experiment_tracking import experiment_tracking_summary
 from .pipeline_spec import pipeline_spec_summary
 from .plugin_registry import plugin_registry_summary
+from .promotion import promotion_summary
 from .run_index import run_index_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 from .workflow_executor import workflow_execution_summary
@@ -152,6 +153,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
                 ("Dashboard", dashboard_summary, [("Readiness", "readiness_score"), ("Stale nodes", "stale_node_count")]),
                 ("Evidence explorer", evidence_explorer_summary, [("Claims", "claim_count"), ("Runs", "run_count")]),
                 ("Agent board", agent_board_summary, [("Agents", "agent_count"), ("Tasks", "task_count"), ("Open", "open_task_count")]),
+                ("Promotion", promotion_summary, [("Promotions", "promotion_count"), ("Latest state", "latest_state"), ("Plan", "latest_plan_status")]),
             ],
             project_dir,
         ),
@@ -227,6 +229,7 @@ def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str,
         "validation_markdown_path",
         "config_path",
         "plan_path",
+        "record_path",
         "materialization_path",
         "materialization_markdown_path",
         "zip_path",
@@ -283,6 +286,9 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("CI validation", "workspace/CI_VALIDATION.md"),
         ("Plugin registry", "workspace/PLUGIN_REGISTRY.md"),
         ("Plugin validation", "workspace/PLUGIN_VALIDATION.md"),
+        ("Promotion plan", "workspace/PROMOTION_PLAN.md"),
+        ("Promotion record", "workspace/PROMOTION_RECORD.md"),
+        ("Promotion registry", "workspace/PROMOTION_REGISTRY.md"),
         ("GitHub Actions workflow", ".github/workflows/openrepro-ci.yml"),
     ]
     links = []

@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.47.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.48.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -40,6 +40,7 @@ OpenRepro-Agent v1.47.0 uses a small modular CLI architecture.
 - `lineage.py`: run lineage hashes for manifests, configs, source index, and verified candidates.
 - `pipeline_spec.py`: declarative pipeline spec export, planning, validation, and refresh helper.
 - `plugin_registry.py`: declarative plugin/provider extension registry and validation without dynamic code loading.
+- `promotion.py`: promotion gate planning, dry-run recording, and release-state registry artifacts.
 - `workflow_registry.py`: registered workflow DAG metadata, state generation, step explanation, and safe derived-step execution.
 - `workflow_preset.py`: goal-oriented workflow preset plans over the registered DAG.
 - `workflow_executor.py`: durable workflow execution sessions with events, logs, retries, and output hashes.
@@ -76,6 +77,7 @@ sources/ + project_config.yaml
   → workspace/agent_sandbox_run.json + agent_sandbox_trajectory.jsonl
   → .github/workflows/openrepro-ci.yml + workspace/ci_validation.json
   → openrepro.plugins.yaml + workspace/plugin_registry.json + plugin_validation.json
+  → workspace/promotion_plan.json + promotion_registry.json
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
   → reports/local_ui/index.html + workspace/local_ui_summary.json

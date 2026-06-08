@@ -50,6 +50,12 @@ CATALOG_OUTPUTS = {
     "workspace/PLUGIN_REGISTRY.md",
     "workspace/plugin_validation.json",
     "workspace/PLUGIN_VALIDATION.md",
+    "workspace/promotion_plan.json",
+    "workspace/PROMOTION_PLAN.md",
+    "workspace/promotion_record.json",
+    "workspace/PROMOTION_RECORD.md",
+    "workspace/promotion_registry.json",
+    "workspace/PROMOTION_REGISTRY.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

@@ -71,6 +71,7 @@ from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
 from .protocol_preflight import generate_protocol_preflight
 from .project_profile import generate_project_profile
+from .promotion import plan_promotion, promotion_summary, record_promotion
 from .project_manager import get_status, init_project, require_project
 from .quality_gate import evaluate_all_quality_gates, evaluate_run_quality
 from .readiness_review import generate_readiness_review
@@ -123,6 +124,8 @@ eval_app = typer.Typer(help="Define and run experiment metric evaluations.", no_
 app.add_typer(eval_app, name="eval")
 plugins_app = typer.Typer(help="Register and validate declarative project plugins.", no_args_is_help=True)
 app.add_typer(plugins_app, name="plugins")
+promote_app = typer.Typer(help="Plan and record promotion gate decisions.", no_args_is_help=True)
+app.add_typer(promote_app, name="promote")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -707,6 +710,89 @@ def plugins_summary_cmd(project_name: str = typer.Argument(..., help="Project di
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "plugin_count", "enabled_plugin_count", "validation_status", "validation_error_count", "config_path", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
+
+
+@promote_app.command("plan")
+def promote_plan_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: str = typer.Option(..., "--target", help="Promotion target: experiment, report, or delivery."),
+    candidate_id: str = typer.Option(..., "--candidate-id", help="Candidate id to promote."),
+    to_state: str = typer.Option("validated", "--to", help="Target state: validated, accepted, released, or rejected."),
+) -> None:
+    """Evaluate promotion gates without recording a decision."""
+    project_dir = require_project(project_name)
+    try:
+        plan = plan_promotion(project_dir, target=target, candidate_id=candidate_id, to_state=to_state)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Promotion Plan: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "target", "candidate_id", "from_state", "to_state", "gate_count", "failed_gate_count", "top_blocker", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'promotion_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROMOTION_PLAN.md'}")
+    if plan["status"] == "ready":
+        _success("Promotion gates passed.")
+    else:
+        _warn("Promotion gates are blocked.")
+
+
+@promote_app.command("record")
+def promote_record_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: str = typer.Option(..., "--target", help="Promotion target: experiment, report, or delivery."),
+    candidate_id: str = typer.Option(..., "--candidate-id", help="Candidate id to promote."),
+    to_state: str = typer.Option("validated", "--to", help="Target state: validated, accepted, released, or rejected."),
+    reviewer: str = typer.Option("", "--reviewer", help="Reviewer or release owner."),
+    note: str = typer.Option("", "--note", help="Promotion note."),
+    confirm: bool = typer.Option(False, "--confirm", help="Record the promotion when required gates pass."),
+) -> None:
+    """Dry-run or record a promotion decision."""
+    project_dir = require_project(project_name)
+    try:
+        result = record_promotion(
+            project_dir,
+            target=target,
+            candidate_id=candidate_id,
+            to_state=to_state,
+            reviewer=reviewer,
+            note=note,
+            confirm=confirm,
+        )
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Promotion Record: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "target", "candidate_id", "to_state", "confirmed", "recorded", "plan_status", "top_blocker"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'promotion_record.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PROMOTION_RECORD.md'}")
+    console.print(f"Registry: {project_dir / 'workspace' / 'promotion_registry.json'}")
+    if result["status"] == "dry_run":
+        _warn("Promotion record was a dry run. Pass --confirm to write the registry.")
+    elif result["status"] == "recorded":
+        _success("Promotion recorded.")
+    else:
+        _warn("Promotion record is blocked.")
+
+
+@promote_app.command("summary")
+def promote_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show promotion registry and latest plan state."""
+    project_dir = require_project(project_name)
+    summary = promotion_summary(project_dir)
+    table = Table(title=f"Promotion Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "promotion_count", "latest_target", "latest_candidate_id", "latest_state", "latest_plan_status", "last_record_status", "sha256"]:
         table.add_row(key, str(summary.get(key)))
     console.print(table)
 

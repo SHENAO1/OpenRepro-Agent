@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.47.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.48.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.47.0 workflow is:
+The v1.48.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → promote plan/record/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
 ```
 
 ## What v0.4.0 supports
@@ -673,6 +673,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Support declarative command, provider, reporter, and evaluator extension entries.
 - Validate plugin ids, kinds, run modes, entrypoints, and unsafe `safe_command` declarations.
 - Keep plugins declarative: registry generation and validation never import or execute plugin code.
+
+## What v1.48.0 adds
+
+- Add `openrepro promote plan/record/summary`.
+- Write `workspace/promotion_plan.json`, `workspace/PROMOTION_PLAN.md`, `workspace/promotion_record.json`, `workspace/PROMOTION_RECORD.md`, `workspace/promotion_registry.json`, and `workspace/PROMOTION_REGISTRY.md`.
+- Evaluate promotion gates for `experiment`, `report`, and `delivery` targets.
+- Require `--confirm` before a passing promotion plan is recorded.
+- Keep promotion gates as engineering release-state controls, not scientific validation.
 
 ## Current limitations
 
@@ -2015,6 +2023,36 @@ human decision commands for `safe_command` plugins.
 
 Shows the current plugin registry and validation summary.
 
+### `openrepro promote plan <project_name> --target TARGET --candidate-id ID [--to STATE]`
+
+Evaluates promotion gates and writes:
+
+```text
+workspace/promotion_plan.json
+workspace/PROMOTION_PLAN.md
+```
+
+Targets are `experiment`, `report`, and `delivery`. States are `validated`,
+`accepted`, `released`, and `rejected`.
+
+### `openrepro promote record <project_name> --target TARGET --candidate-id ID [--to STATE] [--confirm]`
+
+Writes a dry-run or confirmed promotion record:
+
+```text
+workspace/promotion_record.json
+workspace/PROMOTION_RECORD.md
+workspace/promotion_registry.json
+workspace/PROMOTION_REGISTRY.md
+```
+
+Without `--confirm`, no registry entry is written. With `--confirm`, all
+required gates must pass before the promotion is recorded.
+
+### `openrepro promote summary <project_name>`
+
+Shows the promotion registry and latest plan/record status.
+
 ### `openrepro run-demo <project_name>`
 
 Creates a timestamped output directory, for example:
@@ -2598,12 +2636,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.45.0: static local UI console for artifact navigation.
 - v1.46.0: asset-centric incremental build plans and safe materialization.
 - v1.47.0: declarative plugin registry and validation.
+- v1.48.0: promotion gates and release-state registry.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.47.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.48.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

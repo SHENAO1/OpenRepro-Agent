@@ -785,6 +785,16 @@ Released in v1.46.0 with asset-oriented build planning and guarded materializati
 
 Released in v1.47.0 with project extension declarations and guardrail validation.
 
+## v1.48.0 — Promotion and release gates
+
+- [x] Add `openrepro promote plan/record/summary`.
+- [x] Write `workspace/promotion_plan.json`, `workspace/PROMOTION_PLAN.md`, `workspace/promotion_record.json`, `workspace/PROMOTION_RECORD.md`, `workspace/promotion_registry.json`, and `workspace/PROMOTION_REGISTRY.md`.
+- [x] Evaluate promotion gates for experiment, report, and delivery candidates.
+- [x] Require explicit `--confirm` before recording a passing promotion.
+- [x] Keep promotion records as engineering release-state decisions, not scientific validation claims.
+
+Released in v1.48.0 with explicit promotion gates and release-state records.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
