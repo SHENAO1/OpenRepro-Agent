@@ -26,6 +26,7 @@ from .freshness import artifact_freshness_summary
 from .gaps import generate_reproduction_gaps
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
+from .local_ui import local_ui_summary
 from .project_manager import get_status
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -76,6 +77,7 @@ WORKSPACE_ARTIFACTS = [
     "agent_sandbox_run.json",
     "ci_summary.json",
     "ci_validation.json",
+    "local_ui_summary.json",
     "advance_plan.json",
     "review_board.json",
     "review_decisions.json",
@@ -352,6 +354,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     refresh_run = refresh_run_summary(project_dir)
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
+    local_ui = local_ui_summary(project_dir)
     project_profile_existing = project_profile_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
@@ -545,6 +548,18 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "manifest_path": dashboard.get("manifest_path") or str(project_dir / "reports" / "dashboard_manifest.json"),
             "zip_path": dashboard.get("zip_path"),
         },
+        "local_ui": {
+            "schema_version": local_ui.get("schema_version"),
+            "status": local_ui.get("status"),
+            "panel_count": local_ui.get("panel_count"),
+            "present_panel_count": local_ui.get("present_panel_count"),
+            "missing_panel_count": local_ui.get("missing_panel_count"),
+            "missing_artifact_link_count": local_ui.get("missing_artifact_link_count"),
+            "path": local_ui.get("path") or str(project_dir / "reports" / "local_ui" / "index.html"),
+            "manifest_path": local_ui.get("manifest_path") or str(project_dir / "reports" / "local_ui_manifest.json"),
+            "summary_path": local_ui.get("summary_path") or str(project_dir / "workspace" / "local_ui_summary.json"),
+            "zip_path": local_ui.get("zip_path"),
+        },
         "scorecard": {
             "schema_version": scorecard.get("schema_version"),
             "overall_score": scorecard.get("overall_score"),
@@ -694,6 +709,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "reports" / "dashboard" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "dashboard" / "index.html"),
             },
+            "local_ui": {
+                "present": (project_dir / "reports" / "local_ui" / "index.html").exists(),
+                "path": str(project_dir / "reports" / "local_ui" / "index.html"),
+            },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),
             "evidence_package_zip": str(project_dir / "reports" / "evidence_package.zip") if export_zip else None,
@@ -834,6 +853,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - dashboard_status: {package['dashboard']['status']}
 - dashboard_readiness_score: {package['dashboard']['readiness_score']}
 - dashboard_stale_node_count: {package['dashboard']['stale_node_count']}
+- local_ui_status: {package['local_ui']['status']}
+- local_ui_panel_count: {package['local_ui']['panel_count']}
+- local_ui_missing_panel_count: {package['local_ui']['missing_panel_count']}
 - scorecard_overall_score: {package['scorecard']['overall_score']}
 - scorecard_status: {package['scorecard']['overall_status']}
 - gaps_status: {package['gaps']['status']}

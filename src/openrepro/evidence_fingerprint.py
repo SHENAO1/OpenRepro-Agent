@@ -21,6 +21,8 @@ EXCLUDED_REPORT_PREFIXES = {
     "agent_board.zip",
     "evidence_explorer_manifest.json",
     "evidence_explorer.zip",
+    "local_ui_manifest.json",
+    "local_ui.zip",
     "readiness_review.json",
     "READINESS_REVIEW.md",
     "readiness_review.zip",
@@ -30,7 +32,7 @@ EXCLUDED_REPORT_PREFIXES = {
     "DELIVERY_BUNDLE.md",
     "delivery_bundle.zip",
 }
-EXCLUDED_REPORT_DIRS = {"review_site", "dashboard", "agent_board", "evidence_explorer"}
+EXCLUDED_REPORT_DIRS = {"review_site", "dashboard", "agent_board", "evidence_explorer", "local_ui"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "handoff/EVIDENCE_PACKAGE.md",
     "handoff/COLLABORATION_PACK.md",
@@ -63,6 +65,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/ci_summary.json",
     "workspace/CI_VALIDATION.md",
     "workspace/ci_validation.json",
+    "workspace/LOCAL_UI_SUMMARY.md",
+    "workspace/local_ui_summary.json",
     "workspace/PAPER_LINEAGE.md",
     "workspace/paper_lineage.json",
     "workspace/EVIDENCE_QUERY.md",

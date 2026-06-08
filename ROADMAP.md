@@ -755,6 +755,16 @@ Released in v1.43.0 with approved sandbox execution for safe agent tasks.
 
 Released in v1.44.0 with local GitHub Actions CI scaffold generation and validation.
 
+## v1.45.0 — Static local UI console
+
+- [x] Add `openrepro serve build/summary`.
+- [x] Write `reports/local_ui/index.html`, `reports/local_ui_manifest.json`, `workspace/local_ui_summary.json`, and `workspace/LOCAL_UI_SUMMARY.md`.
+- [x] Add optional `reports/local_ui.zip` export.
+- [x] Consolidate workflow, asset, experiment, review, agent, and CI summaries into a local static console.
+- [x] Exclude local UI outputs from evidence fingerprints and asset catalog recursion.
+
+Released in v1.45.0 with a read-only local UI for artifact navigation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.44.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.45.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.44.0 workflow is:
+The v1.45.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
 ```
 
 ## What v0.4.0 supports
@@ -649,6 +649,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Write `workspace/ci_summary.json`, `workspace/CI_SUMMARY.md`, `workspace/ci_validation.json`, and `workspace/CI_VALIDATION.md`.
 - Generate a Python matrix GitHub Actions workflow with editable install, `openrepro --version`, and pytest.
 - Validate the local workflow scaffold without claiming remote CI has run.
+
+## What v1.45.0 adds
+
+- Add `openrepro serve build/summary`.
+- Write `reports/local_ui/index.html`, `reports/local_ui_manifest.json`, `workspace/local_ui_summary.json`, and `workspace/LOCAL_UI_SUMMARY.md`.
+- Add optional `reports/local_ui.zip` export.
+- Consolidate workflow, assets, experiments, review surfaces, agent state, and CI links into a static local console.
+- Keep the local UI read-only: it does not run experiments, refresh artifacts, or claim scientific reproduction.
 
 ## Current limitations
 
@@ -1636,6 +1644,26 @@ Actions runs.
 
 Shows the current local CI scaffold summary.
 
+### `openrepro serve build <project_name> [--zip]`
+
+Builds a static local UI and writes:
+
+```text
+reports/local_ui/index.html
+reports/local_ui_manifest.json
+workspace/local_ui_summary.json
+workspace/LOCAL_UI_SUMMARY.md
+reports/local_ui.zip
+```
+
+The UI consolidates workflow, asset, experiment, review, agent, and CI summaries
+for local navigation. It reads existing artifacts only and does not start a
+server or execute project work.
+
+### `openrepro serve summary <project_name>`
+
+Shows the current static local UI summary.
+
 ### `openrepro freshness <project_name>`
 
 Explains stale or missing derived artifacts and writes:
@@ -2493,12 +2521,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.42.0: experiment evaluation registry and metric leaderboards.
 - v1.43.0: approved sandbox execution for safe agent tasks.
 - v1.44.0: local GitHub Actions CI scaffold and validation.
+- v1.45.0: static local UI console for artifact navigation.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.44.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.45.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

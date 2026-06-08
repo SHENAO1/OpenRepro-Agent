@@ -59,6 +59,7 @@ from .gaps import generate_reproduction_gaps
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
+from .local_ui import generate_local_ui, local_ui_summary
 from .multi_agent_plan import generate_multi_agent_plan
 from .multi_agent_plan_validation import validate_multi_agent_plan
 from .paper_lineage import generate_paper_lineage
@@ -102,6 +103,8 @@ agent_app = typer.Typer(help="Run approved safe agent tasks in a local sandbox."
 app.add_typer(agent_app, name="agent")
 ci_app = typer.Typer(help="Generate and validate local GitHub Actions CI scaffolding.", no_args_is_help=True)
 app.add_typer(ci_app, name="ci")
+serve_app = typer.Typer(help="Build static local project UI artifacts.", no_args_is_help=True)
+app.add_typer(serve_app, name="serve")
 runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
@@ -2807,6 +2810,42 @@ def ci_summary_cmd(project_name: str = typer.Argument(..., help="Project directo
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "workflow_path", "test_command", "sha256"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+
+
+@serve_app.command("build")
+def serve_build_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/local_ui.zip."),
+) -> None:
+    """Build a static local UI for project artifact navigation."""
+    project_dir = require_project(project_name)
+    result = generate_local_ui(project_dir, export_zip=export_zip)
+    table = Table(title=f"Local UI: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "panel_count", "present_panel_count", "missing_panel_count", "artifact_link_count", "missing_artifact_link_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'local_ui' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'local_ui_manifest.json'}")
+    console.print(f"Summary: {project_dir / 'workspace' / 'local_ui_summary.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'LOCAL_UI_SUMMARY.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'local_ui.zip'}")
+    _success("Local UI generated.")
+
+
+@serve_app.command("summary")
+def serve_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing static local UI summary."""
+    project_dir = require_project(project_name)
+    result = local_ui_summary(project_dir)
+    table = Table(title=f"Local UI Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "path", "panel_count", "present_panel_count", "missing_panel_count", "missing_artifact_link_count", "sha256"]:
         table.add_row(key, str(result.get(key)))
     console.print(table)
 
