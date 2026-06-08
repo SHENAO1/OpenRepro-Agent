@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.40.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.41.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -14,6 +14,7 @@ OpenRepro-Agent v1.40.0 uses a small modular CLI architecture.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `asset_catalog.py`: unified source, data, experiment, run, report, handoff, workspace, and config asset catalog.
 - `artifact_cache.py`: local content-addressed cache for observed project artifacts and cache validation.
+- `artifact_cache_remote.py`: local remote cache configuration, push/pull transfer, and restore planning.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, opt-in OpenAI-compatible provider, and request-hash cache.
 - `data_profile.py`: registered data profiling and lightweight schema warnings for CSV, TSV, JSON, and JSONL.
@@ -72,6 +73,7 @@ sources/ + project_config.yaml
   → openrepro.pipeline.yaml + workspace/pipeline_plan.json + pipeline_validation.json
   → workspace/asset_catalog.json + ASSET_CATALOG.md
   → workspace/artifact_cache.json + ARTIFACT_CACHE.md
+  → workspace/artifact_cache_remotes.json + cache_restore_plan.json
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md

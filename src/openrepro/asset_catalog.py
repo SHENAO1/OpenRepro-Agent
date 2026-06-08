@@ -19,6 +19,14 @@ CATALOG_OUTPUTS = {
     "workspace/ARTIFACT_CACHE.md",
     "workspace/artifact_cache_validation.json",
     "workspace/ARTIFACT_CACHE_VALIDATION.md",
+    "workspace/artifact_cache_remotes.json",
+    "workspace/ARTIFACT_CACHE_REMOTES.md",
+    "workspace/artifact_cache_push.json",
+    "workspace/ARTIFACT_CACHE_PUSH.md",
+    "workspace/artifact_cache_pull.json",
+    "workspace/ARTIFACT_CACHE_PULL.md",
+    "workspace/cache_restore_plan.json",
+    "workspace/CACHE_RESTORE_PLAN.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

@@ -715,6 +715,16 @@ Released in v1.39.0 with local content-addressed artifact caching.
 
 Released in v1.40.0 with durable workflow execution sessions.
 
+## v1.41.0 — Remote artifact cache
+
+- [x] Add `openrepro cache remote-add/remote-list/push/pull/restore`.
+- [x] Write `workspace/artifact_cache_remotes.json` and `workspace/ARTIFACT_CACHE_REMOTES.md`.
+- [x] Push and pull content-addressed blobs through a local remote backend.
+- [x] Write transfer summaries in `workspace/artifact_cache_push.json` and `workspace/artifact_cache_pull.json`.
+- [x] Generate dry-run and confirmed restore plans in `workspace/cache_restore_plan.json` and `workspace/CACHE_RESTORE_PLAN.md`.
+
+Released in v1.41.0 with local remote cache transfer and restore planning.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

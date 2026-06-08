@@ -19,6 +19,7 @@ from .analyzer import analyze_project
 from .approval import approve_candidates
 from .asset_catalog import generate_asset_catalog, generate_asset_catalog_graph, get_catalog_asset, list_catalog_assets
 from .artifact_cache import add_artifact_cache, gc_artifact_cache, list_artifact_cache, verify_artifact_cache
+from .artifact_cache_remote import configure_cache_remote, list_cache_remotes, pull_artifact_cache, push_artifact_cache, restore_artifact_cache
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
@@ -2023,6 +2024,117 @@ def cache_gc_cmd(project_name: str = typer.Argument(..., help="Project directory
         table.add_row(key, str(result.get(key)))
     console.print(table)
     _success("Artifact cache garbage collection completed.")
+
+
+@cache_app.command("remote-add")
+def cache_remote_add_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    name: str = typer.Option(..., "--name", help="Remote name."),
+    uri: str = typer.Option(..., "--uri", help="Remote URI or local path."),
+    remote_type: str = typer.Option("local", "--type", help="Remote type: local, s3, or ssh."),
+    make_default: bool = typer.Option(False, "--default", help="Make this the default cache remote."),
+) -> None:
+    """Add or update an artifact cache remote."""
+    project_dir = require_project(project_name)
+    try:
+        result = configure_cache_remote(project_dir, name=name, uri=uri, remote_type=remote_type, make_default=make_default)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Artifact Cache Remotes: {project_name}")
+    table.add_column("Name")
+    table.add_column("Type")
+    table.add_column("URI")
+    table.add_column("Default")
+    table.add_column("Supported")
+    for remote in result["remotes"]:
+        table.add_row(str(remote.get("name")), str(remote.get("type")), str(remote.get("uri")), str(remote.get("default")), str(remote.get("supported")))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'artifact_cache_remotes.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ARTIFACT_CACHE_REMOTES.md'}")
+    _success("Artifact cache remote configured.")
+
+
+@cache_app.command("remote-list")
+def cache_remote_list_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """List artifact cache remotes."""
+    project_dir = require_project(project_name)
+    result = list_cache_remotes(project_dir)
+    table = Table(title=f"Artifact Cache Remotes: {project_name}")
+    table.add_column("Name")
+    table.add_column("Type")
+    table.add_column("URI")
+    table.add_column("Default")
+    table.add_column("Supported")
+    for remote in result["remotes"]:
+        table.add_row(str(remote.get("name")), str(remote.get("type")), str(remote.get("uri")), str(remote.get("default")), str(remote.get("supported")))
+    console.print(table)
+
+
+@cache_app.command("push")
+def cache_push_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    remote: str | None = typer.Option(None, "--remote", help="Remote name. Defaults to the configured default remote."),
+) -> None:
+    """Push local artifact cache blobs to a configured remote."""
+    project_dir = require_project(project_name)
+    try:
+        result = push_artifact_cache(project_dir, remote=remote)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _print_cache_transfer(project_dir, result, "Artifact cache pushed.")
+
+
+@cache_app.command("pull")
+def cache_pull_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    remote: str | None = typer.Option(None, "--remote", help="Remote name. Defaults to the configured default remote."),
+) -> None:
+    """Pull artifact cache blobs from a configured remote."""
+    project_dir = require_project(project_name)
+    try:
+        result = pull_artifact_cache(project_dir, remote=remote)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    _print_cache_transfer(project_dir, result, "Artifact cache pulled.")
+
+
+@cache_app.command("restore")
+def cache_restore_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    remote: str | None = typer.Option(None, "--remote", help="Remote name to pull before restore planning."),
+    confirm: bool = typer.Option(False, "--confirm", help="Actually restore missing files from cached blobs."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Restore changed files as well as missing files."),
+) -> None:
+    """Plan or restore files from local or remote artifact cache blobs."""
+    project_dir = require_project(project_name)
+    try:
+        result = restore_artifact_cache(project_dir, remote=remote, confirm=confirm, overwrite=overwrite)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Cache Restore: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "confirmed", "overwrite", "action_count", "restore_action_count", "restored_count", "skipped_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'cache_restore_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CACHE_RESTORE_PLAN.md'}")
+    _success("Cache restore completed." if confirm else "Cache restore plan generated.")
+
+
+def _print_cache_transfer(project_dir: Path, result: dict, success_message: str) -> None:
+    table = Table(title=f"Artifact Cache Remote: {project_dir.name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "cached_file_count", "copied_blob_count", "skipped_blob_count", "remote_manifest_path"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"Remote: {result.get('remote', {}).get('name')}")
+    _success(success_message)
 
 
 @app.command("lineage")
