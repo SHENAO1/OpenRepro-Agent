@@ -61,6 +61,7 @@ from .github_pr_summary import generate_github_pr_summary, github_pr_summary_sta
 from .golden_path import run_golden_path
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
+from .integrations import export_integrations, integrations_summary
 from .lineage import generate_run_lineage
 from .local_ui import generate_local_ui, local_ui_summary
 from .multi_agent_plan import generate_multi_agent_plan
@@ -133,6 +134,8 @@ github_app = typer.Typer(help="Generate local GitHub review artifacts.", no_args
 app.add_typer(github_app, name="github")
 security_app = typer.Typer(help="Initialize and run local security audits.", no_args_is_help=True)
 app.add_typer(security_app, name="security")
+integrations_app = typer.Typer(help="Export optional integration adapter artifacts.", no_args_is_help=True)
+app.add_typer(integrations_app, name="integrations")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -937,6 +940,39 @@ def security_summary_cmd(project_name: str = typer.Argument(..., help="Project d
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "valid", "finding_count", "critical_count", "high_count", "medium_count", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
+
+
+@integrations_app.command("export")
+def integrations_export_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: list[str] | None = typer.Option(None, "--target", help="Integration target. Repeat for mlflow, aim, dvc, or hydra."),
+) -> None:
+    """Export declaration-only adapter artifacts for external tools."""
+    project_dir = require_project(project_name)
+    result = export_integrations(project_dir, targets=target)
+    table = Table(title=f"Integration Exports: {project_name}")
+    table.add_column("Target", style="bold")
+    table.add_column("Status")
+    table.add_column("Path")
+    for artifact in result["artifacts"]:
+        table.add_row(str(artifact["target"]), str(artifact["status"]), str(artifact["path"]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'integrations.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'INTEGRATIONS.md'}")
+    _success("Integration adapter artifacts exported.")
+
+
+@integrations_app.command("summary")
+def integrations_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing integration export summary."""
+    project_dir = require_project(project_name)
+    summary = integrations_summary(project_dir)
+    table = Table(title=f"Integration Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "target_count", "targets", "path", "markdown_path"]:
         table.add_row(key, str(summary.get(key)))
     console.print(table)
 

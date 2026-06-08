@@ -825,6 +825,16 @@ Released in v1.50.0 with local static security audit guardrails.
 
 Released in v1.51.0 with a lower-friction first-run path and a simple reproducible open-paper toy example.
 
+## v1.52.0 — Declaration-only integration exports
+
+- [x] Add `openrepro integrations export/summary`.
+- [x] Write MLflow, Aim, DVC, and Hydra adapter artifacts under `integrations/`.
+- [x] Write `workspace/integrations.json` and `workspace/INTEGRATIONS.md`.
+- [x] Keep integration exports dependency-free and non-executing.
+- [x] Treat generated files as supervised starting points rather than evidence that external tools ran.
+
+Released in v1.52.0 with lightweight interoperability artifacts for common experiment tooling.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
