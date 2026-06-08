@@ -73,6 +73,7 @@ WORKSPACE_ARTIFACTS = [
     "reproduction_gaps.json",
     "workflow_checkpoints.json",
     "workflow_execution.json",
+    "agent_sandbox_run.json",
     "advance_plan.json",
     "review_board.json",
     "review_decisions.json",

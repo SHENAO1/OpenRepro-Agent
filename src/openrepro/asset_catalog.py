@@ -33,6 +33,9 @@ CATALOG_OUTPUTS = {
     "workspace/EVALUATION_RESULTS.md",
     "workspace/experiment_leaderboard.json",
     "workspace/EXPERIMENT_LEADERBOARD.md",
+    "workspace/agent_sandbox_run.json",
+    "workspace/AGENT_SANDBOX_RUN.md",
+    "workspace/agent_sandbox_trajectory.jsonl",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

@@ -132,6 +132,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "ARTIFACT_CACHE_PUSH.md",
         project_dir / "workspace" / "ARTIFACT_CACHE_PULL.md",
         project_dir / "workspace" / "CACHE_RESTORE_PLAN.md",
+        project_dir / "workspace" / "AGENT_SANDBOX_RUN.md",
         project_dir / "reports" / "run_explorer" / "index.html",
         project_dir / "reports" / "claim_evidence_report.md",
         project_dir / "reports" / "reviewer_packet.md",

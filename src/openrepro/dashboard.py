@@ -152,6 +152,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "CACHE_RESTORE_PLAN.md",
         project_dir / "workspace" / "AGENT_ADAPTER.md",
         project_dir / "workspace" / "AGENT_ADAPTER_VALIDATION.md",
+        project_dir / "workspace" / "AGENT_SANDBOX_RUN.md",
         project_dir / "workspace" / "agent_trajectory.jsonl",
         project_dir / "handoff" / "COLLABORATION_PACK.md",
         project_dir / "workspace" / "PROJECT_TIMELINE.md",

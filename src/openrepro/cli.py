@@ -15,6 +15,7 @@ from .agent_adapter import generate_agent_adapter, validate_agent_adapter
 from .agent_board import generate_agent_board
 from .agent_dispatch import generate_agent_dispatch
 from .agent_exec_plan import generate_agent_exec_plan
+from .agent_sandbox import run_agent_sandbox
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .asset_catalog import generate_asset_catalog, generate_asset_catalog_graph, get_catalog_asset, list_catalog_assets
@@ -96,6 +97,8 @@ app = typer.Typer(
 )
 workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workflow DAG.", no_args_is_help=True)
 app.add_typer(workflow_app, name="workflow")
+agent_app = typer.Typer(help="Run approved safe agent tasks in a local sandbox.", no_args_is_help=True)
+app.add_typer(agent_app, name="agent")
 runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
@@ -2867,6 +2870,57 @@ def delivery_bundle_cmd(
     if export_zip:
         console.print(f"Zip: {project_dir / 'reports' / 'delivery_bundle.zip'}")
     _success("Delivery bundle generated.")
+
+
+@agent_app.command("run")
+def agent_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    role: str | None = typer.Option(None, "--role", help="Agent role id to run, such as maintainer."),
+    confirm: bool = typer.Option(False, "--confirm", help="Execute instead of dry-running sandbox steps."),
+    approve: bool = typer.Option(False, "--approve", help="Required with --confirm to approve sandbox execution."),
+    max_steps: int = typer.Option(1, "--max-steps", min=0, help="Maximum safe steps to run."),
+    continue_on_error: bool = typer.Option(False, "--continue-on-error", help="Continue after blocked or failed sandbox steps."),
+) -> None:
+    """Run or dry-run approved safe agent tasks in a local sandbox."""
+    project_dir = require_project(project_name)
+    result = run_agent_sandbox(
+        project_dir,
+        role=role,
+        confirm=confirm,
+        approved=approve,
+        max_steps=max_steps,
+        continue_on_error=continue_on_error,
+    )
+    table = Table(title=f"Agent Sandbox: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "status",
+        "role",
+        "confirmed",
+        "approved",
+        "selected_step_count",
+        "passed_step_count",
+        "blocked_step_count",
+        "failed_step_count",
+        "dry_run_step_count",
+    ]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_sandbox_run.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_SANDBOX_RUN.md'}")
+    console.print(f"Trajectory: {project_dir / 'workspace' / 'agent_sandbox_trajectory.jsonl'}")
+    console.print(f"Logs: {project_dir / result['logs_dir']}")
+    if result["status"] == "dry_run":
+        _warn("Agent sandbox was a dry run. Pass --confirm --approve to execute safe steps.")
+    elif result["status"] == "complete":
+        _success("Agent sandbox completed.")
+    elif result["status"] == "blocked":
+        _warn("Agent sandbox is blocked.")
+        raise typer.Exit(1)
+    else:
+        _warn("Agent sandbox failed.")
+        raise typer.Exit(1)
 
 
 @app.command("multi-agent-plan")

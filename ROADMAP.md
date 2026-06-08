@@ -735,6 +735,16 @@ Released in v1.41.0 with local remote cache transfer and restore planning.
 
 Released in v1.42.0 with experiment evaluation suites and leaderboards.
 
+## v1.43.0 — Sandboxed agent executor
+
+- [x] Add `openrepro agent run`.
+- [x] Write `workspace/agent_sandbox_run.json`, `workspace/AGENT_SANDBOX_RUN.md`, and append `workspace/agent_sandbox_trajectory.jsonl`.
+- [x] Capture per-step sandbox logs under `workspace/agent_sandbox/<run_id>/`.
+- [x] Require both `--confirm` and `--approve` for execution.
+- [x] Execute only allowlisted safe derived-artifact commands from `agent_exec_plan.json`.
+
+Released in v1.43.0 with approved sandbox execution for safe agent tasks.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
