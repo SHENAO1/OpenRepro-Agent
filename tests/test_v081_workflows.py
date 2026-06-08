@@ -77,6 +77,23 @@ def test_numeric_sweep_template_cli(tmp_path: Path, monkeypatch):
     assert validate_run_manifest(run_dir)["valid"] is True
 
 
+def test_random_search_toy_template_writes_declared_artifacts(tmp_path: Path):
+    project = _prepare_project(tmp_path)
+
+    summary = scaffold_experiment(project, experiment_id="random_search_exp", template="random-search-toy")
+    metadata = run_experiment(project, "random_search_exp", confirm=True)
+    run_dir = Path(metadata["run_dir"])
+    manifest = read_json(run_dir / "manifest.json")
+    metrics = read_json(run_dir / "data" / "metrics.json")
+
+    assert summary["template"] == "random-search-toy"
+    assert (run_dir / "data" / "search_trials.csv").exists()
+    assert "data/search_trials.csv" in manifest["required_artifacts"]
+    assert metrics["template"] == "random-search-toy"
+    assert metrics["random_better"] is True
+    assert validate_run_manifest(run_dir)["valid"] is True
+
+
 def test_run_experiment_fails_when_template_artifact_is_missing(tmp_path: Path):
     project = _prepare_project(tmp_path)
     summary = scaffold_experiment(project, experiment_id="missing_artifact_exp", template="boc-like")

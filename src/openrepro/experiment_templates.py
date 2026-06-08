@@ -51,6 +51,16 @@ EXPERIMENT_TEMPLATES: dict[str, dict[str, Any]] = {
         "required_inputs": [],
         "optional_inputs": ["noise_std", "noise_std_values", "seed"],
     },
+    "random-search-toy": {
+        "name": "random-search-toy",
+        "purpose": "Toy runner for the random-search-vs-grid-search claim from Bergstra and Bengio 2012.",
+        "use_case": "Use for simple open-paper demos where only a few hyperparameters matter.",
+        "required": ["data/metrics.json", "data/search_trials.csv"],
+        "optional": ["figures/result.png"],
+        "input_hints": ["trial_count", "dimension_count", "seed"],
+        "required_inputs": [],
+        "optional_inputs": ["trial_count", "dimension_count", "seed"],
+    },
 }
 
 

@@ -18,6 +18,7 @@ TEMPLATE_METRICS = {
     "basic": [],
     "boc-like": ["template", "seed", "code_length", "noise_std", "mean_correlation", "signal_energy"],
     "numeric-sweep": ["template", "sweep_count", "best_noise_std", "best_stability_score"],
+    "random-search-toy": ["template", "trial_count", "dimension_count", "random_best_loss", "grid_best_loss", "random_better"],
 }
 
 

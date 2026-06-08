@@ -58,6 +58,7 @@ from .experiment_templates import list_experiment_templates
 from .freshness import generate_artifact_freshness
 from .gaps import generate_reproduction_gaps
 from .github_pr_summary import generate_github_pr_summary, github_pr_summary_status
+from .golden_path import run_golden_path
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -166,6 +167,42 @@ def init_cmd(project_name: str = typer.Argument(..., help="Project directory nam
     console.print("\nNext steps:")
     for step in result.next_steps:
         console.print(f"  - {step}")
+
+
+@app.command("start")
+def start_cmd(
+    project_name: str = typer.Argument(..., help="Project directory name for the golden path run."),
+    source: Path | None = typer.Option(None, "--source", "-s", help="Markdown/txt/PDF source file. Defaults to the packaged random-search notes."),
+    template: str = typer.Option("random-search-toy", "--template", help="Experiment template for the starter scaffold."),
+    experiment_id: str = typer.Option("random_search_demo", "--experiment-id", help="Experiment id for the starter scaffold."),
+    reviewer: str = typer.Option("openrepro-start", "--reviewer", help="Reviewer name recorded in demo candidate approval artifacts."),
+    run: bool = typer.Option(True, "--run/--no-run", help="Run the generated starter experiment and quality gate."),
+) -> None:
+    """Run the smallest useful paper-to-evidence workflow."""
+    result = run_golden_path(
+        project_name,
+        source=source,
+        template=template,
+        experiment_id=experiment_id,
+        reviewer=reviewer,
+        run=run,
+    )
+    table = Table(title="OpenRepro Golden Path")
+    table.add_column("Step", style="bold")
+    table.add_column("Status")
+    table.add_column("Detail")
+    for step in result["steps"]:
+        table.add_row(
+            str(step.get("step")),
+            str(step.get("status")),
+            str(step.get("run_dir") or step.get("path") or step.get("experiment_dir") or ""),
+        )
+    console.print(table)
+    _success(f"Golden path status: {result['status']}")
+    console.print(f"Project: {result['project_dir']}")
+    if result.get("run_dir"):
+        console.print(f"Run: {result['run_dir']}")
+    console.print(f"Summary: {Path(result['project_dir']) / 'workspace' / 'GOLDEN_PATH.md'}")
 
 
 @app.command("ingest")
@@ -1723,7 +1760,7 @@ def scaffold_experiment_cmd(
     template: str = typer.Option(
         "basic",
         "--template",
-        help="Experiment template: basic, boc-like, or numeric-sweep.",
+        help="Experiment template name.",
     ),
     acknowledge_candidates: bool = typer.Option(
         False,

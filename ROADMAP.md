@@ -815,6 +815,16 @@ Released in v1.49.0 with local PR review comment generation.
 
 Released in v1.50.0 with local static security audit guardrails.
 
+## v1.51.0 — Golden path and simple open-paper toy workflow
+
+- [x] Add `openrepro start <project>` as a one-command golden path for first-run users.
+- [x] Package a simple open-paper note set based on Bergstra and Bengio 2012 random search.
+- [x] Add a `random-search-toy` experiment template with deterministic same-budget random-search/grid-search outputs.
+- [x] Write `workspace/golden_path.json` and `workspace/GOLDEN_PATH.md` for auditable shortcut execution.
+- [x] Keep the shortcut and toy runner as workflow evidence only, not a full paper reproduction claim.
+
+Released in v1.51.0 with a lower-friction first-run path and a simple reproducible open-paper toy example.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

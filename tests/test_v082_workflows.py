@@ -37,12 +37,13 @@ def test_list_templates_exposes_metadata():
     boc_template = next(item for item in templates if item["name"] == "boc-like")
     cli_result = runner.invoke(app, ["list-templates"])
 
-    assert names == {"basic", "boc-like", "numeric-sweep"}
+    assert names == {"basic", "boc-like", "numeric-sweep", "random-search-toy"}
     assert "data/boc_trace.csv" in boc_template["required"]
     assert "code_length" in boc_template["input_hints"]
     assert cli_result.exit_code == 0, cli_result.output
     assert "boc-like" in cli_result.output
     assert "numeric-sweep" in cli_result.output
+    assert "random-search-toy" in cli_result.output
 
 
 def test_inspect_and_status_surface_template_scaffolds(tmp_path: Path):
