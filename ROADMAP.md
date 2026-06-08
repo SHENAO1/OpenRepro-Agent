@@ -695,6 +695,16 @@ Released in v1.37.0 with declarative pipeline specs.
 
 Released in v1.38.0 with experiment-level tracking over indexed run evidence.
 
+## v1.39.0 — Local artifact cache
+
+- [x] Add `openrepro cache add/list/verify/gc`.
+- [x] Store observed project artifacts in `.openrepro/cache/sha256/<prefix>/<sha256>`.
+- [x] Write `workspace/artifact_cache.json`, `workspace/ARTIFACT_CACHE.md`, `workspace/artifact_cache_validation.json`, and `workspace/ARTIFACT_CACHE_VALIDATION.md`.
+- [x] Exclude cache outputs from asset catalogs and evidence fingerprints.
+- [x] Refresh the artifact cache after the asset catalog.
+
+Released in v1.39.0 with local content-addressed artifact caching.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

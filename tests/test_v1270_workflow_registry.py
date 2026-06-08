@@ -26,7 +26,7 @@ def test_generate_workflow_state_for_initialized_project(tmp_path: Path):
     state = generate_workflow_state(project)
     summary = workflow_state_summary(project)
 
-    assert state["schema_version"] == "1.38.0"
+    assert state["schema_version"] == "1.39.0"
     assert state["status"] == "needs_work"
     assert state["step_count"] > 40
     assert state["complete_step_count"] == 1
@@ -35,7 +35,7 @@ def test_generate_workflow_state_for_initialized_project(tmp_path: Path):
     assert (project / "workspace" / "workflow_state.json").exists()
     assert (project / "workspace" / "WORKFLOW_STATE.md").exists()
     assert summary["present"] is True
-    assert summary["schema_version"] == "1.38.0"
+    assert summary["schema_version"] == "1.39.0"
 
 
 def test_workflow_state_complete_after_refresh_project(tmp_path: Path):
@@ -69,7 +69,7 @@ def test_workflow_run_dry_run_writes_plan(tmp_path: Path):
 
     result = run_workflow(project, step_id="ingest")
 
-    assert result["schema_version"] == "1.38.0"
+    assert result["schema_version"] == "1.39.0"
     assert result["status"] == "dry_run"
     assert result["selected_step_count"] == 1
     assert result["steps"][0]["step_id"] == "ingest"

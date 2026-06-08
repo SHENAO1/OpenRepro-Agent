@@ -82,6 +82,8 @@ WORKSPACE_ARTIFACTS = [
     "experiment_comparison.json",
     "experiment_tracking.json",
     "experiment_tracking_comparison.json",
+    "artifact_cache.json",
+    "artifact_cache_validation.json",
     "run_comparison.json",
     "run_lineage.json",
     "doctor.json",

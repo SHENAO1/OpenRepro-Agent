@@ -18,6 +18,7 @@ from .agent_exec_plan import generate_agent_exec_plan
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .asset_catalog import generate_asset_catalog, generate_asset_catalog_graph, get_catalog_asset, list_catalog_assets
+from .artifact_cache import add_artifact_cache, gc_artifact_cache, list_artifact_cache, verify_artifact_cache
 from .artifact_manager import latest_run_dir, validate_all_run_manifests, validate_run_manifest
 from .benchmark_runner import generate_benchmark_index, run_benchmark, run_benchmark_suite
 from .candidate_review import list_candidates, review_candidates
@@ -102,6 +103,8 @@ pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepr
 app.add_typer(pipeline_app, name="pipeline")
 experiments_app = typer.Typer(help="Track and compare experiment-level run evidence.", no_args_is_help=True)
 app.add_typer(experiments_app, name="experiments")
+cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
+app.add_typer(cache_app, name="cache")
 console = Console()
 
 
@@ -1948,6 +1951,77 @@ def catalog_graph_cmd(project_name: str = typer.Argument(..., help="Project dire
     graph = generate_asset_catalog_graph(project_dir)
     console.print(f"Graph: {graph['path']}")
     _success("Asset catalog graph generated.")
+
+
+@cache_app.command("add")
+def cache_add_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    path: Path | None = typer.Option(None, "--path", help="Specific file or directory to add. Defaults to standard project artifacts."),
+) -> None:
+    """Add project artifacts to the local content-addressed cache."""
+    project_dir = require_project(project_name)
+    try:
+        cache = add_artifact_cache(project_dir, target=path)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Artifact Cache: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "cached_file_count", "blob_count", "total_size_bytes"]:
+        table.add_row(key, str(cache.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'artifact_cache.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ARTIFACT_CACHE.md'}")
+    _success("Artifact cache updated.")
+
+
+@cache_app.command("list")
+def cache_list_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """List local artifact cache entries."""
+    project_dir = require_project(project_name)
+    cache = list_artifact_cache(project_dir)
+    table = Table(title=f"Cached Artifacts: {project_name}")
+    table.add_column("Path")
+    table.add_column("Size")
+    table.add_column("SHA-256")
+    table.add_column("Cache path")
+    for entry in cache["entries"]:
+        table.add_row(str(entry.get("path")), str(entry.get("size_bytes")), str(entry.get("sha256")), str(entry.get("cache_path")))
+    console.print(table)
+    console.print(f"Cached files: {cache['cached_file_count']}")
+
+
+@cache_app.command("verify")
+def cache_verify_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Verify cached blobs against their recorded hashes."""
+    project_dir = require_project(project_name)
+    result = verify_artifact_cache(project_dir)
+    table = Table(title=f"Artifact Cache Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "valid", "checked_file_count", "missing_blob_count", "corrupt_blob_count", "source_changed_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'artifact_cache_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ARTIFACT_CACHE_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Artifact cache validation passed.")
+
+
+@cache_app.command("gc")
+def cache_gc_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Remove unreferenced local cache blobs."""
+    project_dir = require_project(project_name)
+    result = gc_artifact_cache(project_dir)
+    table = Table(title=f"Artifact Cache GC: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "removed_blob_count", "retained_blob_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    _success("Artifact cache garbage collection completed.")
 
 
 @app.command("lineage")

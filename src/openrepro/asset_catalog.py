@@ -15,6 +15,10 @@ CATALOG_OUTPUTS = {
     "workspace/asset_catalog.json",
     "workspace/ASSET_CATALOG.md",
     "workspace/ASSET_CATALOG_GRAPH.md",
+    "workspace/artifact_cache.json",
+    "workspace/ARTIFACT_CACHE.md",
+    "workspace/artifact_cache_validation.json",
+    "workspace/ARTIFACT_CACHE_VALIDATION.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

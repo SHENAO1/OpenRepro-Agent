@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.38.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.39.0"
 
 
 @dataclass(frozen=True)
@@ -653,6 +653,15 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("workspace/asset_catalog.json", "workspace/ASSET_CATALOG.md", "workspace/ASSET_CATALOG_GRAPH.md"),
         ("pipeline_spec",),
     ),
+    WorkflowStep(
+        "artifact_cache",
+        "Artifact cache",
+        "delivery",
+        "Store observed project artifacts in a local content-addressed cache.",
+        "openrepro cache add <project>",
+        ("workspace/artifact_cache.json", "workspace/ARTIFACT_CACHE.md"),
+        ("asset_catalog",),
+    ),
 )
 
 
@@ -884,6 +893,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
     from .asset_catalog import generate_asset_catalog
+    from .artifact_cache import add_artifact_cache
     from .checkpoints import generate_workflow_checkpoints
     from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
     from .claim_evidence_report import generate_claim_evidence_report
@@ -984,6 +994,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "workflow_preset": lambda project_dir: generate_workflow_preset(project_dir, preset="delivery"),
         "pipeline_spec": refresh_pipeline_spec,
         "asset_catalog": generate_asset_catalog,
+        "artifact_cache": add_artifact_cache,
     }
 
 

@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.38.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.39.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.38.0 workflow is:
+The v1.39.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → pipeline export/plan/validate → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → cache add/list/verify/gc → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → pipeline export/plan/validate → catalog build/list/show/graph → cache add/list/verify/gc → status
 ```
 
 ## What v0.4.0 supports
@@ -602,6 +602,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Write experiment tracking comparisons in `workspace/experiment_tracking_comparison.json` and `workspace/EXPERIMENT_TRACKING_COMPARISON.md`.
 - Refresh now generates experiment tracking after the run index.
 
+## What v1.39.0 adds
+
+- Add `openrepro cache add/list/verify/gc`.
+- Store observed project artifacts in `.openrepro/cache/sha256/<prefix>/<sha256>`.
+- Write `workspace/artifact_cache.json`, `workspace/ARTIFACT_CACHE.md`, `workspace/artifact_cache_validation.json`, and `workspace/ARTIFACT_CACHE_VALIDATION.md`.
+- Exclude cache outputs from asset catalogs and evidence fingerprints so refreshes stay stable.
+- Refresh now generates the artifact cache after the asset catalog.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -688,6 +696,8 @@ openrepro quality-gate boc_demo
 openrepro validate boc_demo
 openrepro compare-runs boc_demo
 openrepro catalog build boc_demo
+openrepro cache add boc_demo
+openrepro cache verify boc_demo
 openrepro quality-gate boc_demo --all
 openrepro lineage boc_demo
 openrepro trace-claims boc_demo --validate
@@ -732,6 +742,9 @@ openrepro multi-agent-plan boc_demo
 openrepro pipeline export boc_demo
 openrepro pipeline plan boc_demo
 openrepro pipeline validate boc_demo
+openrepro catalog build boc_demo
+openrepro cache add boc_demo
+openrepro cache verify boc_demo
 openrepro status boc_demo
 ```
 
@@ -1971,6 +1984,40 @@ Shows one catalog asset record, including metadata and relations.
 Regenerates `workspace/ASSET_CATALOG_GRAPH.md` with a Mermaid graph view of the
 catalog. The graph is navigation only; it does not verify scientific claims.
 
+### `openrepro cache add <project_name> [--path PATH]`
+
+Adds standard project artifacts, or one specific file/directory, to the local
+content-addressed cache and writes:
+
+```text
+workspace/artifact_cache.json
+workspace/ARTIFACT_CACHE.md
+.openrepro/cache/sha256/<prefix>/<sha256>
+```
+
+The cache stores observed bytes by SHA-256 for offline reuse and drift checks.
+It is not a provenance guarantee or a scientific validation result.
+
+### `openrepro cache list <project_name>`
+
+Lists cached artifact records in the console.
+
+### `openrepro cache verify <project_name>`
+
+Verifies cached blobs against recorded hashes and writes:
+
+```text
+workspace/artifact_cache_validation.json
+workspace/ARTIFACT_CACHE_VALIDATION.md
+```
+
+The validation also reports changed source files while treating intact cached
+blobs as valid.
+
+### `openrepro cache gc <project_name>`
+
+Removes unreferenced local cache blobs under `.openrepro/cache/sha256/`.
+
 ### `openrepro lineage <project_name>`
 
 Writes project run lineage artifacts:
@@ -2249,12 +2296,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.36.0: lightweight data expectation suites and validation results.
 - v1.37.0: declarative pipeline spec export, planning, and validation.
 - v1.38.0: experiment-level tracking over indexed run evidence.
+- v1.39.0: local content-addressed artifact cache and verification.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.38.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.39.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
