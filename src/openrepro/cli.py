@@ -65,6 +65,7 @@ from .multi_agent_plan import generate_multi_agent_plan
 from .multi_agent_plan_validation import validate_multi_agent_plan
 from .paper_lineage import generate_paper_lineage
 from .pipeline_spec import export_pipeline_spec, plan_pipeline, validate_pipeline_spec
+from .plugin_registry import build_plugin_registry, plugin_registry_summary, register_plugin, validate_plugin_registry
 from .planner import generate_experiment_plan
 from .protocol_coverage import generate_protocol_coverage
 from .protocol_plan import generate_protocol_plan
@@ -120,6 +121,8 @@ experiments_app = typer.Typer(help="Track and compare experiment-level run evide
 app.add_typer(experiments_app, name="experiments")
 eval_app = typer.Typer(help="Define and run experiment metric evaluations.", no_args_is_help=True)
 app.add_typer(eval_app, name="eval")
+plugins_app = typer.Typer(help="Register and validate declarative project plugins.", no_args_is_help=True)
+app.add_typer(plugins_app, name="plugins")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -615,6 +618,97 @@ def eval_run_cmd(
     if result["status"] == "failed":
         raise typer.Exit(1)
     _success("Evaluation suite passed.")
+
+
+@plugins_app.command("register")
+def plugins_register_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    plugin_id: str = typer.Option(..., "--id", help="Plugin id."),
+    kind: str = typer.Option("command", "--kind", help="Plugin kind: command, provider, reporter, or evaluator."),
+    entrypoint: str = typer.Option(..., "--entrypoint", help="Command, provider label, or supervised entrypoint."),
+    description: str = typer.Option("", "--description", help="Short plugin description."),
+    capability: list[str] | None = typer.Option(None, "--capability", help="Capability label. Repeat to add more."),
+    run_mode: str = typer.Option("declaration", "--run-mode", help="declaration, external_supervised, or safe_command."),
+    disabled: bool = typer.Option(False, "--disabled", help="Register the plugin as disabled."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Update an existing plugin id."),
+) -> None:
+    """Register a declarative project plugin."""
+    project_dir = require_project(project_name)
+    try:
+        registry = register_plugin(
+            project_dir,
+            plugin_id=plugin_id,
+            kind=kind,
+            entrypoint=entrypoint,
+            description=description,
+            capabilities=capability or [],
+            run_mode=run_mode,
+            enabled=not disabled,
+            overwrite=overwrite,
+        )
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Plugin Registry: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "plugin_count", "enabled_plugin_count", "kind_counts", "run_mode_counts"]:
+        table.add_row(key, str(registry.get(key)))
+    console.print(table)
+    console.print(f"Config: {project_dir / 'openrepro.plugins.yaml'}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'plugin_registry.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PLUGIN_REGISTRY.md'}")
+    console.print(f"Validation: {project_dir / 'workspace' / 'PLUGIN_VALIDATION.md'}")
+    _success("Plugin registered.")
+
+
+@plugins_app.command("list")
+def plugins_list_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Build and list declarative project plugins."""
+    project_dir = require_project(project_name)
+    registry = build_plugin_registry(project_dir)
+    table = Table(title=f"Plugins: {project_name}")
+    table.add_column("Plugin")
+    table.add_column("Kind")
+    table.add_column("Enabled")
+    table.add_column("Run mode")
+    table.add_column("Entrypoint")
+    for plugin in registry["plugins"]:
+        table.add_row(str(plugin.get("plugin_id")), str(plugin.get("kind")), str(plugin.get("enabled")), str(plugin.get("run_mode")), str(plugin.get("entrypoint")))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'plugin_registry.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PLUGIN_REGISTRY.md'}")
+
+
+@plugins_app.command("validate")
+def plugins_validate_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate declarative project plugins."""
+    project_dir = require_project(project_name)
+    result = validate_plugin_registry(project_dir)
+    table = Table(title=f"Plugin Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "valid", "plugin_count", "error_count", "warning_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'plugin_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'PLUGIN_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Plugin registry is valid.")
+
+
+@plugins_app.command("summary")
+def plugins_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing plugin registry summary."""
+    project_dir = require_project(project_name)
+    summary = plugin_registry_summary(project_dir)
+    table = Table(title=f"Plugin Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "plugin_count", "enabled_plugin_count", "validation_status", "validation_error_count", "config_path", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
 
 
 @app.command("trace-claims")

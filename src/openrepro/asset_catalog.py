@@ -46,6 +46,10 @@ CATALOG_OUTPUTS = {
     "workspace/CI_VALIDATION.md",
     "workspace/local_ui_summary.json",
     "workspace/LOCAL_UI_SUMMARY.md",
+    "workspace/plugin_registry.json",
+    "workspace/PLUGIN_REGISTRY.md",
+    "workspace/plugin_validation.json",
+    "workspace/PLUGIN_VALIDATION.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

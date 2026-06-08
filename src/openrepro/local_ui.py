@@ -20,6 +20,7 @@ from .evidence_explorer import evidence_explorer_summary
 from .experiment_evaluation import evaluation_registry_summary, evaluation_results_summary
 from .experiment_tracking import experiment_tracking_summary
 from .pipeline_spec import pipeline_spec_summary
+from .plugin_registry import plugin_registry_summary
 from .run_index import run_index_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 from .workflow_executor import workflow_execution_summary
@@ -161,6 +162,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
                 ("Agent adapter", agent_adapter_summary, [("Steps", "adapter_step_count"), ("Blocked", "blocked_task_count"), ("Valid", "validation_valid")]),
                 ("Agent sandbox", agent_sandbox_summary, [("Selected", "selected_step_count"), ("Passed", "passed_step_count"), ("Failed", "failed_step_count")]),
                 ("CI", ci_summary, [("Present", "present"), ("Status", "status"), ("Test command", "test_command")]),
+                ("Plugins", plugin_registry_summary, [("Plugins", "plugin_count"), ("Enabled", "enabled_plugin_count"), ("Validation", "validation_status")]),
             ],
             project_dir,
         ),
@@ -222,6 +224,8 @@ def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str,
         "manifest_path",
         "summary_path",
         "validation_path",
+        "validation_markdown_path",
+        "config_path",
         "plan_path",
         "materialization_path",
         "materialization_markdown_path",
@@ -277,6 +281,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("Agent sandbox", "workspace/AGENT_SANDBOX_RUN.md"),
         ("CI summary", "workspace/CI_SUMMARY.md"),
         ("CI validation", "workspace/CI_VALIDATION.md"),
+        ("Plugin registry", "workspace/PLUGIN_REGISTRY.md"),
+        ("Plugin validation", "workspace/PLUGIN_VALIDATION.md"),
         ("GitHub Actions workflow", ".github/workflows/openrepro-ci.yml"),
     ]
     links = []

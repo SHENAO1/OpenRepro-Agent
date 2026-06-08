@@ -55,6 +55,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .multi_agent_plan_validation import validate_multi_agent_plan
     from .paper_lineage import generate_paper_lineage
     from .pipeline_spec import refresh_pipeline_spec
+    from .plugin_registry import build_plugin_registry, validate_plugin_registry
     from .protocol_coverage import generate_protocol_coverage
     from .protocol_plan import generate_protocol_plan
     from .protocol_preflight import generate_protocol_preflight
@@ -144,6 +145,23 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "dashboard",
             "Refresh static project dashboard.",
             lambda: generate_dashboard(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "plugin_registry",
+            "Refresh declarative plugin registry.",
+            lambda: build_plugin_registry(project_dir),
+        )
+    )
+    records.append(
+        _run_step(
+            "plugin_validation",
+            "Validate declarative plugin registry.",
+            lambda: validate_plugin_registry(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

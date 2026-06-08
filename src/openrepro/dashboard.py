@@ -160,6 +160,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "agent_trajectory.jsonl",
         project_dir / "workspace" / "CI_SUMMARY.md",
         project_dir / "workspace" / "CI_VALIDATION.md",
+        project_dir / "workspace" / "PLUGIN_REGISTRY.md",
+        project_dir / "workspace" / "PLUGIN_VALIDATION.md",
         project_dir / "handoff" / "COLLABORATION_PACK.md",
         project_dir / "workspace" / "PROJECT_TIMELINE.md",
         project_dir / "workspace" / "PROJECT_PROFILE.md",

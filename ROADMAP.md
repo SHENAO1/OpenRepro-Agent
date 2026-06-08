@@ -775,6 +775,16 @@ Released in v1.45.0 with a read-only local UI for artifact navigation.
 
 Released in v1.46.0 with asset-oriented build planning and guarded materialization.
 
+## v1.47.0 — Declarative plugin registry
+
+- [x] Add `openrepro plugins register/list/validate/summary`.
+- [x] Write `openrepro.plugins.yaml`, `workspace/plugin_registry.json`, `workspace/PLUGIN_REGISTRY.md`, `workspace/plugin_validation.json`, and `workspace/PLUGIN_VALIDATION.md`.
+- [x] Support command, provider, reporter, and evaluator plugin declarations.
+- [x] Validate plugin ids, kinds, run modes, entrypoints, and unsafe `safe_command` declarations.
+- [x] Keep plugins declarative: validation does not import, load, or execute extension code.
+
+Released in v1.47.0 with project extension declarations and guardrail validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

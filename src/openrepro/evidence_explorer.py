@@ -137,6 +137,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "AGENT_SANDBOX_RUN.md",
         project_dir / "workspace" / "CI_SUMMARY.md",
         project_dir / "workspace" / "CI_VALIDATION.md",
+        project_dir / "workspace" / "PLUGIN_REGISTRY.md",
+        project_dir / "workspace" / "PLUGIN_VALIDATION.md",
         project_dir / "reports" / "local_ui" / "index.html",
         project_dir / "workspace" / "LOCAL_UI_SUMMARY.md",
         project_dir / "reports" / "run_explorer" / "index.html",
