@@ -56,6 +56,8 @@ CATALOG_OUTPUTS = {
     "workspace/PROMOTION_RECORD.md",
     "workspace/promotion_registry.json",
     "workspace/PROMOTION_REGISTRY.md",
+    "workspace/github_pr_summary.json",
+    "workspace/GITHUB_PR_SUMMARY.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

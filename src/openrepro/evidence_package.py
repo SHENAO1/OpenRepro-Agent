@@ -82,6 +82,7 @@ WORKSPACE_ARTIFACTS = [
     "promotion_plan.json",
     "promotion_record.json",
     "promotion_registry.json",
+    "github_pr_summary.json",
     "local_ui_summary.json",
     "advance_plan.json",
     "review_board.json",
@@ -133,6 +134,8 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "plugin_count",
         "enabled_plugin_count",
         "promotion_count",
+        "check_count",
+        "failed_check_count",
         "failed_gate_count",
         "passed_gate_count",
         "materialize_step_count",
@@ -730,6 +733,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "local_ui": {
                 "present": (project_dir / "reports" / "local_ui" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "local_ui" / "index.html"),
+            },
+            "github_pr_comment": {
+                "present": (project_dir / "reports" / "pr_comment.md").exists(),
+                "path": str(project_dir / "reports" / "pr_comment.md"),
             },
             "evidence_package_json": str(project_dir / "reports" / "evidence_package.json"),
             "evidence_package_markdown": str(project_dir / "reports" / "evidence_package.md"),

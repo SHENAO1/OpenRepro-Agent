@@ -31,6 +31,7 @@ EXCLUDED_REPORT_PREFIXES = {
     "delivery_bundle.json",
     "DELIVERY_BUNDLE.md",
     "delivery_bundle.zip",
+    "pr_comment.md",
 }
 EXCLUDED_REPORT_DIRS = {"review_site", "dashboard", "agent_board", "evidence_explorer", "local_ui"}
 EXCLUDED_PROJECT_RELATIVE_PATHS = {
@@ -77,6 +78,8 @@ EXCLUDED_PROJECT_RELATIVE_PATHS = {
     "workspace/promotion_record.json",
     "workspace/PROMOTION_REGISTRY.md",
     "workspace/promotion_registry.json",
+    "workspace/GITHUB_PR_SUMMARY.md",
+    "workspace/github_pr_summary.json",
     "workspace/PAPER_LINEAGE.md",
     "workspace/paper_lineage.json",
     "workspace/EVIDENCE_QUERY.md",

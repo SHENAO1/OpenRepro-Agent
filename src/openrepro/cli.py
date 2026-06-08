@@ -57,6 +57,7 @@ from .experiment_spec import validate_experiment_spec
 from .experiment_templates import list_experiment_templates
 from .freshness import generate_artifact_freshness
 from .gaps import generate_reproduction_gaps
+from .github_pr_summary import generate_github_pr_summary, github_pr_summary_status
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
 from .lineage import generate_run_lineage
@@ -126,6 +127,8 @@ plugins_app = typer.Typer(help="Register and validate declarative project plugin
 app.add_typer(plugins_app, name="plugins")
 promote_app = typer.Typer(help="Plan and record promotion gate decisions.", no_args_is_help=True)
 app.add_typer(promote_app, name="promote")
+github_app = typer.Typer(help="Generate local GitHub review artifacts.", no_args_is_help=True)
+app.add_typer(github_app, name="github")
 cache_app = typer.Typer(help="Manage the local content-addressed artifact cache.", no_args_is_help=True)
 app.add_typer(cache_app, name="cache")
 console = Console()
@@ -793,6 +796,53 @@ def promote_summary_cmd(project_name: str = typer.Argument(..., help="Project di
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "promotion_count", "latest_target", "latest_candidate_id", "latest_state", "latest_plan_status", "last_record_status", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
+
+
+@github_app.command("pr-summary")
+def github_pr_summary_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    pr_number: int | None = typer.Option(None, "--pr-number", help="GitHub pull request number for display only."),
+    base_ref: str | None = typer.Option(None, "--base", help="Optional local git base ref for diff stats."),
+    head_ref: str | None = typer.Option(None, "--head", help="Optional local git head ref for diff stats."),
+    repo_dir: Path | None = typer.Option(None, "--repo-dir", help="Repository directory for local git metadata. Defaults to current directory."),
+) -> None:
+    """Generate a local GitHub PR comment summary."""
+    project_dir = require_project(project_name)
+    result = generate_github_pr_summary(
+        project_dir,
+        pr_number=pr_number,
+        base_ref=base_ref,
+        head_ref=head_ref,
+        repo_dir=repo_dir,
+    )
+    table = Table(title=f"GitHub PR Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "pr_number", "check_count", "failed_check_count", "warning_count"]:
+        table.add_row(key, str(result.get(key)))
+    table.add_row("branch", str(result.get("git", {}).get("branch")))
+    table.add_row("commit", str(result.get("git", {}).get("commit")))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'github_pr_summary.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'GITHUB_PR_SUMMARY.md'}")
+    console.print(f"PR comment: {project_dir / 'reports' / 'pr_comment.md'}")
+    if result["status"] == "ready":
+        _success("GitHub PR summary generated.")
+    else:
+        _warn("GitHub PR summary has blocked checks.")
+
+
+@github_app.command("summary")
+def github_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing local GitHub PR summary status."""
+    project_dir = require_project(project_name)
+    summary = github_pr_summary_status(project_dir)
+    table = Table(title=f"GitHub PR Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "pr_number", "check_count", "failed_check_count", "warning_count", "comment_path", "sha256"]:
         table.add_row(key, str(summary.get(key)))
     console.print(table)
 

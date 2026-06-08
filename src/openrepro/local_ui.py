@@ -165,6 +165,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
                 ("Agent sandbox", agent_sandbox_summary, [("Selected", "selected_step_count"), ("Passed", "passed_step_count"), ("Failed", "failed_step_count")]),
                 ("CI", ci_summary, [("Present", "present"), ("Status", "status"), ("Test command", "test_command")]),
                 ("Plugins", plugin_registry_summary, [("Plugins", "plugin_count"), ("Enabled", "enabled_plugin_count"), ("Validation", "validation_status")]),
+                ("GitHub PR", _github_pr_summary, [("Checks", "check_count"), ("Failed", "failed_check_count"), ("Warnings", "warning_count")]),
             ],
             project_dir,
         ),
@@ -220,6 +221,7 @@ def _summary_item(
 def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str, Any]]:
     keys = [
         "path",
+        "comment_path",
         "markdown_path",
         "index_path",
         "explorer_path",
@@ -289,6 +291,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("Promotion plan", "workspace/PROMOTION_PLAN.md"),
         ("Promotion record", "workspace/PROMOTION_RECORD.md"),
         ("Promotion registry", "workspace/PROMOTION_REGISTRY.md"),
+        ("GitHub PR summary", "workspace/GITHUB_PR_SUMMARY.md"),
+        ("GitHub PR comment", "reports/pr_comment.md"),
         ("GitHub Actions workflow", ".github/workflows/openrepro-ci.yml"),
     ]
     links = []
@@ -354,6 +358,26 @@ def _leaderboard_summary(project_dir: Path) -> dict[str, Any]:
         "experiment_count": int(data.get("experiment_count", 0) or 0),
         "rankable_experiment_count": int(data.get("rankable_experiment_count", 0) or 0),
         "metric": data.get("metric"),
+        "sha256": sha256_file(path) if path.exists() else None,
+    }
+
+
+def _github_pr_summary(project_dir: Path) -> dict[str, Any]:
+    path = Path(project_dir) / "workspace" / "github_pr_summary.json"
+    markdown_path = Path(project_dir) / "workspace" / "GITHUB_PR_SUMMARY.md"
+    comment_path = Path(project_dir) / "reports" / "pr_comment.md"
+    data = read_json(path, default={}) or {}
+    data = data if isinstance(data, dict) else {}
+    return {
+        "present": path.exists(),
+        "path": str(path) if path.exists() else None,
+        "markdown_path": str(markdown_path) if markdown_path.exists() else None,
+        "comment_path": str(comment_path) if comment_path.exists() else None,
+        "schema_version": data.get("schema_version"),
+        "status": data.get("status", "present" if path.exists() else "missing"),
+        "check_count": int(data.get("check_count", 0) or 0),
+        "failed_check_count": int(data.get("failed_check_count", 0) or 0),
+        "warning_count": int(data.get("warning_count", 0) or 0),
         "sha256": sha256_file(path) if path.exists() else None,
     }
 

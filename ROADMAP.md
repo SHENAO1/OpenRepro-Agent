@@ -795,6 +795,16 @@ Released in v1.47.0 with project extension declarations and guardrail validation
 
 Released in v1.48.0 with explicit promotion gates and release-state records.
 
+## v1.49.0 — GitHub PR summary draft
+
+- [x] Add `openrepro github pr-summary/summary`.
+- [x] Write `workspace/github_pr_summary.json`, `workspace/GITHUB_PR_SUMMARY.md`, and `reports/pr_comment.md`.
+- [x] Summarize local CI, local UI, asset build, plugin validation, promotion, dashboard, and evidence freshness state.
+- [x] Include local git branch and commit metadata when available.
+- [x] Keep PR summaries local: no GitHub API calls and no remote CI success claims.
+
+Released in v1.49.0 with local PR review comment generation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
