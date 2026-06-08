@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.45.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.46.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.45.0 workflow is:
+The v1.46.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
 ```
 
 ## What v0.4.0 supports
@@ -657,6 +657,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Add optional `reports/local_ui.zip` export.
 - Consolidate workflow, assets, experiments, review surfaces, agent state, and CI links into a static local console.
 - Keep the local UI read-only: it does not run experiments, refresh artifacts, or claim scientific reproduction.
+
+## What v1.46.0 adds
+
+- Add `openrepro assets plan/materialize/summary`.
+- Write `workspace/asset_build_plan.json`, `workspace/ASSET_BUILD_PLAN.md`, `workspace/asset_materialization.json`, and `workspace/ASSET_MATERIALIZATION.md`.
+- Identify safe runnable workflow steps with missing outputs and turn them into incremental materialization candidates.
+- Add `local_ui` to the workflow DAG, delivery preset, and refresh pipeline.
+- Keep materialization dry-run by default and delegate confirmed execution to the guarded workflow executor.
 
 ## Current limitations
 
@@ -2156,6 +2164,35 @@ Shows one catalog asset record, including metadata and relations.
 Regenerates `workspace/ASSET_CATALOG_GRAPH.md` with a Mermaid graph view of the
 catalog. The graph is navigation only; it does not verify scientific claims.
 
+### `openrepro assets plan <project_name> [--target TARGET] [--refresh-catalog]`
+
+Plans safe incremental asset materialization and writes:
+
+```text
+workspace/asset_build_plan.json
+workspace/ASSET_BUILD_PLAN.md
+```
+
+The plan reads workflow state and the asset catalog, then marks safe runnable
+steps with missing outputs as materialization candidates. Unsafe source input,
+human decisions, repairs, and experiment execution stay blocked.
+
+### `openrepro assets materialize <project_name> [--target TARGET] [--step STEP] [--confirm]`
+
+Writes a dry-run or confirmed materialization record:
+
+```text
+workspace/asset_materialization.json
+workspace/ASSET_MATERIALIZATION.md
+```
+
+Without `--confirm`, no commands execute. With `--confirm`, materialization
+delegates safe candidates to `openrepro workflow execute`.
+
+### `openrepro assets summary <project_name>`
+
+Shows the current asset build plan and latest materialization status.
+
 ### `openrepro cache add <project_name> [--path PATH]`
 
 Adds standard project artifacts, or one specific file/directory, to the local
@@ -2522,12 +2559,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.43.0: approved sandbox execution for safe agent tasks.
 - v1.44.0: local GitHub Actions CI scaffold and validation.
 - v1.45.0: static local UI console for artifact navigation.
+- v1.46.0: asset-centric incremental build plans and safe materialization.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.45.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.46.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 

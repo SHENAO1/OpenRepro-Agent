@@ -18,6 +18,7 @@ from .agent_exec_plan import generate_agent_exec_plan
 from .agent_sandbox import run_agent_sandbox
 from .analyzer import analyze_project
 from .approval import approve_candidates
+from .asset_build import asset_build_summary, materialize_assets, plan_asset_build
 from .asset_catalog import generate_asset_catalog, generate_asset_catalog_graph, get_catalog_asset, list_catalog_assets
 from .artifact_cache import add_artifact_cache, gc_artifact_cache, list_artifact_cache, verify_artifact_cache
 from .artifact_cache_remote import configure_cache_remote, list_cache_remotes, pull_artifact_cache, push_artifact_cache, restore_artifact_cache
@@ -109,6 +110,8 @@ runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
 app.add_typer(catalog_app, name="catalog")
+assets_app = typer.Typer(help="Plan and materialize safe asset builds.", no_args_is_help=True)
+app.add_typer(assets_app, name="assets")
 data_expectations_app = typer.Typer(help="Initialize and run lightweight data expectations.", no_args_is_help=True)
 app.add_typer(data_expectations_app, name="data-expectations")
 pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepro pipeline specs.", no_args_is_help=True)
@@ -2054,6 +2057,76 @@ def catalog_graph_cmd(project_name: str = typer.Argument(..., help="Project dire
     graph = generate_asset_catalog_graph(project_dir)
     console.print(f"Graph: {graph['path']}")
     _success("Asset catalog graph generated.")
+
+
+@assets_app.command("plan")
+def assets_plan_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: str = typer.Option("all", "--target", help="Step id, stage, output, or all."),
+    refresh_catalog: bool = typer.Option(False, "--refresh-catalog", help="Regenerate the asset catalog before planning."),
+) -> None:
+    """Plan safe incremental asset materialization."""
+    project_dir = require_project(project_name)
+    plan = plan_asset_build(project_dir, target=target, refresh_catalog=refresh_catalog)
+    table = Table(title=f"Asset Build Plan: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "target", "step_count", "materialize_step_count", "blocked_step_count", "top_step_id", "top_command"]:
+        table.add_row(key, str(plan.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'asset_build_plan.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ASSET_BUILD_PLAN.md'}")
+    _success("Asset build plan generated.")
+
+
+@assets_app.command("materialize")
+def assets_materialize_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: str = typer.Option("all", "--target", help="Step id, stage, output, or all."),
+    step_id: str | None = typer.Option(None, "--step", help="Exact workflow step id to materialize."),
+    confirm: bool = typer.Option(False, "--confirm", help="Execute safe materialization candidates through the workflow executor."),
+    max_steps: int | None = typer.Option(None, "--max-steps", min=0, help="Maximum candidate steps to materialize."),
+    export_zip: bool = typer.Option(False, "--zip", help="Pass zip export through to safe workflow actions."),
+) -> None:
+    """Dry-run or execute safe asset materialization candidates."""
+    project_dir = require_project(project_name)
+    result = materialize_assets(
+        project_dir,
+        target=target,
+        step_id=step_id,
+        confirm=confirm,
+        max_steps=max_steps,
+        export_zip=export_zip,
+    )
+    table = Table(title=f"Asset Materialization: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "target", "confirmed", "selected_step_count", "executed_step_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'asset_materialization.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'ASSET_MATERIALIZATION.md'}")
+    if result["status"] == "dry_run":
+        _warn("Asset materialization was a dry run. Pass --confirm to execute safe candidates.")
+    elif result["status"] == "complete":
+        _success("Asset materialization completed.")
+    elif result["status"] == "up_to_date":
+        _success("Assets are up to date.")
+    else:
+        _warn("Asset materialization is blocked or failed.")
+
+
+@assets_app.command("summary")
+def assets_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the current asset build plan summary."""
+    project_dir = require_project(project_name)
+    summary = asset_build_summary(project_dir)
+    table = Table(title=f"Asset Build Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "target", "step_count", "materialize_step_count", "blocked_step_count", "top_step_id", "last_materialization_status", "sha256"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
 
 
 @cache_app.command("add")

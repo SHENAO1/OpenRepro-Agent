@@ -765,6 +765,16 @@ Released in v1.44.0 with local GitHub Actions CI scaffold generation and validat
 
 Released in v1.45.0 with a read-only local UI for artifact navigation.
 
+## v1.46.0 — Asset-centric incremental build
+
+- [x] Add `openrepro assets plan/materialize/summary`.
+- [x] Write `workspace/asset_build_plan.json`, `workspace/ASSET_BUILD_PLAN.md`, `workspace/asset_materialization.json`, and `workspace/ASSET_MATERIALIZATION.md`.
+- [x] Use workflow outputs and asset catalog records to identify safe missing derived artifacts.
+- [x] Add `local_ui` to the workflow DAG, delivery preset, and refresh pipeline.
+- [x] Keep materialization dry-run by default and execute only safe workflow steps when confirmed.
+
+Released in v1.46.0 with asset-oriented build planning and guarded materialization.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

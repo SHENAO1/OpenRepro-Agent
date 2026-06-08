@@ -24,6 +24,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
+    from .asset_build import plan_asset_build
     from .acceptance_criteria import generate_acceptance_criteria
     from .asset_catalog import generate_asset_catalog
     from .artifact_cache import add_artifact_cache
@@ -49,6 +50,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .handoff_generator import generate_handoff
     from .inspector import inspect_project
     from .lineage import generate_run_lineage
+    from .local_ui import generate_local_ui
     from .multi_agent_plan import generate_multi_agent_plan
     from .multi_agent_plan_validation import validate_multi_agent_plan
     from .paper_lineage import generate_paper_lineage
@@ -142,6 +144,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "dashboard",
             "Refresh static project dashboard.",
             lambda: generate_dashboard(project_dir, export_zip=export_zip),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "local_ui",
+            "Refresh static local UI console.",
+            lambda: generate_local_ui(project_dir, export_zip=export_zip),
         )
     )
     result = _build_result(project_dir, export_zip, records)
@@ -319,6 +331,16 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
             "artifact_cache",
             "Refresh local content-addressed artifact cache.",
             lambda: add_artifact_cache(project_dir),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "asset_build_plan",
+            "Refresh asset-centric incremental build plan.",
+            lambda: plan_asset_build(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

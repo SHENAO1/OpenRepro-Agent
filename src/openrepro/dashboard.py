@@ -146,6 +146,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "PIPELINE_PLAN.md",
         project_dir / "workspace" / "PIPELINE_VALIDATION.md",
         project_dir / "workspace" / "ASSET_CATALOG.md",
+        project_dir / "workspace" / "ASSET_BUILD_PLAN.md",
+        project_dir / "workspace" / "ASSET_MATERIALIZATION.md",
         project_dir / "workspace" / "ARTIFACT_CACHE.md",
         project_dir / "workspace" / "ARTIFACT_CACHE_VALIDATION.md",
         project_dir / "workspace" / "ARTIFACT_CACHE_REMOTES.md",

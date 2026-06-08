@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.45.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.46.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -13,6 +13,7 @@ OpenRepro-Agent v1.45.0 uses a small modular CLI architecture.
 - `demo_runner.py`: lightweight BOC-like signal demo and parameter sweep.
 - `artifact_manager.py`: run directory, artifact manifest, and validation utilities.
 - `asset_catalog.py`: unified source, data, experiment, run, report, handoff, workspace, and config asset catalog.
+- `asset_build.py`: asset-centric incremental build planning and guarded safe materialization through the workflow executor.
 - `artifact_cache.py`: local content-addressed cache for observed project artifacts and cache validation.
 - `artifact_cache_remote.py`: local remote cache configuration, push/pull transfer, and restore planning.
 - `api_usage.py`: mock/cached usage record and summary schema.
@@ -80,6 +81,7 @@ sources/ + project_config.yaml
   → workspace/workflow_execution.json + workflow_events.jsonl
   → openrepro.pipeline.yaml + workspace/pipeline_plan.json + pipeline_validation.json
   → workspace/asset_catalog.json + ASSET_CATALOG.md
+  → workspace/asset_build_plan.json + ASSET_BUILD_PLAN.md
   → workspace/artifact_cache.json + ARTIFACT_CACHE.md
   → workspace/artifact_cache_remotes.json + cache_restore_plan.json
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json

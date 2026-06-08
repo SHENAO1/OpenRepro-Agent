@@ -12,6 +12,7 @@ from .agent_board import agent_board_summary
 from .agent_sandbox import agent_sandbox_summary
 from .artifact_cache import artifact_cache_summary
 from .artifact_manager import sha256_file
+from .asset_build import asset_build_summary
 from .asset_catalog import asset_catalog_summary
 from .ci_integration import ci_summary
 from .dashboard import dashboard_summary
@@ -127,6 +128,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
                 ("Cache", artifact_cache_summary, [("Cached files", "cached_file_count"), ("Blobs", "blob_count"), ("Bytes", "total_size_bytes")]),
                 ("Cache remotes", _cache_remote_summary, [("Remotes", "remote_count"), ("Default", "default_remote")]),
                 ("Restore plan", _cache_restore_summary, [("Actions", "action_count"), ("Restore actions", "restore_action_count"), ("Status", "status")]),
+                ("Build plan", asset_build_summary, [("Materialize", "materialize_step_count"), ("Blocked", "blocked_step_count"), ("Top step", "top_step_id")]),
             ],
             project_dir,
         ),
@@ -221,6 +223,8 @@ def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str,
         "summary_path",
         "validation_path",
         "plan_path",
+        "materialization_path",
+        "materialization_markdown_path",
         "zip_path",
         "workflow_path",
         "trajectory_path",
@@ -261,6 +265,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("Pipeline plan", "workspace/PIPELINE_PLAN.md"),
         ("Asset catalog", "workspace/ASSET_CATALOG.md"),
         ("Asset graph", "workspace/ASSET_CATALOG_GRAPH.md"),
+        ("Asset build plan", "workspace/ASSET_BUILD_PLAN.md"),
+        ("Asset materialization", "workspace/ASSET_MATERIALIZATION.md"),
         ("Artifact cache", "workspace/ARTIFACT_CACHE.md"),
         ("Cache remotes", "workspace/ARTIFACT_CACHE_REMOTES.md"),
         ("Cache restore", "workspace/CACHE_RESTORE_PLAN.md"),

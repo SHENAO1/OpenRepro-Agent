@@ -56,6 +56,7 @@ PRESETS: dict[str, dict[str, Any]] = {
             "collaboration_pack",
             "freshness",
             "dashboard",
+            "local_ui",
             "readiness_review",
             "readiness_review_validation",
             "review_action_plan",

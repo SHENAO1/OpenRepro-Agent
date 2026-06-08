@@ -495,13 +495,22 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("freshness",),
     ),
     WorkflowStep(
+        "local_ui",
+        "Local UI",
+        "delivery",
+        "Generate the static local UI console.",
+        "openrepro serve build <project>",
+        ("reports/local_ui/index.html", "reports/local_ui_manifest.json", "workspace/local_ui_summary.json"),
+        ("dashboard",),
+    ),
+    WorkflowStep(
         "readiness_review",
         "Readiness review",
         "delivery",
         "Generate the final readiness review.",
         "openrepro readiness-review <project>",
         ("reports/readiness_review.json",),
-        ("dashboard",),
+        ("local_ui",),
     ),
     WorkflowStep(
         "readiness_review_validation",
@@ -915,6 +924,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .gaps import generate_reproduction_gaps
     from .handoff_generator import generate_handoff
     from .lineage import generate_run_lineage
+    from .local_ui import generate_local_ui
     from .multi_agent_plan import generate_multi_agent_plan
     from .multi_agent_plan_validation import validate_multi_agent_plan
     from .paper_lineage import generate_paper_lineage
@@ -977,6 +987,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "collaboration_pack": lambda project_dir: generate_collaboration_pack(project_dir, export_zip=export_zip),
         "freshness": generate_artifact_freshness,
         "dashboard": lambda project_dir: generate_dashboard(project_dir, export_zip=export_zip),
+        "local_ui": lambda project_dir: generate_local_ui(project_dir, export_zip=export_zip),
         "readiness_review": lambda project_dir: generate_readiness_review(project_dir, export_zip=export_zip),
         "readiness_review_validation": validate_readiness_review,
         "review_action_plan": generate_review_action_plan,
