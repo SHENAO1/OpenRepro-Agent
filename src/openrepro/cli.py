@@ -31,6 +31,7 @@ from .claim_evidence_report_validation import validate_claim_evidence_report
 from .claim_signoff import ALLOWED_CLAIM_SIGNOFF_DECISIONS, generate_claim_signoffs, record_claim_signoff
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
+from .ci_integration import ci_summary, init_ci_config, validate_ci_config
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_expectations import init_data_expectations, run_data_expectations
@@ -99,6 +100,8 @@ workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workfl
 app.add_typer(workflow_app, name="workflow")
 agent_app = typer.Typer(help="Run approved safe agent tasks in a local sandbox.", no_args_is_help=True)
 app.add_typer(agent_app, name="agent")
+ci_app = typer.Typer(help="Generate and validate local GitHub Actions CI scaffolding.", no_args_is_help=True)
+app.add_typer(ci_app, name="ci")
 runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
@@ -2754,6 +2757,58 @@ def _print_workflow_execution(project_dir: Path, project_name: str, result: dict
         _warn("Workflow execution is blocked.")
     else:
         _warn("Workflow execution failed.")
+
+
+@ci_app.command("init")
+def ci_init_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    test_command: str = typer.Option("python -m pytest -q", "--test-command", help="Command for the CI test step."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite an existing workflow file."),
+) -> None:
+    """Generate a local GitHub Actions workflow scaffold."""
+    project_dir = require_project(project_name)
+    result = init_ci_config(project_dir, test_command=test_command, overwrite=overwrite)
+    table = Table(title=f"CI Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "workflow_relative_path", "test_command", "sha256"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"Workflow: {project_dir / '.github' / 'workflows' / 'openrepro-ci.yml'}")
+    console.print(f"JSON: {project_dir / 'workspace' / 'ci_summary.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CI_SUMMARY.md'}")
+    _success("CI workflow scaffold generated." if result["status"] == "written" else "CI workflow scaffold preserved.")
+
+
+@ci_app.command("validate")
+def ci_validate_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate the local GitHub Actions workflow scaffold."""
+    project_dir = require_project(project_name)
+    result = validate_ci_config(project_dir)
+    table = Table(title=f"CI Validation: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "valid", "check_count", "failed_check_count"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'ci_validation.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'CI_VALIDATION.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("CI workflow scaffold is valid.")
+
+
+@ci_app.command("summary")
+def ci_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the local CI scaffold summary."""
+    project_dir = require_project(project_name)
+    result = ci_summary(project_dir)
+    table = Table(title=f"CI Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "workflow_path", "test_command", "sha256"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
 
 
 @app.command("freshness")

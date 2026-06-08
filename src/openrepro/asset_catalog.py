@@ -36,6 +36,10 @@ CATALOG_OUTPUTS = {
     "workspace/agent_sandbox_run.json",
     "workspace/AGENT_SANDBOX_RUN.md",
     "workspace/agent_sandbox_trajectory.jsonl",
+    "workspace/ci_summary.json",
+    "workspace/CI_SUMMARY.md",
+    "workspace/ci_validation.json",
+    "workspace/CI_VALIDATION.md",
 }
 CATALOG_ROOTS = ("sources", "data", "experiments", "outputs", "workspace", "reports", "handoff")
 

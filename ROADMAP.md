@@ -745,6 +745,16 @@ Released in v1.42.0 with experiment evaluation suites and leaderboards.
 
 Released in v1.43.0 with approved sandbox execution for safe agent tasks.
 
+## v1.44.0 — GitHub CI integration
+
+- [x] Add `openrepro ci init/validate/summary`.
+- [x] Write `.github/workflows/openrepro-ci.yml`.
+- [x] Write `workspace/ci_summary.json`, `workspace/CI_SUMMARY.md`, `workspace/ci_validation.json`, and `workspace/CI_VALIDATION.md`.
+- [x] Generate a Python matrix workflow with editable install, CLI smoke check, and pytest.
+- [x] Validate local CI configuration without claiming remote GitHub Actions success.
+
+Released in v1.44.0 with local GitHub Actions CI scaffold generation and validation.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

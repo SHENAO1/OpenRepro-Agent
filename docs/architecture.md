@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.43.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.44.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -28,6 +28,7 @@ OpenRepro-Agent v1.43.0 uses a small modular CLI architecture.
 - `diagnostics.py`: failure classification and repair suggestions.
 - `agent_adapter.py`: externally supervised agent runner adapter specs, validation, and trajectory handoff logs.
 - `agent_sandbox.py`: approved local sandbox execution for safe agent execution-plan steps.
+- `ci_integration.py`: GitHub Actions workflow scaffolding and local CI configuration validation.
 - `repair.py`: advisory repair plan generation.
 - `repro_lock.py`: reproducibility lockfile generation and validation for config, data, dependencies, and experiment contracts.
 - `run_compare.py`: run metric and manifest comparison.
@@ -70,6 +71,7 @@ sources/ + project_config.yaml
   → workspace/run_lineage.json + RUN_LINEAGE.md
   → workspace/agent_adapter.json + agent_trajectory.jsonl
   → workspace/agent_sandbox_run.json + agent_sandbox_trajectory.jsonl
+  → .github/workflows/openrepro-ci.yml + workspace/ci_validation.json
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
   → workspace/workflow_preset.json + WORKFLOW_PRESET.md

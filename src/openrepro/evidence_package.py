@@ -74,6 +74,8 @@ WORKSPACE_ARTIFACTS = [
     "workflow_checkpoints.json",
     "workflow_execution.json",
     "agent_sandbox_run.json",
+    "ci_summary.json",
+    "ci_validation.json",
     "advance_plan.json",
     "review_board.json",
     "review_decisions.json",
