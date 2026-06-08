@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from .utils import iso_now, read_json, safe_write_text, write_json
 
-WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.37.0"
+WORKFLOW_REGISTRY_SCHEMA_VERSION = "1.38.0"
 
 
 @dataclass(frozen=True)
@@ -214,13 +214,22 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("quality_gates",),
     ),
     WorkflowStep(
+        "experiment_tracking",
+        "Experiment tracking",
+        "evidence",
+        "Aggregate indexed runs into experiment-level tracking artifacts.",
+        "openrepro experiments track <project>",
+        ("workspace/experiment_tracking.json", "workspace/EXPERIMENT_TRACKING.md", "reports/experiments/index.html"),
+        ("run_index",),
+    ),
+    WorkflowStep(
         "lineage",
         "Run lineage",
         "evidence",
         "Build run lineage hashes and repeat groups.",
         "openrepro lineage <project>",
         ("workspace/run_lineage.json",),
-        ("run_index",),
+        ("experiment_tracking",),
     ),
     WorkflowStep(
         "claim_trace",
@@ -891,6 +900,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .evidence_explorer import generate_evidence_explorer
     from .evidence_query import query_evidence
     from .evidence_package import generate_evidence_package
+    from .experiment_tracking import generate_experiment_tracking
     from .freshness import generate_artifact_freshness
     from .gaps import generate_reproduction_gaps
     from .handoff_generator import generate_handoff
@@ -927,6 +937,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "repro_lock_validation": validate_repro_lock,
         "quality_gates": evaluate_all_quality_gates,
         "run_index": lambda project_dir: generate_run_index(project_dir, export_zip=export_zip),
+        "experiment_tracking": lambda project_dir: generate_experiment_tracking(project_dir, export_zip=export_zip),
         "lineage": generate_run_lineage,
         "claim_trace": generate_claim_trace,
         "claim_trace_validation": validate_claim_trace,

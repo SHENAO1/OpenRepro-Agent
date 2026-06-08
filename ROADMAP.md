@@ -685,6 +685,16 @@ Released in v1.36.0 with lightweight data expectation suites and results.
 
 Released in v1.37.0 with declarative pipeline specs.
 
+## v1.38.0 — Experiment tracking layer
+
+- [x] Add `openrepro experiments track/list/show/compare`.
+- [x] Write `workspace/experiment_tracking.json`, `workspace/EXPERIMENT_TRACKING.md`, `reports/experiments/index.html`, and `reports/experiment_tracking_manifest.json`.
+- [x] Aggregate indexed runs by experiment id with latest run, quality gate counts, metric keys, latest metrics, spec hashes, and input summaries.
+- [x] Write experiment tracking comparisons in `workspace/experiment_tracking_comparison.json` and `workspace/EXPERIMENT_TRACKING_COMPARISON.md`.
+- [x] Refresh experiment tracking after the run index.
+
+Released in v1.38.0 with experiment-level tracking over indexed run evidence.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

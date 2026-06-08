@@ -80,6 +80,8 @@ WORKSPACE_ARTIFACTS = [
     "protocol_plan.json",
     "protocol_preflight.json",
     "experiment_comparison.json",
+    "experiment_tracking.json",
+    "experiment_tracking_comparison.json",
     "run_comparison.json",
     "run_lineage.json",
     "doctor.json",

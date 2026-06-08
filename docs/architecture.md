@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.37.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.38.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -29,6 +29,7 @@ OpenRepro-Agent v1.37.0 uses a small modular CLI architecture.
 - `repro_lock.py`: reproducibility lockfile generation and validation for config, data, dependencies, and experiment contracts.
 - `run_compare.py`: run metric and manifest comparison.
 - `run_index.py`: run-output indexing, static run explorer generation, and indexed run comparisons.
+- `experiment_tracking.py`: experiment-level tracking over indexed runs, metrics, quality gates, specs, and inputs.
 - `lineage.py`: run lineage hashes for manifests, configs, source index, and verified candidates.
 - `pipeline_spec.py`: declarative pipeline spec export, planning, validation, and refresh helper.
 - `workflow_registry.py`: registered workflow DAG metadata, state generation, step explanation, and safe derived-step execution.
@@ -59,6 +60,7 @@ sources/ + project_config.yaml
   → workspace/inspect_summary.json
   → workspace/repair_plan.json + run_comparison.json
   → workspace/repair_dry_run.json + REPAIR_DRY_RUN.md
+  → workspace/experiment_tracking.json + EXPERIMENT_TRACKING.md
   → workspace/run_lineage.json + RUN_LINEAGE.md
   → workspace/agent_adapter.json + agent_trajectory.jsonl
   → reports/evidence_explorer/index.html

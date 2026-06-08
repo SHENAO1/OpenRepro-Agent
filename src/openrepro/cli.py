@@ -44,6 +44,7 @@ from .evidence_query import query_evidence
 from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
 from .experiment_scaffold import scaffold_experiment
+from .experiment_tracking import compare_tracked_experiments, generate_experiment_tracking, list_tracked_experiments, tracked_experiment
 from .experiment_inputs import set_experiment_input, validate_experiment_inputs
 from .experiment_runner import run_experiment
 from .experiment_spec import validate_experiment_spec
@@ -99,6 +100,8 @@ data_expectations_app = typer.Typer(help="Initialize and run lightweight data ex
 app.add_typer(data_expectations_app, name="data-expectations")
 pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepro pipeline specs.", no_args_is_help=True)
 app.add_typer(pipeline_app, name="pipeline")
+experiments_app = typer.Typer(help="Track and compare experiment-level run evidence.", no_args_is_help=True)
+app.add_typer(experiments_app, name="experiments")
 console = Console()
 
 
@@ -401,6 +404,108 @@ def compare_experiments_cmd(
     console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_COMPARISON.md'}")
     for warning in comparison.get("warnings", []):
         _warn(str(warning))
+
+
+@experiments_app.command("track")
+def experiments_track_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/experiment_tracking.zip."),
+) -> None:
+    """Generate experiment-level tracking artifacts."""
+    project_dir = require_project(project_name)
+    tracking = generate_experiment_tracking(project_dir, export_zip=export_zip)
+    table = Table(title=f"Experiment Tracking: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "experiment_count", "run_count"]:
+        table.add_row(key, str(tracking.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_tracking.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_TRACKING.md'}")
+    console.print(f"Index: {project_dir / 'reports' / 'experiments' / 'index.html'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'experiment_tracking.zip'}")
+    _success("Experiment tracking generated.")
+
+
+@experiments_app.command("list")
+def experiments_list_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """List tracked experiments."""
+    project_dir = require_project(project_name)
+    result = list_tracked_experiments(project_dir)
+    table = Table(title=f"Experiments: {project_name}")
+    table.add_column("Experiment")
+    table.add_column("Status")
+    table.add_column("Runs")
+    table.add_column("Latest run")
+    table.add_column("Gate")
+    for experiment in result["experiments"]:
+        table.add_row(
+            str(experiment.get("experiment_id")),
+            str(experiment.get("status")),
+            str(experiment.get("run_count")),
+            str(experiment.get("latest_run_id")),
+            str(experiment.get("latest_quality_gate_status")),
+        )
+    console.print(table)
+
+
+@experiments_app.command("show")
+def experiments_show_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    experiment_id: str = typer.Argument(..., help="Experiment id."),
+) -> None:
+    """Show one tracked experiment."""
+    project_dir = require_project(project_name)
+    try:
+        experiment = tracked_experiment(project_dir, experiment_id)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Experiment: {experiment_id}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in [
+        "experiment_id",
+        "status",
+        "run_count",
+        "latest_run_id",
+        "latest_quality_gate_status",
+        "quality_gate_status_counts",
+        "metric_keys",
+        "latest_metrics",
+        "spec_present",
+        "spec_sha256",
+    ]:
+        table.add_row(key, str(experiment.get(key)))
+    console.print(table)
+
+
+@experiments_app.command("compare")
+def experiments_compare_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    left: str = typer.Option(..., "--left", help="Left experiment id."),
+    right: str = typer.Option(..., "--right", help="Right experiment id."),
+) -> None:
+    """Compare latest tracked metrics for two experiments."""
+    project_dir = require_project(project_name)
+    try:
+        comparison = compare_tracked_experiments(project_dir, left, right)
+    except ValueError as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title=f"Experiment Tracking Comparison: {project_name}")
+    table.add_column("Metric")
+    table.add_column("Left")
+    table.add_column("Right")
+    table.add_column("Delta")
+    table.add_column("Equal")
+    for item in comparison["metric_deltas"]:
+        table.add_row(str(item["metric"]), str(item["left"]), str(item["right"]), str(item["delta"]), str(item["equal"]))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'experiment_tracking_comparison.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EXPERIMENT_TRACKING_COMPARISON.md'}")
+    _success("Experiment tracking comparison written.")
 
 
 @app.command("trace-claims")

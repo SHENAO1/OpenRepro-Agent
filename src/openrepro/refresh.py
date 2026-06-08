@@ -43,6 +43,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .evidence_query import query_evidence
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
+    from .experiment_tracking import generate_experiment_tracking
     from .gaps import generate_reproduction_gaps
     from .handoff_generator import generate_handoff
     from .inspector import inspect_project
@@ -79,6 +80,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         ("repro_lock_validation", "Validate project reproducibility lockfile.", lambda: validate_repro_lock(project_dir)),
         ("quality_gates", "Evaluate quality gates for existing runs.", lambda: evaluate_all_quality_gates(project_dir)),
         ("run_index", "Refresh run index and static run explorer.", lambda: generate_run_index(project_dir, export_zip=export_zip)),
+        ("experiment_tracking", "Refresh experiment-level tracking artifacts.", lambda: generate_experiment_tracking(project_dir, export_zip=export_zip)),
         ("lineage", "Refresh run lineage.", lambda: generate_run_lineage(project_dir)),
         ("claim_trace", "Refresh claim trace.", lambda: generate_claim_trace(project_dir)),
         ("claim_trace_validation", "Validate claim trace.", lambda: validate_claim_trace(project_dir)),
@@ -405,6 +407,7 @@ def _summary(output: Any) -> dict[str, Any]:
         "valid",
         "healthy",
         "run_count",
+        "experiment_count",
         "claim_count",
         "event_count",
         "open_count",

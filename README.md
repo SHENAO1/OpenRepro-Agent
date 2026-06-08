@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.37.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.38.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.37.0 workflow is:
+The v1.38.0 workflow is:
 
 ```text
-init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → pipeline export/plan/validate → status
+init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent-adapter → validate-agent-adapter → paper-lineage → workflow status/explain/preset/run/resume → pipeline export/plan/validate → status
 ```
 
 ## What v0.4.0 supports
@@ -594,6 +594,14 @@ init → configure-provider → ingest → analyze → plan → list-templates �
 - Plan the current project against the pipeline spec and report next safe commands.
 - Validate pipeline steps against the registered workflow DAG.
 
+## What v1.38.0 adds
+
+- Add `openrepro experiments track/list/show/compare`.
+- Write `workspace/experiment_tracking.json`, `workspace/EXPERIMENT_TRACKING.md`, `reports/experiments/index.html`, and `reports/experiment_tracking_manifest.json`.
+- Aggregate indexed runs by experiment id with latest run, quality gate counts, metric keys, latest metrics, spec hashes, and input summaries.
+- Write experiment tracking comparisons in `workspace/experiment_tracking_comparison.json` and `workspace/EXPERIMENT_TRACKING_COMPARISON.md`.
+- Refresh now generates experiment tracking after the run index.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -667,6 +675,7 @@ openrepro run-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro quality-gate boc_demo
 openrepro rerun-experiment boc_demo --experiment-id boc_candidate_exp --confirm
 openrepro compare-experiments boc_demo --experiment-id boc_candidate_exp
+openrepro experiments track boc_demo
 openrepro run-demo boc_demo
 openrepro validate boc_demo
 openrepro validate boc_demo --all
@@ -1741,6 +1750,41 @@ The comparison reports metric equality, metric deltas, runner hashes, raw input
 hashes, normalized input hashes, spec hashes, and environment hashes. It is
 repeatability evidence only; it does not claim paper reproduction success.
 
+### `openrepro experiments track <project_name> [--zip]`
+
+Generates experiment-level tracking artifacts and writes:
+
+```text
+workspace/experiment_tracking.json
+workspace/EXPERIMENT_TRACKING.md
+reports/experiments/index.html
+reports/experiment_tracking_manifest.json
+reports/experiment_tracking.zip
+```
+
+Tracking groups indexed runs by experiment id and summarizes latest runs,
+quality gate counts, metric keys, latest metrics, spec hashes, and input
+summaries.
+
+### `openrepro experiments list <project_name>`
+
+Lists tracked experiments in the console.
+
+### `openrepro experiments show <project_name> <experiment_id>`
+
+Shows one tracked experiment record.
+
+### `openrepro experiments compare <project_name> --left LEFT --right RIGHT`
+
+Compares latest tracked metrics for two experiment ids and writes:
+
+```text
+workspace/experiment_tracking_comparison.json
+workspace/EXPERIMENT_TRACKING_COMPARISON.md
+```
+
+The comparison reports observed latest metric differences only.
+
 ### `openrepro run-demo <project_name>`
 
 Creates a timestamped output directory, for example:
@@ -2204,12 +2248,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.35.0: unified project asset catalog and graph artifacts.
 - v1.36.0: lightweight data expectation suites and validation results.
 - v1.37.0: declarative pipeline spec export, planning, and validation.
+- v1.38.0: experiment-level tracking over indexed run evidence.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.37.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.38.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
