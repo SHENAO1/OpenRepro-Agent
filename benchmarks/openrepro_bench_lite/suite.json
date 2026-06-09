@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.6.0",
+  "suite_id": "openrepro_bench_lite",
+  "description": "Built-in lightweight workflow-compliance suite for toy paper-reproduction notes.",
+  "tasks": [
+    {
+      "task": "bench_lite_boc_notes.json",
+      "project": null
+    },
+    {
+      "task": "bench_lite_random_search_notes.json",
+      "project": null
+    },
+    {
+      "task": "bench_lite_numeric_table_notes.json",
+      "project": null
+    }
+  ],
+  "policy": "Workflow-compliance evidence only; no paper reproduction success or benchmark score is claimed.",
+  "openrepro_bench_lite": {
+    "schema_version": "1.53.0",
+    "task_count": 3,
+    "source": "package:openrepro.examples"
+  }
+}

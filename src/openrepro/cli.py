@@ -66,6 +66,7 @@ from .lineage import generate_run_lineage
 from .local_ui import generate_local_ui, local_ui_summary
 from .multi_agent_plan import generate_multi_agent_plan
 from .multi_agent_plan_validation import validate_multi_agent_plan
+from .openrepro_bench_lite import list_bench_lite_tasks, run_openrepro_bench_lite
 from .paper_lineage import generate_paper_lineage
 from .pipeline_spec import export_pipeline_spec, plan_pipeline, validate_pipeline_spec
 from .plugin_registry import build_plugin_registry, plugin_registry_summary, register_plugin, validate_plugin_registry
@@ -2699,6 +2700,57 @@ def doctor_cmd(project_name: str = typer.Argument(..., help="Project directory."
     console.print(table)
     console.print(f"JSON: {project_dir / 'workspace' / 'doctor.json'}")
     console.print(f"Markdown: {project_dir / 'workspace' / 'DOCTOR.md'}")
+
+
+@app.command("bench-lite")
+def bench_lite_cmd(
+    project_prefix: str = typer.Option("openrepro_bench_lite", "--project-prefix", help="Prefix for generated benchmark projects."),
+    bench_dir: Path | None = typer.Option(None, "--bench-dir", help="Directory for the materialized built-in benchmark pack."),
+    task_id: list[str] | None = typer.Option(None, "--task-id", help="Built-in task id to run. Repeat to run a subset."),
+    list_tasks: bool = typer.Option(False, "--list-tasks", help="List built-in OpenRepro-Bench Lite tasks and exit."),
+    materialize_only: bool = typer.Option(False, "--materialize-only", help="Write the built-in suite and tasks without running them."),
+) -> None:
+    """Run the built-in OpenRepro-Bench Lite workflow-compliance suite."""
+    if list_tasks:
+        table = Table(title="OpenRepro-Bench Lite Tasks")
+        table.add_column("Task", style="bold")
+        table.add_column("Title")
+        table.add_column("Difficulty")
+        table.add_column("Focus")
+        for task in list_bench_lite_tasks():
+            table.add_row(str(task["task_id"]), str(task["paper_title"]), str(task["difficulty"]), str(task["focus"]))
+        console.print(table)
+        console.print("Tasks: " + ", ".join(str(task["task_id"]) for task in list_bench_lite_tasks()))
+        return
+    try:
+        result = run_openrepro_bench_lite(
+            project_prefix=project_prefix,
+            bench_dir=bench_dir,
+            task_ids=task_id,
+            materialize_only=materialize_only,
+        )
+    except Exception as exc:
+        diagnosis = diagnose_error(str(exc), source="openrepro_bench_lite")
+        _warn(str(exc))
+        console.print(f"Diagnosis: {diagnosis['code']}")
+        console.print(f"Repair: {diagnosis['repair_suggestion']}")
+        raise typer.Exit(1) from exc
+
+    table = Table(title="OpenRepro-Bench Lite")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "task_count", "tasks_passed", "project_prefix", "suite_dir"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"Suite: {result['suite_path']}")
+    console.print(f"JSON: {result['summary_path']}")
+    console.print(f"Markdown: {result['markdown_path']}")
+    if result["status"] == "passed":
+        _success("OpenRepro-Bench Lite completed.")
+    elif materialize_only:
+        _success("OpenRepro-Bench Lite materialized.")
+    else:
+        _warn("OpenRepro-Bench Lite completed with review needed.")
 
 
 @app.command("benchmark")

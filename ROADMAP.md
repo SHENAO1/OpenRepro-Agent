@@ -835,6 +835,16 @@ Released in v1.51.0 with a lower-friction first-run path and a simple reproducib
 
 Released in v1.52.0 with lightweight interoperability artifacts for common experiment tooling.
 
+## v1.53.0 — OpenRepro-Bench Lite
+
+- [x] Add `openrepro bench-lite` for a built-in curated workflow-compliance suite.
+- [x] Materialize BOC-like, random-search, and numeric-table toy note tasks.
+- [x] Reuse the existing benchmark runner and benchmark index instead of inventing a parallel scoring path.
+- [x] Write `openrepro_bench_lite_summary.json` and `OPENREPRO_BENCH_LITE_SUMMARY.md`.
+- [x] Keep benchmark-pack outputs limited to observed workflow evidence, not scientific reproduction scores.
+
+Released in v1.53.0 with a small reproducible benchmark pack aligned with high-star project practices around public suites, repeatable runs, and summary artifacts.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.52.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.53.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -25,6 +25,7 @@ OpenRepro-Agent v1.52.0 uses a small modular CLI architecture.
 - `experiment_scaffold.py`: human-gated experiment scaffolds from candidate evidence.
 - `experiment_runner.py`: controlled execution for verified experiment scaffolds.
 - `benchmark_runner.py`: workflow-compliance benchmark and benchmark-suite execution.
+- `openrepro_bench_lite.py`: built-in curated OpenRepro-Bench Lite task pack and summary generation.
 - `inspector.py`: project observability summary for humans and agents.
 - `diagnostics.py`: failure classification and repair suggestions.
 - `agent_adapter.py`: externally supervised agent runner adapter specs, validation, and trajectory handoff logs.
@@ -99,6 +100,7 @@ sources/ + project_config.yaml
   → benchmarks/runs/<timestamp>_<task>/benchmark_result.json
   → benchmarks/runs/<timestamp>_<suite>_suite/benchmark_suite_result.json
   → benchmarks/runs/benchmark_index.json + benchmark_index.md
+  → benchmarks/openrepro_bench_lite/openrepro_bench_lite_summary.json + OPENREPRO_BENCH_LITE_SUMMARY.md
   → reports/report.md
   → handoff/*.md
 ```

@@ -1,0 +1,68 @@
+{
+  "schema_version": "0.6.0",
+  "task_id": "bench_lite_boc_notes",
+  "paper_title": "BOC-like workflow notes",
+  "source_files": [
+    "sources/boc_notes.md"
+  ],
+  "artifacts": {
+    "required": [
+      "workspace/paper_summary.md",
+      "workspace/MODEL_LEDGER.md",
+      "workspace/EXPERIMENT_PLAN.md",
+      "outputs/<timestamp>_<project>/figures/correlation.png",
+      "outputs/<timestamp>_<project>/data/demo_metrics.json",
+      "outputs/<timestamp>_<project>/manifest.json"
+    ],
+    "optional": [
+      "outputs/<timestamp>_<project>/reports/demo_report.md"
+    ]
+  },
+  "metrics": {
+    "required": [
+      "signal_length",
+      "correlation_peak",
+      "correlation_peak_index",
+      "run_time_seconds"
+    ],
+    "optional": [
+      "side_lobe_level"
+    ]
+  },
+  "workflow": {
+    "run_demo": true,
+    "run_sweep": false
+  },
+  "pass_criteria": {
+    "require_manifest_valid": true
+  },
+  "dataset": {
+    "name": "boc_notes.md",
+    "type": "markdown_notes",
+    "path": "sources/boc_notes.md"
+  },
+  "environment": {
+    "python": ">=3.10",
+    "runner": "OpenRepro-Agent CLI"
+  },
+  "dependencies": [
+    "numpy",
+    "matplotlib",
+    "pdfplumber",
+    "pyyaml",
+    "typer"
+  ],
+  "paper_source": {
+    "title": "BOC-like workflow notes",
+    "source_type": "toy_example_notes",
+    "claim_policy": "workflow evidence only"
+  },
+  "expected_runtime_notes": "Runs the built-in lightweight BOC-like demo over toy notes.",
+  "openrepro_bench_lite": {
+    "schema_version": "1.53.0",
+    "difficulty": "starter",
+    "focus": "source ingestion, rule analysis, plan generation, and demo evidence",
+    "source_example": "boc_notes.md"
+  },
+  "notes": "This task checks workflow evidence only. It is not a benchmark score or a paper reproduction claim."
+}
