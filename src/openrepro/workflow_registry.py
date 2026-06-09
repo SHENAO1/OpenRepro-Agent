@@ -250,13 +250,22 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("claim_trace",),
     ),
     WorkflowStep(
+        "evidence_graph",
+        "Evidence graph",
+        "claim_evidence",
+        "Build the unified claim, data, experiment, run, review, and artifact graph.",
+        "openrepro evidence-graph <project>",
+        ("workspace/evidence_graph.json", "workspace/EVIDENCE_GRAPH.md"),
+        ("claim_trace_validation",),
+    ),
+    WorkflowStep(
         "scorecard",
         "Readiness scorecard",
         "review",
         "Score workflow evidence readiness.",
         "openrepro scorecard <project>",
         ("workspace/reproduction_scorecard.json",),
-        ("claim_trace_validation",),
+        ("evidence_graph",),
     ),
     WorkflowStep(
         "gaps",
@@ -917,6 +926,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .data_profile import generate_data_profile
     from .delivery_bundle import generate_delivery_bundle
     from .evidence_explorer import generate_evidence_explorer
+    from .evidence_graph import generate_evidence_graph
     from .evidence_query import query_evidence
     from .evidence_package import generate_evidence_package
     from .experiment_tracking import generate_experiment_tracking
@@ -961,6 +971,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "lineage": generate_run_lineage,
         "claim_trace": generate_claim_trace,
         "claim_trace_validation": validate_claim_trace,
+        "evidence_graph": generate_evidence_graph,
         "scorecard": generate_reproduction_scorecard,
         "gaps": generate_reproduction_gaps,
         "checkpoints": generate_workflow_checkpoints,

@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.56.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.57.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -21,6 +21,7 @@ OpenRepro-Agent v1.56.0 uses a small modular CLI architecture.
 - `data_profile.py`: registered data profiling and lightweight schema warnings for CSV, TSV, JSON, and JSONL.
 - `dataset_card.py`: dataset card generation and lightweight data quality gates over registered data.
 - `evidence_explorer.py`: static reviewer-facing evidence explorer for lineage, claims, data, runs, and artifact links.
+- `evidence_graph.py`: unified claim, source, data, experiment, run, review, and artifact evidence graph for human and supervised-agent review.
 - `evidence_query.py`: searchable evidence query artifacts over explorer claims, lineage nodes, runs, data, and artifact links.
 - `candidate_review.py`: candidate listing and human review lifecycle.
 - `experiment_scaffold.py`: human-gated experiment scaffolds from candidate evidence.
@@ -94,6 +95,7 @@ sources/ + project_config.yaml
   → workspace/integration_execution.json + INTEGRATION_EXECUTION.md
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
+  → workspace/evidence_graph.json + EVIDENCE_GRAPH.md
   → reports/local_ui/index.html + workspace/local_ui_summary.json
   → reports/cockpit/index.html + reports/cockpit_manifest.json
   → workspace/cockpit_summary.json + COCKPIT_SUMMARY.md

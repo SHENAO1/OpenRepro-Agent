@@ -23,6 +23,7 @@ from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
 from .dataset_card import data_quality_gate_summary, dataset_card_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
+from .evidence_graph import generate_evidence_graph
 from .experiment_spec import inspect_experiment_specs
 from .freshness import artifact_freshness_summary
 from .gaps import generate_reproduction_gaps
@@ -70,6 +71,7 @@ WORKSPACE_ARTIFACTS = [
     "quality_gate_summary.json",
     "claim_trace.json",
     "claim_trace_validation.json",
+    "evidence_graph.json",
     "claim_evidence_binder.json",
     "claim_evidence_binder_validation.json",
     "claim_signoffs.json",
@@ -360,6 +362,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
 
     claim_trace = generate_claim_trace(project_dir)
     claim_trace_validation = validate_claim_trace(project_dir)
+    evidence_graph = generate_evidence_graph(project_dir)
     lineage = generate_run_lineage(project_dir)
     scorecard = generate_reproduction_scorecard(project_dir)
     gaps = generate_reproduction_gaps(project_dir)
@@ -434,6 +437,20 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "validation_warning_count": claim_trace_validation.get("warning_count"),
             "path": str(project_dir / "workspace" / "claim_trace.json"),
             "validation_path": str(project_dir / "workspace" / "claim_trace_validation.json"),
+        },
+        "evidence_graph": {
+            "schema_version": evidence_graph.get("schema_version"),
+            "status": evidence_graph.get("status"),
+            "top_command": evidence_graph.get("top_command"),
+            "node_count": evidence_graph.get("node_count"),
+            "edge_count": evidence_graph.get("edge_count"),
+            "claim_count": evidence_graph.get("claim_count"),
+            "data_count": evidence_graph.get("data_count"),
+            "experiment_count": evidence_graph.get("experiment_count"),
+            "run_count": evidence_graph.get("run_count"),
+            "review_decision_count": evidence_graph.get("review_decision_count"),
+            "path": str(project_dir / "workspace" / "evidence_graph.json"),
+            "markdown_path": str(project_dir / "workspace" / "EVIDENCE_GRAPH.md"),
         },
         "claim_evidence_binder": {
             "schema_version": claim_binder.get("schema_version"),
@@ -724,6 +741,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "reports" / "claim_evidence_report_validation.md").exists(),
                 "path": str(project_dir / "reports" / "claim_evidence_report_validation.md"),
             },
+            "evidence_graph": {
+                "present": (project_dir / "workspace" / "EVIDENCE_GRAPH.md").exists(),
+                "path": str(project_dir / "workspace" / "EVIDENCE_GRAPH.md"),
+            },
             "reviewer_packet": {
                 "present": (project_dir / "reports" / "reviewer_packet.md").exists(),
                 "path": str(project_dir / "reports" / "reviewer_packet.md"),
@@ -884,6 +905,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - claim_trace_experiment_count: {package['claim_trace']['experiment_trace_count']}
 - claim_trace_validation_status: {package['claim_trace']['validation_status']}
 - claim_trace_validation_issue_count: {package['claim_trace']['validation_issue_count']}
+- evidence_graph_status: {package['evidence_graph']['status']}
+- evidence_graph_node_count: {package['evidence_graph']['node_count']}
+- evidence_graph_edge_count: {package['evidence_graph']['edge_count']}
 - claim_evidence_binder_status: {package['claim_evidence_binder']['status']}
 - claim_evidence_binder_incomplete_claim_count: {package['claim_evidence_binder']['incomplete_claim_count']}
 - claim_evidence_binder_validation_status: {package['claim_evidence_binder']['validation_status']}

@@ -11,6 +11,7 @@ from .artifact_manager import sha256_file
 from .claim_trace import claim_trace_summary
 from .dataset_card import data_quality_gate_summary, dataset_card_summary
 from .evidence_fingerprint import evidence_package_status
+from .evidence_graph import evidence_graph_summary
 from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
 from .integrations import integrations_summary
@@ -20,7 +21,7 @@ from .run_index import run_index_summary
 from .scorecard import scorecard_summary
 from .utils import iso_now, read_json, relpath, safe_write_text, write_json
 
-COCKPIT_SCHEMA_VERSION = "1.56.0"
+COCKPIT_SCHEMA_VERSION = "1.57.0"
 
 
 def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, Any]:
@@ -34,6 +35,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
     data_quality = data_quality_gate_summary(project_dir)
     dataset_card = dataset_card_summary(project_dir)
     claim_trace = claim_trace_summary(project_dir)
+    evidence_graph = evidence_graph_summary(project_dir)
     runs = run_index_summary(project_dir)
     bench_lite = _bench_lite_summary(project_dir)
     integrations = integrations_summary(project_dir)
@@ -48,6 +50,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
         data_quality=data_quality,
         dataset_card=dataset_card,
         claim_trace=claim_trace,
+        evidence_graph=evidence_graph,
         runs=runs,
         bench_lite=bench_lite,
         integrations=integrations,
@@ -76,6 +79,8 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
             "dataset_card_status": dataset_card.get("status"),
             "claim_trace_status": claim_trace.get("validation_status", "missing"),
             "claim_trace_issue_count": claim_trace.get("validation_issue_count"),
+            "evidence_graph_status": evidence_graph.get("status"),
+            "evidence_graph_node_count": evidence_graph.get("node_count"),
             "run_count": runs.get("run_count"),
             "quality_gate_passed_count": runs.get("quality_gate_passed_count"),
             "bench_lite_status": bench_lite.get("status"),
@@ -93,6 +98,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
             "data_quality_gate": data_quality,
             "dataset_card": dataset_card,
             "claim_trace": claim_trace,
+            "evidence_graph": evidence_graph,
             "runs": runs,
             "bench_lite": bench_lite,
             "integrations": integrations,
@@ -182,6 +188,7 @@ def _next_actions(project_dir: Path, **sections: dict[str, Any]) -> list[dict[st
     _maybe_action(actions, "dataset_card", "Generate the dataset card.", sections["dataset_card"].get("present") and sections["dataset_card"].get("status") in {"ready", "ready_with_warnings"}, f"openrepro dataset-card generate {project_dir}", "medium")
     _maybe_action(actions, "run_index", "Build the run index so latest runs and quality gates are visible.", sections["runs"].get("present") and int(sections["runs"].get("run_count", 0) or 0) > 0, f"openrepro runs index {project_dir}", "medium")
     _maybe_action(actions, "claim_trace", "Generate and validate claim traceability.", sections["claim_trace"].get("present") and sections["claim_trace"].get("validation_status") in {"passed", "valid"}, f"openrepro trace-claims {project_dir} --validate", "high")
+    _maybe_action(actions, "evidence_graph", "Generate the unified evidence graph.", sections["evidence_graph"].get("present") and int(sections["evidence_graph"].get("node_count", 0) or 0) > 0, f"openrepro evidence-graph {project_dir}", "high")
     _maybe_action(actions, "bench_lite", "Run OpenRepro-Bench Lite for workflow benchmark evidence.", sections["bench_lite"].get("status") == "passed", str(sections["bench_lite"].get("top_command") or "openrepro bench-lite"), "medium")
     _maybe_action(actions, "integrations", "Export or plan integration adapter execution.", sections["integrations"].get("present") and sections["integrations"].get("execution_status") in {"planned", "executed", "skipped_missing_dependency"}, f"openrepro integrations run {project_dir}", "low")
     _maybe_action(actions, "evidence_package", "Refresh the evidence package.", sections["evidence"].get("status") == "current" and not sections["evidence"].get("stale"), f"openrepro evidence-package {project_dir} --zip", "high")
@@ -205,6 +212,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "RUN_INDEX.md",
         project_dir / "workspace" / "CLAIM_TRACE.md",
         project_dir / "workspace" / "CLAIM_TRACE_VALIDATION.md",
+        project_dir / "workspace" / "EVIDENCE_GRAPH.md",
         project_dir / "workspace" / "INTEGRATION_EXECUTION.md",
         project_dir / "reports" / "evidence_package.md",
         project_dir / "workspace" / "ARTIFACT_FRESHNESS.md",
@@ -366,6 +374,8 @@ def _render_html(cockpit: dict[str, Any]) -> str:
         <div class="metric"><span>Dataset card</span><strong>{_badge(summary.get('dataset_card_status'))}</strong></div>
         <div class="metric"><span>Claim trace</span><strong>{_badge(summary.get('claim_trace_status'))}</strong></div>
         <div class="metric"><span>Claim issues</span><strong>{_cell(summary.get('claim_trace_issue_count'))}</strong></div>
+        <div class="metric"><span>Evidence graph</span><strong>{_badge(summary.get('evidence_graph_status'))}</strong></div>
+        <div class="metric"><span>Graph nodes</span><strong>{_cell(summary.get('evidence_graph_node_count'))}</strong></div>
         <div class="metric"><span>Runs</span><strong>{_cell(summary.get('run_count'))}</strong></div>
         <div class="metric"><span>Passed gates</span><strong>{_cell(summary.get('quality_gate_passed_count'))}</strong></div>
         <div class="metric"><span>Bench Lite</span><strong>{_badge(summary.get('bench_lite_status'))}</strong></div>

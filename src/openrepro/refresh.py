@@ -42,6 +42,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .data_profile import generate_data_profile
     from .delivery_bundle import generate_delivery_bundle
     from .evidence_explorer import generate_evidence_explorer
+    from .evidence_graph import generate_evidence_graph
     from .evidence_query import query_evidence
     from .evidence_package import generate_evidence_package
     from .freshness import generate_artifact_freshness
@@ -88,6 +89,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         ("lineage", "Refresh run lineage.", lambda: generate_run_lineage(project_dir)),
         ("claim_trace", "Refresh claim trace.", lambda: generate_claim_trace(project_dir)),
         ("claim_trace_validation", "Validate claim trace.", lambda: validate_claim_trace(project_dir)),
+        ("evidence_graph", "Refresh unified evidence graph.", lambda: generate_evidence_graph(project_dir)),
         ("scorecard", "Refresh readiness scorecard.", lambda: generate_reproduction_scorecard(project_dir)),
         ("gaps", "Refresh reproduction gaps.", lambda: generate_reproduction_gaps(project_dir)),
         ("checkpoints", "Refresh workflow checkpoints.", lambda: generate_workflow_checkpoints(project_dir)),

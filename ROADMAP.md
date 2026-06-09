@@ -875,6 +875,18 @@ Released in v1.55.0 with DVC/Great-Expectations-inspired data documentation and 
 
 Released in v1.56.0 with a static operator cockpit inspired by high-star project practices around visible project health, one-page review surfaces, and actionable next steps.
 
+## v1.57.0 — Unified Evidence Graph
+
+- [x] Add `openrepro evidence-graph`.
+- [x] Write `workspace/evidence_graph.json` and `workspace/EVIDENCE_GRAPH.md`.
+- [x] Link claims, source provenance, registered data, experiment specs, runs, review decisions, and key artifacts in one graph schema.
+- [x] Surface Evidence Graph status in the reproduction cockpit.
+- [x] Refresh and include Evidence Graph summaries in evidence packages.
+- [x] Add Evidence Graph to the registered workflow DAG and refresh pipeline.
+- [x] Keep the graph as an audit map only: it does not run experiments, verify scientific correctness, or promote candidate claims.
+
+Released in v1.57.0 with an evidence-first graph layer for human and supervised-agent paper reproduction review.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

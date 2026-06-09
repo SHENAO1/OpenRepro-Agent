@@ -47,6 +47,7 @@ from .demo_runner import run_demo, run_sweep
 from .document_loader import ingest_source
 from .doctor import run_doctor
 from .evidence_explorer import generate_evidence_explorer
+from .evidence_graph import generate_evidence_graph
 from .evidence_query import query_evidence
 from .evidence_package import generate_evidence_package
 from .experiment_compare import compare_experiments, rerun_experiment
@@ -2966,6 +2967,31 @@ def evidence_package_cmd(
     console.print(f"Markdown: {project_dir / 'reports' / 'evidence_package.md'}")
     if export_zip:
         console.print(f"Zip: {project_dir / 'reports' / 'evidence_package.zip'}")
+
+
+@app.command("evidence-graph")
+def evidence_graph_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Generate the unified evidence graph."""
+    project_dir = require_project(project_name)
+    graph = generate_evidence_graph(project_dir)
+    _success(f"Evidence graph generated with {graph['node_count']} nodes and {graph['edge_count']} edges.")
+    table = Table(title="Evidence Graph")
+    table.add_column("Metric")
+    table.add_column("Value")
+    for key in [
+        "schema_version",
+        "status",
+        "top_command",
+        "claim_count",
+        "data_count",
+        "experiment_count",
+        "run_count",
+        "review_decision_count",
+    ]:
+        table.add_row(key, str(graph.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'evidence_graph.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'EVIDENCE_GRAPH.md'}")
 
 
 @app.command("review-site")

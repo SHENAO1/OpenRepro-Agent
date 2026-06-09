@@ -34,12 +34,14 @@ def test_generate_cockpit_writes_static_review_surface(tmp_path: Path):
     cockpit = generate_cockpit(project, export_zip=True)
     summary = cockpit_summary(project)
 
-    assert cockpit["schema_version"] == "1.56.0"
+    assert cockpit["schema_version"] == "1.57.0"
     assert cockpit["status"] == "needs_attention"
     assert cockpit["summary"]["data_quality_status"] == "passed"
+    assert cockpit["summary"]["evidence_graph_status"] == "missing"
     assert cockpit["summary"]["run_count"] >= 1
     assert cockpit["summary"]["integration_execution_status"] == "planned"
     assert any(action["action_id"] == "bench_lite" for action in cockpit["next_actions"])
+    assert any(action["action_id"] == "evidence_graph" for action in cockpit["next_actions"])
     assert (project / "reports" / "cockpit" / "index.html").exists()
     assert (project / "reports" / "cockpit_manifest.json").exists()
     assert (project / "workspace" / "cockpit_summary.json").exists()

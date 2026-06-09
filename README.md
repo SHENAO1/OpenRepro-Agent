@@ -4,7 +4,7 @@
 
 OpenRepro-Agent is a Python CLI for building auditable paper-reproduction workspaces. It helps you ingest sources, extract candidate evidence, scaffold guarded experiments, run toy or verified workflows, validate artifacts, and package results for human or agent handoff.
 
-Current version: **v1.56.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
+Current version: **v1.57.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
 
 ## Why
 
@@ -17,7 +17,7 @@ Paper reproduction often fails because notes, formulas, assumptions, datasets, c
 - Rule-based formula and parameter candidate extraction.
 - Human-gated candidate review before experiment scaffolding.
 - Experiment specs, input validation, run manifests, quality gates, and run comparisons.
-- Dataset cards, lightweight data quality gates, lineage, claim traceability, readiness reviews, and evidence packages.
+- Dataset cards, lightweight data quality gates, lineage, claim traceability, unified evidence graphs, readiness reviews, and evidence packages.
 - Static review surfaces including dashboard, evidence explorer, and reproduction cockpit.
 - Mock provider by default, with explicit opt-in OpenAI-compatible API support.
 - Built-in starter workflow and OpenRepro-Bench Lite for repeatable workflow checks.
@@ -62,6 +62,7 @@ Useful next commands:
 ```bash
 openrepro status random_search_demo
 openrepro cockpit build random_search_demo --zip
+openrepro evidence-graph random_search_demo
 openrepro evidence-package random_search_demo --zip
 openrepro bench-lite
 ```
