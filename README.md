@@ -1,5 +1,7 @@
 # OpenRepro-Agent
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 OpenRepro-Agent is a Python CLI for building auditable paper-reproduction workspaces. It helps you ingest sources, extract candidate evidence, scaffold guarded experiments, run toy or verified workflows, validate artifacts, and package results for human or agent handoff.
 
 Current version: **v1.56.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
