@@ -4,7 +4,7 @@
 
 OpenRepro-Agent 是一个用于构建可审计论文复现工作区的 Python CLI。它帮助你导入论文或笔记、提取候选证据、生成受保护的实验脚手架、运行 toy 或已验证流程、校验产物，并打包给人类维护者或代码代理继续接手。
 
-当前版本：**v1.57.0**。本项目仍是 alpha 阶段的工程脚手架，不是全自动论文复现系统。
+当前版本：**v1.58.0**。本项目仍是 alpha 阶段的工程脚手架，不是全自动论文复现系统。
 
 ## 为什么做
 
@@ -18,6 +18,7 @@ OpenRepro-Agent 是一个用于构建可审计论文复现工作区的 Python CL
 - 在生成实验脚手架前加入人工候选审阅门禁。
 - 支持实验规格、输入校验、运行 manifest、质量门禁和运行对比。
 - 支持数据集卡片、轻量数据质量门禁、lineage、claim trace、统一 evidence graph、readiness review 和 evidence package。
+- 支持 runner-neutral 的受控智能体任务合同，并提供显式结果 schema 和护栏。
 - 提供静态审阅界面，包括 dashboard、evidence explorer 和 reproduction cockpit。
 - 默认使用 mock provider；真实 OpenAI-compatible API 需要显式启用。
 - 内置 starter workflow 和 OpenRepro-Bench Lite，用于可重复的流程检查。
@@ -63,6 +64,7 @@ openrepro start random_search_demo
 openrepro status random_search_demo
 openrepro cockpit build random_search_demo --zip
 openrepro evidence-graph random_search_demo
+openrepro agent-task-spec random_search_demo
 openrepro evidence-package random_search_demo --zip
 openrepro bench-lite
 ```

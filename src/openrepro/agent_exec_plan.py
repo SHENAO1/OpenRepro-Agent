@@ -28,6 +28,7 @@ SAFE_COMMANDS = {
     "validate-multi-agent-plan",
     "agent-board",
     "agent-dispatch",
+    "agent-task-spec",
 }
 FORBIDDEN_COMMANDS = {
     "run-experiment",

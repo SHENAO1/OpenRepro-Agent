@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from . import __version__
 from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
+from .agent_task_spec import generate_agent_task_spec
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
 from .claim_evidence_binder import generate_claim_evidence_binder, validate_claim_evidence_binder
@@ -81,6 +82,8 @@ WORKSPACE_ARTIFACTS = [
     "workflow_checkpoints.json",
     "workflow_execution.json",
     "agent_sandbox_run.json",
+    "agent_task_spec.json",
+    "agent_result_schema.json",
     "ci_summary.json",
     "ci_validation.json",
     "plugin_registry.json",
@@ -157,6 +160,9 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "warning_count",
         "selected_step_count",
         "executed_step_count",
+        "task_contract_count",
+        "ready_task_count",
+        "blocked_task_count",
         "formula_candidate_count",
         "parameter_candidate_count",
         "candidate_review_count",
@@ -384,6 +390,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     project_timeline = generate_project_timeline(project_dir)
     project_profile = generate_project_profile(project_dir)
     acceptance_criteria = generate_acceptance_criteria(project_dir)
+    agent_task_spec = generate_agent_task_spec(project_dir)
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
@@ -558,6 +565,18 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "required_failed_count": acceptance_criteria.get("required_failed_count"),
             "path": str(project_dir / "workspace" / "acceptance_criteria.json"),
             "markdown_path": str(project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md"),
+        },
+        "agent_task_spec": {
+            "schema_version": agent_task_spec.get("schema_version"),
+            "status": agent_task_spec.get("status"),
+            "task_contract_count": agent_task_spec.get("task_contract_count"),
+            "ready_task_count": agent_task_spec.get("ready_task_count"),
+            "blocked_task_count": agent_task_spec.get("blocked_task_count"),
+            "human_input_task_count": agent_task_spec.get("human_input_task_count"),
+            "top_command": agent_task_spec.get("top_command"),
+            "path": str(project_dir / "workspace" / "agent_task_spec.json"),
+            "markdown_path": str(project_dir / "workspace" / "AGENT_TASK_SPEC.md"),
+            "result_schema_path": str(project_dir / "workspace" / "agent_result_schema.json"),
         },
         "collaboration_pack": {
             "schema_version": collaboration_pack.get("schema_version"),
@@ -769,6 +788,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "handoff" / "COLLABORATION_PACK.md").exists(),
                 "path": str(project_dir / "handoff" / "COLLABORATION_PACK.md"),
             },
+            "agent_task_spec": {
+                "present": (project_dir / "workspace" / "AGENT_TASK_SPEC.md").exists(),
+                "path": str(project_dir / "workspace" / "AGENT_TASK_SPEC.md"),
+            },
             "refresh_run": {
                 "present": (project_dir / "workspace" / "REFRESH_RUN.md").exists(),
                 "path": str(project_dir / "workspace" / "REFRESH_RUN.md"),
@@ -936,6 +959,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - acceptance_criteria_status: {package['acceptance_criteria']['status']}
 - acceptance_criteria_passed_count: {package['acceptance_criteria']['passed_count']}
 - acceptance_criteria_needs_work_count: {package['acceptance_criteria']['needs_work_count']}
+- agent_task_spec_status: {package['agent_task_spec']['status']}
+- agent_task_spec_task_contract_count: {package['agent_task_spec']['task_contract_count']}
+- agent_task_spec_blocked_task_count: {package['agent_task_spec']['blocked_task_count']}
 - collaboration_pack_status: {package['collaboration_pack']['status']}
 - collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
 - collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}

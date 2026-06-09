@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.57.0" in result.output
+    assert "OpenRepro-Agent v1.58.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):

@@ -16,6 +16,7 @@ from .agent_board import generate_agent_board
 from .agent_dispatch import generate_agent_dispatch
 from .agent_exec_plan import generate_agent_exec_plan
 from .agent_sandbox import run_agent_sandbox
+from .agent_task_spec import generate_agent_task_spec
 from .analyzer import analyze_project
 from .approval import approve_candidates
 from .asset_build import asset_build_summary, materialize_assets, plan_asset_build
@@ -2236,6 +2237,8 @@ def inspect_cmd(project_name: str = typer.Argument(..., help="Project directory.
         "Agent dispatch tasks": summary["agent_dispatch_open_task_count"],
         "Agent exec plan": summary["agent_exec_plan_status"],
         "Agent exec safe steps": summary["agent_exec_plan_safe_step_count"],
+        "Agent task spec": summary["agent_task_spec_status"],
+        "Agent task contracts": summary["agent_task_spec_task_contract_count"],
         "Paper lineage": summary["paper_lineage_status"],
         "Paper lineage nodes": summary["paper_lineage_node_count"],
         "Runs": summary["run_count"],
@@ -3782,6 +3785,26 @@ def agent_exec_plan_cmd(
     _success("Agent execution dry-run plan generated.")
 
 
+@app.command("agent-task-spec")
+def agent_task_spec_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    max_tasks: int = typer.Option(20, "--max-tasks", help="Maximum task contracts to include."),
+) -> None:
+    """Generate runner-neutral supervised agent task contracts."""
+    project_dir = require_project(project_name)
+    spec = generate_agent_task_spec(project_dir, max_tasks=max_tasks)
+    table = Table(title="Agent Task Spec")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "task_contract_count", "ready_task_count", "blocked_task_count", "human_input_task_count", "top_command"]:
+        table.add_row(key, str(spec.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_task_spec.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'AGENT_TASK_SPEC.md'}")
+    console.print(f"Result schema: {project_dir / 'workspace' / 'agent_result_schema.json'}")
+    _success("Agent task spec generated.")
+
+
 @app.command("agent-adapter")
 def agent_adapter_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -3979,6 +4002,8 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Agent dispatch tasks": status.agent_dispatch_open_task_count,
         "Agent exec plan": status.agent_exec_plan_status,
         "Agent exec safe steps": status.agent_exec_plan_safe_step_count,
+        "Agent task spec": status.agent_task_spec_status,
+        "Agent task contracts": status.agent_task_spec_task_contract_count,
         "Paper lineage": status.paper_lineage_status,
         "Paper lineage nodes": status.paper_lineage_node_count,
         "Latest run dir": status.latest_run_dir or "None",

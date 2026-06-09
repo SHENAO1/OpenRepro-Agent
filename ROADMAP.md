@@ -887,6 +887,17 @@ Released in v1.56.0 with a static operator cockpit inspired by high-star project
 
 Released in v1.57.0 with an evidence-first graph layer for human and supervised-agent paper reproduction review.
 
+## v1.58.0 — Supervised Agent Task Specs
+
+- [x] Add `openrepro agent-task-spec`.
+- [x] Write `workspace/agent_task_spec.json`, `workspace/AGENT_TASK_SPEC.md`, and `workspace/agent_result_schema.json`.
+- [x] Convert multi-agent dispatch and dry-run execution plans into runner-neutral supervised task contracts.
+- [x] Reference Evidence Graph node ids and required input artifacts in each task contract.
+- [x] Add task specs to the registered workflow DAG, refresh pipeline, project status, and evidence package.
+- [x] Keep task specs non-executing: they define contracts and result schema only, not autonomous agent runs.
+
+Released in v1.58.0 with a controlled agent-ready handoff layer built on Evidence Graph and existing agent dispatch plans.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

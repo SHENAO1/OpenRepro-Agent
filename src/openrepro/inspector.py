@@ -11,6 +11,7 @@ from .advance import advance_summary
 from .agent_board import agent_board_summary
 from .agent_dispatch import agent_dispatch_summary
 from .agent_exec_plan import agent_exec_plan_summary
+from .agent_task_spec import agent_task_spec_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
 from .checkpoints import checkpoint_summary
@@ -226,6 +227,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     agent_board = agent_board_summary(project_dir)
     agent_dispatch = agent_dispatch_summary(project_dir)
     agent_exec_plan = agent_exec_plan_summary(project_dir)
+    agent_task_spec = agent_task_spec_summary(project_dir)
     paper_lineage = paper_lineage_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
@@ -453,6 +455,12 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "agent_exec_plan_safe_step_count": agent_exec_plan["safe_step_count"],
         "agent_exec_plan_blocked_task_count": agent_exec_plan["blocked_task_count"],
         "agent_exec_plan_top_command": agent_exec_plan["top_command"],
+        "agent_task_spec_status": agent_task_spec["status"],
+        "agent_task_spec_task_contract_count": agent_task_spec["task_contract_count"],
+        "agent_task_spec_ready_task_count": agent_task_spec["ready_task_count"],
+        "agent_task_spec_blocked_task_count": agent_task_spec["blocked_task_count"],
+        "agent_task_spec_human_input_task_count": agent_task_spec["human_input_task_count"],
+        "agent_task_spec_top_command": agent_task_spec["top_command"],
         "paper_lineage_status": paper_lineage["status"],
         "paper_lineage_node_count": paper_lineage["node_count"],
         "paper_lineage_edge_count": paper_lineage["edge_count"],

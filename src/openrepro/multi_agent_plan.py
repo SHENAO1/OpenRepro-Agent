@@ -201,6 +201,9 @@ def _tasks_from_project_status(project_dir: Path, status: dict[str, Any]) -> lis
         "openrepro agent-board",
         "openrepro agent-dispatch",
         "openrepro agent-exec-plan",
+        "openrepro agent-task-spec",
+        "openrepro agent-adapter",
+        "openrepro validate-agent-adapter",
         "openrepro paper-lineage",
     ]
     if not command or command.startswith("Project v") or any(command.startswith(item) for item in coordination_commands):
