@@ -35,6 +35,7 @@ from .claim_trace import generate_claim_trace, validate_claim_trace
 from .ci_integration import ci_summary, init_ci_config, validate_ci_config
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
+from .cockpit import cockpit_summary, generate_cockpit
 from .data_expectations import init_data_expectations, run_data_expectations
 from .dataset_card import data_quality_gate_summary, dataset_card_summary, generate_dataset_card, run_data_quality_gate
 from .data_registry import register_data, validate_data_index
@@ -114,6 +115,8 @@ ci_app = typer.Typer(help="Generate and validate local GitHub Actions CI scaffol
 app.add_typer(ci_app, name="ci")
 serve_app = typer.Typer(help="Build static local project UI artifacts.", no_args_is_help=True)
 app.add_typer(serve_app, name="serve")
+cockpit_app = typer.Typer(help="Build the static reproduction cockpit.", no_args_is_help=True)
+app.add_typer(cockpit_app, name="cockpit")
 runs_app = typer.Typer(help="Index, inspect, and compare run outputs.", no_args_is_help=True)
 app.add_typer(runs_app, name="runs")
 catalog_app = typer.Typer(help="Build and inspect the OpenRepro asset catalog.", no_args_is_help=True)
@@ -3448,6 +3451,44 @@ def serve_summary_cmd(project_name: str = typer.Argument(..., help="Project dire
     table.add_column("Item", style="bold")
     table.add_column("Value")
     for key in ["present", "status", "path", "panel_count", "present_panel_count", "missing_panel_count", "missing_artifact_link_count", "sha256"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+
+
+@cockpit_app.command("build")
+def cockpit_build_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    export_zip: bool = typer.Option(False, "--zip", help="Also export reports/cockpit.zip."),
+) -> None:
+    """Build the static reproduction cockpit."""
+    project_dir = require_project(project_name)
+    result = generate_cockpit(project_dir, export_zip=export_zip)
+    table = Table(title=f"Reproduction Cockpit: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "top_command", "next_action_count"]:
+        table.add_row(key, str(result.get(key)))
+    for key in ["readiness_score", "data_quality_status", "bench_lite_status", "integration_execution_status"]:
+        table.add_row(key, str(result.get("summary", {}).get(key)))
+    console.print(table)
+    console.print(f"Index: {project_dir / 'reports' / 'cockpit' / 'index.html'}")
+    console.print(f"Manifest: {project_dir / 'reports' / 'cockpit_manifest.json'}")
+    console.print(f"Summary: {project_dir / 'workspace' / 'cockpit_summary.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'COCKPIT_SUMMARY.md'}")
+    if export_zip:
+        console.print(f"Zip: {project_dir / 'reports' / 'cockpit.zip'}")
+    _success("Reproduction cockpit generated.")
+
+
+@cockpit_app.command("summary")
+def cockpit_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing reproduction cockpit summary."""
+    project_dir = require_project(project_name)
+    result = cockpit_summary(project_dir)
+    table = Table(title=f"Reproduction Cockpit Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "top_command", "next_action_count", "readiness_score", "data_quality_status", "bench_lite_status", "path", "sha256"]:
         table.add_row(key, str(result.get(key)))
     console.print(table)
 

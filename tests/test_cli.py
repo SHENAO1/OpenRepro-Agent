@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.55.0" in result.output
+    assert "OpenRepro-Agent v1.56.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -126,6 +126,7 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["refresh", "boc_demo", "--zip"],
         ["freshness", "boc_demo"],
         ["dashboard", "boc_demo", "--zip"],
+        ["cockpit", "build", "boc_demo", "--zip"],
         ["readiness-review", "boc_demo", "--zip"],
         ["validate-readiness-review", "boc_demo"],
         ["review-action-plan", "boc_demo"],
@@ -234,6 +235,11 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "reports" / "dashboard" / "index.html").exists()
     assert (project / "reports" / "dashboard_manifest.json").exists()
     assert (project / "reports" / "dashboard.zip").exists()
+    assert (project / "reports" / "cockpit" / "index.html").exists()
+    assert (project / "reports" / "cockpit_manifest.json").exists()
+    assert (project / "workspace" / "cockpit_summary.json").exists()
+    assert (project / "workspace" / "COCKPIT_SUMMARY.md").exists()
+    assert (project / "reports" / "cockpit.zip").exists()
     assert (project / "reports" / "readiness_review.json").exists()
     assert (project / "reports" / "READINESS_REVIEW.md").exists()
     assert (project / "reports" / "readiness_review.zip").exists()

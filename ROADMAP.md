@@ -865,6 +865,16 @@ Released in v1.54.0 with safer executable integration handoff while preserving d
 
 Released in v1.55.0 with DVC/Great-Expectations-inspired data documentation and structural quality gates.
 
+## v1.56.0 — Reproduction Cockpit
+
+- [x] Add `openrepro cockpit build/summary`.
+- [x] Write `reports/cockpit/index.html`, `reports/cockpit_manifest.json`, `workspace/cockpit_summary.json`, `workspace/COCKPIT_SUMMARY.md`, and optional `reports/cockpit.zip`.
+- [x] Summarize readiness, gaps, data quality, dataset card, claim trace, runs, Bench Lite, integrations, evidence freshness, and review decisions.
+- [x] Generate ordered next actions with suggested commands.
+- [x] Surface Cockpit links in evidence packages, dashboards, and readiness reviews.
+
+Released in v1.56.0 with a static operator cockpit inspired by high-star project practices around visible project health, one-page review surfaces, and actionable next steps.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

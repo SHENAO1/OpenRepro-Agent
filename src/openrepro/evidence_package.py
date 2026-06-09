@@ -18,6 +18,7 @@ from .claim_signoff import generate_claim_signoffs
 from .claim_signoff_validation import validate_claim_signoffs
 from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import collaboration_pack_summary
+from .cockpit import cockpit_summary
 from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
 from .dataset_card import data_quality_gate_summary, dataset_card_summary
@@ -89,6 +90,7 @@ WORKSPACE_ARTIFACTS = [
     "security_policy.json",
     "security_audit.json",
     "local_ui_summary.json",
+    "cockpit_summary.json",
     "advance_plan.json",
     "review_board.json",
     "review_decisions.json",
@@ -385,6 +387,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     artifact_freshness = artifact_freshness_summary(project_dir)
     dashboard = dashboard_summary(project_dir)
     local_ui = local_ui_summary(project_dir)
+    cockpit = cockpit_summary(project_dir)
     project_profile_existing = project_profile_summary(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
@@ -582,6 +585,20 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "manifest_path": dashboard.get("manifest_path") or str(project_dir / "reports" / "dashboard_manifest.json"),
             "zip_path": dashboard.get("zip_path"),
         },
+        "cockpit": {
+            "schema_version": cockpit.get("schema_version"),
+            "status": cockpit.get("status"),
+            "top_command": cockpit.get("top_command"),
+            "next_action_count": cockpit.get("next_action_count"),
+            "readiness_score": cockpit.get("readiness_score"),
+            "data_quality_status": cockpit.get("data_quality_status"),
+            "bench_lite_status": cockpit.get("bench_lite_status"),
+            "path": cockpit.get("path") or str(project_dir / "reports" / "cockpit" / "index.html"),
+            "manifest_path": cockpit.get("manifest_path") or str(project_dir / "reports" / "cockpit_manifest.json"),
+            "summary_path": cockpit.get("summary_path") or str(project_dir / "workspace" / "cockpit_summary.json"),
+            "markdown_path": cockpit.get("markdown_path") or str(project_dir / "workspace" / "COCKPIT_SUMMARY.md"),
+            "zip_path": cockpit.get("zip_path"),
+        },
         "local_ui": {
             "schema_version": local_ui.get("schema_version"),
             "status": local_ui.get("status"),
@@ -751,6 +768,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "reports" / "dashboard" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "dashboard" / "index.html"),
             },
+            "cockpit": {
+                "present": (project_dir / "reports" / "cockpit" / "index.html").exists(),
+                "path": str(project_dir / "reports" / "cockpit" / "index.html"),
+            },
             "local_ui": {
                 "present": (project_dir / "reports" / "local_ui" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "local_ui" / "index.html"),
@@ -903,6 +924,9 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - dashboard_status: {package['dashboard']['status']}
 - dashboard_readiness_score: {package['dashboard']['readiness_score']}
 - dashboard_stale_node_count: {package['dashboard']['stale_node_count']}
+- cockpit_status: {package['cockpit']['status']}
+- cockpit_next_action_count: {package['cockpit']['next_action_count']}
+- cockpit_top_command: {package['cockpit']['top_command']}
 - local_ui_status: {package['local_ui']['status']}
 - local_ui_panel_count: {package['local_ui']['panel_count']}
 - local_ui_missing_panel_count: {package['local_ui']['missing_panel_count']}
