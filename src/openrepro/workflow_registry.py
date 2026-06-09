@@ -603,13 +603,22 @@ WORKFLOW_STEPS: tuple[WorkflowStep, ...] = (
         ("agent_exec_plan",),
     ),
     WorkflowStep(
+        "agent_result_validation",
+        "Agent result validation",
+        "agent",
+        "Validate imported supervised agent result events against task specs and guardrails.",
+        "openrepro agent-result validate <project>",
+        ("workspace/agent_result_validation.json", "workspace/AGENT_RESULT_REVIEW.md"),
+        ("agent_task_spec",),
+    ),
+    WorkflowStep(
         "agent_adapter",
         "Agent adapter",
         "agent",
         "Generate a supervised external-agent adapter spec.",
         "openrepro agent-adapter <project>",
         ("workspace/agent_adapter.json", "workspace/agent_trajectory.jsonl"),
-        ("agent_task_spec",),
+        ("agent_result_validation",),
     ),
     WorkflowStep(
         "agent_adapter_validation",
@@ -919,6 +928,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
+    from .agent_result import validate_agent_results
     from .agent_task_spec import generate_agent_task_spec
     from .asset_catalog import generate_asset_catalog
     from .artifact_cache import add_artifact_cache
@@ -1019,6 +1029,7 @@ def _workflow_actions(export_zip: bool = False) -> dict[str, Callable[[Path], An
         "agent_dispatch": generate_agent_dispatch,
         "agent_exec_plan": lambda project_dir: generate_agent_exec_plan(project_dir, dry_run=True),
         "agent_task_spec": generate_agent_task_spec,
+        "agent_result_validation": validate_agent_results,
         "agent_adapter": generate_agent_adapter,
         "agent_adapter_validation": validate_agent_adapter,
         "paper_lineage": generate_paper_lineage,

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from zipfile import ZIP_DEFLATED, ZipFile
 
+from .agent_result import agent_result_summary
 from .artifact_manager import sha256_file
 from .claim_trace import claim_trace_summary
 from .dataset_card import data_quality_gate_summary, dataset_card_summary
@@ -36,6 +37,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
     dataset_card = dataset_card_summary(project_dir)
     claim_trace = claim_trace_summary(project_dir)
     evidence_graph = evidence_graph_summary(project_dir)
+    agent_results = agent_result_summary(project_dir)
     runs = run_index_summary(project_dir)
     bench_lite = _bench_lite_summary(project_dir)
     integrations = integrations_summary(project_dir)
@@ -51,6 +53,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
         dataset_card=dataset_card,
         claim_trace=claim_trace,
         evidence_graph=evidence_graph,
+        agent_results=agent_results,
         runs=runs,
         bench_lite=bench_lite,
         integrations=integrations,
@@ -81,6 +84,10 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
             "claim_trace_issue_count": claim_trace.get("validation_issue_count"),
             "evidence_graph_status": evidence_graph.get("status"),
             "evidence_graph_node_count": evidence_graph.get("node_count"),
+            "agent_result_status": agent_results.get("status"),
+            "agent_result_count": agent_results.get("result_count"),
+            "agent_result_issue_count": agent_results.get("issue_count"),
+            "agent_result_needs_human_review_count": agent_results.get("needs_human_review_count"),
             "run_count": runs.get("run_count"),
             "quality_gate_passed_count": runs.get("quality_gate_passed_count"),
             "bench_lite_status": bench_lite.get("status"),
@@ -99,6 +106,7 @@ def generate_cockpit(project_dir: Path, export_zip: bool = False) -> dict[str, A
             "dataset_card": dataset_card,
             "claim_trace": claim_trace,
             "evidence_graph": evidence_graph,
+            "agent_results": agent_results,
             "runs": runs,
             "bench_lite": bench_lite,
             "integrations": integrations,
@@ -189,6 +197,7 @@ def _next_actions(project_dir: Path, **sections: dict[str, Any]) -> list[dict[st
     _maybe_action(actions, "run_index", "Build the run index so latest runs and quality gates are visible.", sections["runs"].get("present") and int(sections["runs"].get("run_count", 0) or 0) > 0, f"openrepro runs index {project_dir}", "medium")
     _maybe_action(actions, "claim_trace", "Generate and validate claim traceability.", sections["claim_trace"].get("present") and sections["claim_trace"].get("validation_status") in {"passed", "valid"}, f"openrepro trace-claims {project_dir} --validate", "high")
     _maybe_action(actions, "evidence_graph", "Generate the unified evidence graph.", sections["evidence_graph"].get("present") and int(sections["evidence_graph"].get("node_count", 0) or 0) > 0, f"openrepro evidence-graph {project_dir}", "high")
+    _maybe_action(actions, "agent_results", "Validate or review imported supervised agent results.", int(sections["agent_results"].get("result_count", 0) or 0) == 0 or sections["agent_results"].get("status") in {"validated", "no_results"}, str(sections["agent_results"].get("top_command") or f"openrepro agent-result validate {project_dir}"), "high")
     _maybe_action(actions, "bench_lite", "Run OpenRepro-Bench Lite for workflow benchmark evidence.", sections["bench_lite"].get("status") == "passed", str(sections["bench_lite"].get("top_command") or "openrepro bench-lite"), "medium")
     _maybe_action(actions, "integrations", "Export or plan integration adapter execution.", sections["integrations"].get("present") and sections["integrations"].get("execution_status") in {"planned", "executed", "skipped_missing_dependency"}, f"openrepro integrations run {project_dir}", "low")
     _maybe_action(actions, "evidence_package", "Refresh the evidence package.", sections["evidence"].get("status") == "current" and not sections["evidence"].get("stale"), f"openrepro evidence-package {project_dir} --zip", "high")
@@ -213,6 +222,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "CLAIM_TRACE.md",
         project_dir / "workspace" / "CLAIM_TRACE_VALIDATION.md",
         project_dir / "workspace" / "EVIDENCE_GRAPH.md",
+        project_dir / "workspace" / "AGENT_RESULT_REVIEW.md",
         project_dir / "workspace" / "INTEGRATION_EXECUTION.md",
         project_dir / "reports" / "evidence_package.md",
         project_dir / "workspace" / "ARTIFACT_FRESHNESS.md",
@@ -376,6 +386,8 @@ def _render_html(cockpit: dict[str, Any]) -> str:
         <div class="metric"><span>Claim issues</span><strong>{_cell(summary.get('claim_trace_issue_count'))}</strong></div>
         <div class="metric"><span>Evidence graph</span><strong>{_badge(summary.get('evidence_graph_status'))}</strong></div>
         <div class="metric"><span>Graph nodes</span><strong>{_cell(summary.get('evidence_graph_node_count'))}</strong></div>
+        <div class="metric"><span>Agent results</span><strong>{_badge(summary.get('agent_result_status'))}</strong></div>
+        <div class="metric"><span>Agent result issues</span><strong>{_cell(summary.get('agent_result_issue_count'))}</strong></div>
         <div class="metric"><span>Runs</span><strong>{_cell(summary.get('run_count'))}</strong></div>
         <div class="metric"><span>Passed gates</span><strong>{_cell(summary.get('quality_gate_passed_count'))}</strong></div>
         <div class="metric"><span>Bench Lite</span><strong>{_badge(summary.get('bench_lite_status'))}</strong></div>
@@ -412,9 +424,9 @@ def _artifact_link(item: dict[str, Any]) -> str:
 def _badge(value: Any) -> str:
     text = _cell(value)
     normalized = str(value).lower()
-    if normalized in {"ready", "ready_for_review", "current", "complete", "clear", "passed", "executed", "planned", "ready_for_human_review"}:
+    if normalized in {"ready", "ready_for_review", "current", "complete", "clear", "passed", "executed", "planned", "ready_for_human_review", "validated", "no_results"}:
         kind = "good"
-    elif normalized in {"missing", "stale", "failed", "needs_attention", "needs_work", "needs_refresh", "needs_freshness", "needs_evidence_package"}:
+    elif normalized in {"missing", "stale", "failed", "needs_attention", "needs_work", "needs_refresh", "needs_freshness", "needs_evidence_package", "invalid"}:
         kind = "bad"
     elif normalized in {"high", "medium", "low"}:
         kind = "info" if normalized == "low" else "warn"

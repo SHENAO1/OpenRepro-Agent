@@ -11,6 +11,7 @@ from .advance import advance_summary
 from .agent_board import agent_board_summary
 from .agent_dispatch import agent_dispatch_summary
 from .agent_exec_plan import agent_exec_plan_summary
+from .agent_result import agent_result_summary
 from .agent_task_spec import agent_task_spec_summary
 from .artifact_manager import latest_run_dir, list_run_dirs, validate_run_manifest
 from .benchmark_runner import collect_benchmark_results
@@ -228,6 +229,7 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
     agent_dispatch = agent_dispatch_summary(project_dir)
     agent_exec_plan = agent_exec_plan_summary(project_dir)
     agent_task_spec = agent_task_spec_summary(project_dir)
+    agent_result = agent_result_summary(project_dir)
     paper_lineage = paper_lineage_summary(project_dir)
     run_command_counts = _run_command_counts(run_dirs)
 
@@ -461,6 +463,14 @@ def inspect_project(project_dir: Path) -> dict[str, Any]:
         "agent_task_spec_blocked_task_count": agent_task_spec["blocked_task_count"],
         "agent_task_spec_human_input_task_count": agent_task_spec["human_input_task_count"],
         "agent_task_spec_top_command": agent_task_spec["top_command"],
+        "agent_result_status": agent_result["status"],
+        "agent_result_count": agent_result["result_count"],
+        "agent_result_valid_result_count": agent_result["valid_result_count"],
+        "agent_result_invalid_result_count": agent_result["invalid_result_count"],
+        "agent_result_needs_human_review_count": agent_result["needs_human_review_count"],
+        "agent_result_issue_count": agent_result["issue_count"],
+        "agent_result_warning_count": agent_result["warning_count"],
+        "agent_result_top_command": agent_result["top_command"],
         "paper_lineage_status": paper_lineage["status"],
         "paper_lineage_node_count": paper_lineage["node_count"],
         "paper_lineage_edge_count": paper_lineage["edge_count"],

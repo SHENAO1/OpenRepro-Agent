@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from .agent_adapter import agent_adapter_summary
 from .agent_board import agent_board_summary
+from .agent_result import agent_result_summary
 from .agent_sandbox import agent_sandbox_summary
 from .artifact_cache import artifact_cache_summary
 from .artifact_manager import sha256_file
@@ -163,6 +164,7 @@ def _build_panels(project_dir: Path) -> list[dict[str, Any]]:
             "Automation",
             [
                 ("Agent adapter", agent_adapter_summary, [("Steps", "adapter_step_count"), ("Blocked", "blocked_task_count"), ("Valid", "validation_valid")]),
+                ("Agent results", agent_result_summary, [("Results", "result_count"), ("Issues", "issue_count"), ("Human review", "needs_human_review_count")]),
                 ("Agent sandbox", agent_sandbox_summary, [("Selected", "selected_step_count"), ("Passed", "passed_step_count"), ("Failed", "failed_step_count")]),
                 ("CI", ci_summary, [("Present", "present"), ("Status", "status"), ("Test command", "test_command")]),
                 ("Plugins", plugin_registry_summary, [("Plugins", "plugin_count"), ("Enabled", "enabled_plugin_count"), ("Validation", "validation_status")]),
@@ -233,6 +235,8 @@ def _summary_paths(project_dir: Path, summary: dict[str, Any]) -> list[dict[str,
         "summary_path",
         "validation_path",
         "validation_markdown_path",
+        "review_path",
+        "jsonl_path",
         "config_path",
         "plan_path",
         "record_path",
@@ -287,6 +291,7 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         ("Evaluation results", "workspace/EVALUATION_RESULTS.md"),
         ("Leaderboard", "workspace/EXPERIMENT_LEADERBOARD.md"),
         ("Agent adapter", "workspace/AGENT_ADAPTER.md"),
+        ("Agent result review", "workspace/AGENT_RESULT_REVIEW.md"),
         ("Agent sandbox", "workspace/AGENT_SANDBOX_RUN.md"),
         ("CI summary", "workspace/CI_SUMMARY.md"),
         ("CI validation", "workspace/CI_VALIDATION.md"),

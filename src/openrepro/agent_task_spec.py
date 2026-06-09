@@ -14,13 +14,13 @@ from .utils import iso_now, read_json, safe_write_text, write_json
 AGENT_TASK_SPEC_SCHEMA_VERSION = "1.58.0"
 
 
-def generate_agent_task_spec(project_dir: Path, max_tasks: int = 20) -> dict[str, Any]:
+def generate_agent_task_spec(project_dir: Path, max_tasks: int = 20, refresh_evidence_graph: bool = True) -> dict[str, Any]:
     """Write a supervised, runner-neutral task contract for external agents."""
     project_dir = Path(project_dir)
     if not project_dir.exists():
         raise FileNotFoundError(f"Project directory not found: {project_dir}")
 
-    evidence_graph = generate_evidence_graph(project_dir)
+    evidence_graph = generate_evidence_graph(project_dir) if refresh_evidence_graph else _load_existing_evidence_graph(project_dir)
     dispatch = generate_agent_dispatch(project_dir)
     exec_plan = generate_agent_exec_plan(project_dir, dry_run=True)
     task_contracts = _task_contracts(project_dir, evidence_graph, dispatch, exec_plan, max_tasks=max_tasks)
@@ -68,6 +68,13 @@ def generate_agent_task_spec(project_dir: Path, max_tasks: int = 20) -> dict[str
     safe_write_text(project_dir / "workspace" / "AGENT_TASK_SPEC.md", _render_markdown(spec))
     write_json(project_dir / "workspace" / "agent_result_schema.json", _result_schema(spec))
     return spec
+
+
+def _load_existing_evidence_graph(project_dir: Path) -> dict[str, Any]:
+    graph = read_json(project_dir / "workspace" / "evidence_graph.json", default={}) or {}
+    if isinstance(graph, dict) and isinstance(graph.get("nodes"), list):
+        return graph
+    return generate_evidence_graph(project_dir)
 
 
 def agent_task_spec_summary(project_dir: Path) -> dict[str, Any]:

@@ -24,6 +24,7 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
     from .agent_board import generate_agent_board
     from .agent_dispatch import generate_agent_dispatch
     from .agent_exec_plan import generate_agent_exec_plan
+    from .agent_result import validate_agent_results
     from .agent_task_spec import generate_agent_task_spec
     from .asset_build import plan_asset_build
     from .acceptance_criteria import generate_acceptance_criteria
@@ -274,7 +275,17 @@ def generate_refresh_run(project_dir: Path, export_zip: bool = False) -> dict[st
         _run_step(
             "agent_task_spec",
             "Refresh supervised agent task contracts.",
-            lambda: generate_agent_task_spec(project_dir),
+            lambda: generate_agent_task_spec(project_dir, refresh_evidence_graph=False),
+        )
+    )
+    result = _build_result(project_dir, export_zip, records)
+    write_json(workspace / "refresh_run.json", result)
+    safe_write_text(workspace / "REFRESH_RUN.md", _render_markdown(result))
+    records.append(
+        _run_step(
+            "agent_result_validation",
+            "Refresh supervised agent result validation.",
+            lambda: validate_agent_results(project_dir),
         )
     )
     result = _build_result(project_dir, export_zip, records)

@@ -898,6 +898,17 @@ Released in v1.57.0 with an evidence-first graph layer for human and supervised-
 
 Released in v1.58.0 with a controlled agent-ready handoff layer built on Evidence Graph and existing agent dispatch plans.
 
+## v1.59.0 — Agent Result Intake and Validation
+
+- [x] Add `openrepro agent-result ingest`.
+- [x] Add `openrepro agent-result validate`.
+- [x] Write `workspace/agent_results.json`, `workspace/agent_results.jsonl`, `workspace/agent_result_validation.json`, and `workspace/AGENT_RESULT_REVIEW.md`.
+- [x] Validate imported result events against `agent_result_schema.json`, current task specs, Evidence Graph node ids, artifact path safety, forbidden commands, and policy acknowledgement.
+- [x] Add result validation to the registered workflow DAG, refresh pipeline, project status, inspect summaries, cockpit, local UI, and evidence packages.
+- [x] Keep imported agent results as reviewable workflow evidence only: they do not execute agents, accept claims, run experiments, close human decisions, or prove scientific reproduction.
+
+Released in v1.59.0 with the first closed loop from supervised agent task contracts to imported, validated, human-reviewable result evidence.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

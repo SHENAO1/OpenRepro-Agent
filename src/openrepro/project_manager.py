@@ -12,6 +12,7 @@ from .advance import advance_summary
 from .agent_board import agent_board_summary
 from .agent_dispatch import agent_dispatch_summary
 from .agent_exec_plan import agent_exec_plan_summary
+from .agent_result import agent_result_summary
 from .agent_task_spec import agent_task_spec_summary
 from .artifact_manager import latest_run_dir, required_handoff_files
 from .checkpoints import checkpoint_summary
@@ -272,6 +273,15 @@ class ProjectStatus:
     agent_task_spec_ready_task_count: int
     agent_task_spec_blocked_task_count: int
     agent_task_spec_top_command: str | None
+    agent_result_exists: bool
+    agent_result_status: str
+    agent_result_result_count: int
+    agent_result_valid_result_count: int
+    agent_result_invalid_result_count: int
+    agent_result_needs_human_review_count: int
+    agent_result_issue_count: int
+    agent_result_warning_count: int
+    agent_result_top_command: str | None
     paper_lineage_exists: bool
     paper_lineage_status: str
     paper_lineage_node_count: int
@@ -688,6 +698,15 @@ def get_status(project_name: str | Path) -> ProjectStatus:
             agent_task_spec_ready_task_count=0,
             agent_task_spec_blocked_task_count=0,
             agent_task_spec_top_command=None,
+            agent_result_exists=False,
+            agent_result_status="missing",
+            agent_result_result_count=0,
+            agent_result_valid_result_count=0,
+            agent_result_invalid_result_count=0,
+            agent_result_needs_human_review_count=0,
+            agent_result_issue_count=0,
+            agent_result_warning_count=0,
+            agent_result_top_command=None,
             paper_lineage_exists=False,
             paper_lineage_status="missing",
             paper_lineage_node_count=0,
@@ -764,6 +783,7 @@ def get_status(project_name: str | Path) -> ProjectStatus:
     agent_dispatch = agent_dispatch_summary(project_dir)
     agent_exec_plan = agent_exec_plan_summary(project_dir)
     agent_task_spec = agent_task_spec_summary(project_dir)
+    agent_result = agent_result_summary(project_dir)
     paper_lineage = paper_lineage_summary(project_dir)
     lineage_exists = (project_dir / "workspace" / "run_lineage.json").exists()
     report_exists = (project_dir / "reports" / "report.md").exists()
@@ -973,6 +993,14 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         next_step = f"Run: openrepro agent-task-spec {project_dir}"
     elif agent_task_spec["status"] not in {"complete", "ready"}:
         command = str(agent_task_spec["top_command"] or f"openrepro agent-task-spec {project_dir}")
+        next_step = f"Run: {command}"
+    elif int(agent_task_spec["ready_task_count"] or 0) > 0 and int(agent_result["result_count"] or 0) == 0:
+        next_step = f"Run: openrepro agent-result ingest {project_dir} --file <agent_result.json>"
+    elif agent_result["status"] == "invalid":
+        command = str(agent_result["top_command"] or f"openrepro agent-result validate {project_dir}")
+        next_step = f"Run: {command}"
+    elif agent_result["status"] == "needs_human_review":
+        command = str(agent_result["top_command"] or f"openrepro review-board {project_dir}")
         next_step = f"Run: {command}"
     elif not paper_lineage["present"]:
         next_step = f"Run: openrepro paper-lineage {project_dir}"
@@ -1192,6 +1220,15 @@ def get_status(project_name: str | Path) -> ProjectStatus:
         agent_task_spec_ready_task_count=int(agent_task_spec["ready_task_count"] or 0),
         agent_task_spec_blocked_task_count=int(agent_task_spec["blocked_task_count"] or 0),
         agent_task_spec_top_command=agent_task_spec["top_command"],
+        agent_result_exists=bool(agent_result["present"]),
+        agent_result_status=str(agent_result["status"]),
+        agent_result_result_count=int(agent_result["result_count"] or 0),
+        agent_result_valid_result_count=int(agent_result["valid_result_count"] or 0),
+        agent_result_invalid_result_count=int(agent_result["invalid_result_count"] or 0),
+        agent_result_needs_human_review_count=int(agent_result["needs_human_review_count"] or 0),
+        agent_result_issue_count=int(agent_result["issue_count"] or 0),
+        agent_result_warning_count=int(agent_result["warning_count"] or 0),
+        agent_result_top_command=agent_result["top_command"],
         paper_lineage_exists=bool(paper_lineage["present"]),
         paper_lineage_status=str(paper_lineage["status"]),
         paper_lineage_node_count=int(paper_lineage["node_count"] or 0),

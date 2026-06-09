@@ -9,6 +9,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from . import __version__
 from .acceptance_criteria import generate_acceptance_criteria
 from .advance import generate_advance_plan
+from .agent_result import validate_agent_results
 from .agent_task_spec import generate_agent_task_spec
 from .artifact_manager import list_run_dirs, required_handoff_files, sha256_file, validate_run_manifest
 from .checkpoints import generate_workflow_checkpoints
@@ -84,6 +85,8 @@ WORKSPACE_ARTIFACTS = [
     "agent_sandbox_run.json",
     "agent_task_spec.json",
     "agent_result_schema.json",
+    "agent_results.json",
+    "agent_result_validation.json",
     "ci_summary.json",
     "ci_validation.json",
     "plugin_registry.json",
@@ -163,6 +166,10 @@ def _artifact_summary(data: Any) -> dict[str, Any]:
         "task_contract_count",
         "ready_task_count",
         "blocked_task_count",
+        "result_count",
+        "valid_result_count",
+        "invalid_result_count",
+        "needs_human_review_count",
         "formula_candidate_count",
         "parameter_candidate_count",
         "candidate_review_count",
@@ -390,7 +397,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     project_timeline = generate_project_timeline(project_dir)
     project_profile = generate_project_profile(project_dir)
     acceptance_criteria = generate_acceptance_criteria(project_dir)
-    agent_task_spec = generate_agent_task_spec(project_dir)
+    agent_task_spec = generate_agent_task_spec(project_dir, refresh_evidence_graph=False)
     review_site = review_site_summary(project_dir)
     collaboration_pack = collaboration_pack_summary(project_dir)
     refresh_run = refresh_run_summary(project_dir)
@@ -399,6 +406,7 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     local_ui = local_ui_summary(project_dir)
     cockpit = cockpit_summary(project_dir)
     project_profile_existing = project_profile_summary(project_dir)
+    agent_results = validate_agent_results(project_dir)
     inspect_summary = inspect_project(project_dir)
     status = get_status(project_dir).to_dict()
     status["evidence_package_exists"] = True
@@ -577,6 +585,22 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
             "path": str(project_dir / "workspace" / "agent_task_spec.json"),
             "markdown_path": str(project_dir / "workspace" / "AGENT_TASK_SPEC.md"),
             "result_schema_path": str(project_dir / "workspace" / "agent_result_schema.json"),
+        },
+        "agent_results": {
+            "schema_version": agent_results.get("schema_version"),
+            "status": agent_results.get("status"),
+            "valid": agent_results.get("valid"),
+            "result_count": agent_results.get("result_count"),
+            "valid_result_count": agent_results.get("valid_result_count"),
+            "invalid_result_count": agent_results.get("invalid_result_count"),
+            "needs_human_review_count": agent_results.get("needs_human_review_count"),
+            "issue_count": agent_results.get("issue_count"),
+            "warning_count": agent_results.get("warning_count"),
+            "top_command": agent_results.get("top_command"),
+            "path": str(project_dir / "workspace" / "agent_results.json"),
+            "jsonl_path": str(project_dir / "workspace" / "agent_results.jsonl"),
+            "validation_path": str(project_dir / "workspace" / "agent_result_validation.json"),
+            "review_path": str(project_dir / "workspace" / "AGENT_RESULT_REVIEW.md"),
         },
         "collaboration_pack": {
             "schema_version": collaboration_pack.get("schema_version"),
@@ -792,6 +816,10 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "AGENT_TASK_SPEC.md").exists(),
                 "path": str(project_dir / "workspace" / "AGENT_TASK_SPEC.md"),
             },
+            "agent_result_review": {
+                "present": (project_dir / "workspace" / "AGENT_RESULT_REVIEW.md").exists(),
+                "path": str(project_dir / "workspace" / "AGENT_RESULT_REVIEW.md"),
+            },
             "refresh_run": {
                 "present": (project_dir / "workspace" / "REFRESH_RUN.md").exists(),
                 "path": str(project_dir / "workspace" / "REFRESH_RUN.md"),
@@ -962,6 +990,10 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - agent_task_spec_status: {package['agent_task_spec']['status']}
 - agent_task_spec_task_contract_count: {package['agent_task_spec']['task_contract_count']}
 - agent_task_spec_blocked_task_count: {package['agent_task_spec']['blocked_task_count']}
+- agent_result_status: {package['agent_results']['status']}
+- agent_result_count: {package['agent_results']['result_count']}
+- agent_result_issue_count: {package['agent_results']['issue_count']}
+- agent_result_needs_human_review_count: {package['agent_results']['needs_human_review_count']}
 - collaboration_pack_status: {package['collaboration_pack']['status']}
 - collaboration_pack_unresolved_decision_count: {package['collaboration_pack']['unresolved_decision_count']}
 - collaboration_pack_next_safe_command_count: {package['collaboration_pack']['next_safe_command_count']}

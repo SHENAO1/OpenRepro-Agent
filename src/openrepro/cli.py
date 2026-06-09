@@ -15,6 +15,7 @@ from .agent_adapter import generate_agent_adapter, validate_agent_adapter
 from .agent_board import generate_agent_board
 from .agent_dispatch import generate_agent_dispatch
 from .agent_exec_plan import generate_agent_exec_plan
+from .agent_result import ingest_agent_result, validate_agent_results
 from .agent_sandbox import run_agent_sandbox
 from .agent_task_spec import generate_agent_task_spec
 from .analyzer import analyze_project
@@ -113,6 +114,8 @@ workflow_app = typer.Typer(help="Inspect and run the registered OpenRepro workfl
 app.add_typer(workflow_app, name="workflow")
 agent_app = typer.Typer(help="Run approved safe agent tasks in a local sandbox.", no_args_is_help=True)
 app.add_typer(agent_app, name="agent")
+agent_result_app = typer.Typer(help="Ingest and validate supervised agent result events.", no_args_is_help=True)
+app.add_typer(agent_result_app, name="agent-result")
 ci_app = typer.Typer(help="Generate and validate local GitHub Actions CI scaffolding.", no_args_is_help=True)
 app.add_typer(ci_app, name="ci")
 serve_app = typer.Typer(help="Build static local project UI artifacts.", no_args_is_help=True)
@@ -3805,6 +3808,64 @@ def agent_task_spec_cmd(
     _success("Agent task spec generated.")
 
 
+@agent_result_app.command("ingest")
+def agent_result_ingest_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    file: Path = typer.Option(..., "--file", "-f", help="JSON agent result event or list of events."),
+    replace: bool = typer.Option(False, "--replace", help="Replace the existing agent result log before ingesting."),
+) -> None:
+    """Ingest externally produced supervised agent result events."""
+    project_dir = require_project(project_name)
+    try:
+        result = ingest_agent_result(project_dir, file, replace=replace)
+    except Exception as exc:
+        _warn(str(exc))
+        raise typer.Exit(1) from exc
+    table = Table(title="Agent Result Ingest")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in ["status", "new_result_count", "result_count", "validation_status", "issue_count", "warning_count", "top_command"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_results.json'}")
+    console.print(f"JSONL: {project_dir / 'workspace' / 'agent_results.jsonl'}")
+    console.print(f"Validation: {project_dir / 'workspace' / 'agent_result_validation.json'}")
+    console.print(f"Review: {project_dir / 'workspace' / 'AGENT_RESULT_REVIEW.md'}")
+    if result["issue_count"]:
+        _warn("Agent result ingested with validation issues.")
+    else:
+        _success("Agent result ingested and validated.")
+
+
+@agent_result_app.command("validate")
+def agent_result_validate_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Validate imported supervised agent result events."""
+    project_dir = require_project(project_name)
+    validation = validate_agent_results(project_dir)
+    table = Table(title="Agent Result Validation")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key in [
+        "status",
+        "valid",
+        "result_count",
+        "valid_result_count",
+        "invalid_result_count",
+        "needs_human_review_count",
+        "issue_count",
+        "warning_count",
+        "top_command",
+    ]:
+        table.add_row(key, str(validation.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'agent_result_validation.json'}")
+    console.print(f"Review: {project_dir / 'workspace' / 'AGENT_RESULT_REVIEW.md'}")
+    if validation["issue_count"]:
+        _warn("Agent result validation found issues.")
+        raise typer.Exit(1)
+    _success("Agent result validation completed.")
+
+
 @app.command("agent-adapter")
 def agent_adapter_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -4004,6 +4065,10 @@ def status_cmd(project_name: str = typer.Argument(..., help="Project directory."
         "Agent exec safe steps": status.agent_exec_plan_safe_step_count,
         "Agent task spec": status.agent_task_spec_status,
         "Agent task contracts": status.agent_task_spec_task_contract_count,
+        "Agent results": status.agent_result_status,
+        "Agent result count": status.agent_result_result_count,
+        "Agent result issues": status.agent_result_issue_count,
+        "Agent result human review": status.agent_result_needs_human_review_count,
         "Paper lineage": status.paper_lineage_status,
         "Paper lineage nodes": status.paper_lineage_node_count,
         "Latest run dir": status.latest_run_dir or "None",

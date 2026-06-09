@@ -4,7 +4,7 @@
 
 OpenRepro-Agent is a Python CLI for building auditable paper-reproduction workspaces. It keeps notes, evidence, experiments, outputs, reports, and handoff files in one project layout so humans and supervised agents can continue work without losing provenance.
 
-Current version: **v1.58.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
+Current version: **v1.59.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
 
 ## Install
 
@@ -45,6 +45,7 @@ Useful review and handoff commands:
 ```bash
 openrepro evidence-graph random_search_demo
 openrepro agent-task-spec random_search_demo
+openrepro agent-result validate random_search_demo
 openrepro evidence-package random_search_demo --zip
 openrepro bench-lite
 ```

@@ -427,6 +427,17 @@ remain blocked. Generated execution-plan files are excluded from
 evidence-package freshness fingerprints because they are downstream
 coordination artifacts.
 
+v1.59.0 adds `agent_result.py`. Agent result intake should import externally
+produced result events into `workspace/agent_results.jsonl` and the aggregate
+`workspace/agent_results.json`, then validate them against the generated result
+schema, current task specs, Evidence Graph node ids, artifact path safety, and
+forbidden command guardrails. Validation must write
+`workspace/agent_result_validation.json` and `workspace/AGENT_RESULT_REVIEW.md`.
+The derived aggregate and validation files are excluded from evidence-package
+freshness fingerprints; the append-only JSONL import log remains evidence. It
+must not execute agents, run experiments, close review decisions, add claim
+signoffs, or treat imported output as scientific proof.
+
 v1.26.0 adds `paper_lineage.py`. Paper lineage graphs should organize existing
 workflow evidence into claim, method, data, experiment, and metric nodes. They
 must not infer missing paper content, verify scientific correctness, run
