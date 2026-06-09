@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.54.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.55.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -19,6 +19,7 @@ OpenRepro-Agent v1.54.0 uses a small modular CLI architecture.
 - `api_usage.py`: mock/cached usage record and summary schema.
 - `provider.py`: provider interface, deterministic mock provider, opt-in OpenAI-compatible provider, and request-hash cache.
 - `data_profile.py`: registered data profiling and lightweight schema warnings for CSV, TSV, JSON, and JSONL.
+- `dataset_card.py`: dataset card generation and lightweight data quality gates over registered data.
 - `evidence_explorer.py`: static reviewer-facing evidence explorer for lineage, claims, data, runs, and artifact links.
 - `evidence_query.py`: searchable evidence query artifacts over explorer claims, lineage nodes, runs, data, and artifact links.
 - `candidate_review.py`: candidate listing and human review lifecycle.
@@ -67,6 +68,8 @@ sources/ + project_config.yaml
   → workspace/verified_candidates.json + VERIFIED_CANDIDATES.md
   → workspace/data_profile.json + DATA_PROFILE.md
   → workspace/data_expectations.json + DATA_EXPECTATION_RESULTS.md
+  → workspace/dataset_card.json + DATASET_CARD.md
+  → workspace/data_quality_gate.json + DATA_QUALITY_GATE.md
   → experiments/<experiment_id>/...
   → openrepro.lock.json + workspace/repro_lock_validation.json
   → outputs/<timestamp>_<project>_<experiment_id>/...

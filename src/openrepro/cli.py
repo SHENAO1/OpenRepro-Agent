@@ -36,6 +36,7 @@ from .ci_integration import ci_summary, init_ci_config, validate_ci_config
 from .collaboration_pack import generate_collaboration_pack
 from .config import configure_api_provider, provider_status
 from .data_expectations import init_data_expectations, run_data_expectations
+from .dataset_card import data_quality_gate_summary, dataset_card_summary, generate_dataset_card, run_data_quality_gate
 from .data_registry import register_data, validate_data_index
 from .data_profile import generate_data_profile
 from .dashboard import generate_dashboard
@@ -121,6 +122,10 @@ assets_app = typer.Typer(help="Plan and materialize safe asset builds.", no_args
 app.add_typer(assets_app, name="assets")
 data_expectations_app = typer.Typer(help="Initialize and run lightweight data expectations.", no_args_is_help=True)
 app.add_typer(data_expectations_app, name="data-expectations")
+dataset_card_app = typer.Typer(help="Generate dataset cards for registered project data.", no_args_is_help=True)
+app.add_typer(dataset_card_app, name="dataset-card")
+data_quality_app = typer.Typer(help="Run lightweight data quality gates.", no_args_is_help=True)
+app.add_typer(data_quality_app, name="data-quality")
 pipeline_app = typer.Typer(help="Export, plan, and validate declarative OpenRepro pipeline specs.", no_args_is_help=True)
 app.add_typer(pipeline_app, name="pipeline")
 experiments_app = typer.Typer(help="Track and compare experiment-level run evidence.", no_args_is_help=True)
@@ -1739,6 +1744,40 @@ def data_profile_cmd(
     _success("Data profile generated.")
 
 
+@dataset_card_app.command("generate")
+def dataset_card_generate_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    max_rows: int = typer.Option(5000, "--max-rows", help="Maximum rows sampled per data source."),
+) -> None:
+    """Generate a dataset card for registered data."""
+    project_dir = require_project(project_name)
+    card = generate_dataset_card(project_dir, max_rows=max_rows)
+    table = Table(title=f"Dataset Card: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "dataset_count", "profiled_dataset_count", "label_dataset_count", "split_dataset_count", "warning_count", "error_count"]:
+        table.add_row(key, str(card.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'dataset_card.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATASET_CARD.md'}")
+    if card["status"] == "needs_review":
+        raise typer.Exit(1)
+    _success("Dataset card generated.")
+
+
+@dataset_card_app.command("summary")
+def dataset_card_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing dataset card summary."""
+    project_dir = require_project(project_name)
+    summary = dataset_card_summary(project_dir)
+    table = Table(title=f"Dataset Card Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "dataset_count", "profiled_dataset_count", "warning_count", "error_count", "path", "markdown_path"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
+
+
 @data_expectations_app.command("init")
 def data_expectations_init_cmd(
     project_name: str = typer.Argument(..., help="Project directory."),
@@ -1778,6 +1817,47 @@ def data_expectations_run_cmd(
     if result["status"] == "failed":
         raise typer.Exit(1)
     _success("Data expectations passed.")
+
+
+@data_quality_app.command("run")
+def data_quality_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    max_rows: int = typer.Option(100000, "--max-rows", help="Maximum rows sampled or validated per data source."),
+    max_missing_ratio: float = typer.Option(0.5, "--max-missing-ratio", help="Fail when any sampled column exceeds this missingness ratio."),
+    max_duplicate_ratio: float = typer.Option(0.2, "--max-duplicate-ratio", help="Fail when sampled duplicate-row ratio exceeds this value."),
+) -> None:
+    """Run the lightweight data quality gate."""
+    project_dir = require_project(project_name)
+    result = run_data_quality_gate(
+        project_dir,
+        max_rows=max_rows,
+        max_missing_ratio=max_missing_ratio,
+        max_duplicate_ratio=max_duplicate_ratio,
+    )
+    table = Table(title=f"Data Quality Gate: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["status", "valid", "check_count", "passed_count", "warning_count", "failed_count", "top_failed_check"]:
+        table.add_row(key, str(result.get(key)))
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'data_quality_gate.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'DATA_QUALITY_GATE.md'}")
+    if not result["valid"]:
+        raise typer.Exit(1)
+    _success("Data quality gate passed.")
+
+
+@data_quality_app.command("summary")
+def data_quality_summary_cmd(project_name: str = typer.Argument(..., help="Project directory.")) -> None:
+    """Show the existing data quality gate summary."""
+    project_dir = require_project(project_name)
+    summary = data_quality_gate_summary(project_dir)
+    table = Table(title=f"Data Quality Summary: {project_name}")
+    table.add_column("Item", style="bold")
+    table.add_column("Value")
+    for key in ["present", "status", "valid", "check_count", "failed_count", "warning_count", "top_failed_check", "path", "markdown_path"]:
+        table.add_row(key, str(summary.get(key)))
+    console.print(table)
 
 
 @app.command("lock")

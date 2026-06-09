@@ -10,6 +10,7 @@ from .acceptance_criteria import acceptance_criteria_summary
 from .artifact_manager import sha256_file
 from .collaboration_pack import collaboration_pack_summary
 from .dashboard import dashboard_summary
+from .dataset_card import data_quality_gate_summary, dataset_card_summary
 from .evidence_fingerprint import evidence_package_status
 from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
@@ -61,6 +62,8 @@ def build_readiness_review(project_dir: Path) -> dict[str, Any]:
     gaps = gaps_summary(project_dir)
     preflight = protocol_preflight_summary(project_dir)
     decisions = review_decision_summary(project_dir)
+    dataset_card = dataset_card_summary(project_dir)
+    data_quality = data_quality_gate_summary(project_dir)
     checks = [
         _check(
             "project_profile_ready",
@@ -174,6 +177,8 @@ def build_readiness_review(project_dir: Path) -> dict[str, Any]:
             "evidence_package_status": evidence.get("status"),
             "freshness_status": freshness.get("status"),
             "dashboard_status": dashboard.get("status"),
+            "dataset_card_status": dataset_card.get("status"),
+            "data_quality_status": data_quality.get("status"),
         },
         "artifact_links": _artifact_links(project_dir),
         "policy": "Readiness reviews organize final human-review state only; they do not claim scientific reproduction success.",
@@ -219,6 +224,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
     paths = [
         project_dir / "workspace" / "PROJECT_PROFILE.md",
         project_dir / "workspace" / "ACCEPTANCE_CRITERIA.md",
+        project_dir / "workspace" / "DATASET_CARD.md",
+        project_dir / "workspace" / "DATA_QUALITY_GATE.md",
         project_dir / "reports" / "evidence_package.md",
         project_dir / "workspace" / "ARTIFACT_FRESHNESS.md",
         project_dir / "reports" / "dashboard" / "index.html",
@@ -291,6 +298,8 @@ def _render_markdown(review: dict[str, Any]) -> str:
 - evidence_package_status: {review['summary']['evidence_package_status']}
 - freshness_status: {review['summary']['freshness_status']}
 - dashboard_status: {review['summary']['dashboard_status']}
+- dataset_card_status: {review['summary']['dataset_card_status']}
+- data_quality_status: {review['summary']['data_quality_status']}
 
 ## Checks
 

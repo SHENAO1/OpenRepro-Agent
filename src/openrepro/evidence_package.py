@@ -20,6 +20,7 @@ from .claim_trace import generate_claim_trace, validate_claim_trace
 from .collaboration_pack import collaboration_pack_summary
 from .dashboard import dashboard_summary
 from .data_registry import data_index_summary
+from .dataset_card import data_quality_gate_summary, dataset_card_summary
 from .evidence_fingerprint import evidence_package_status, evidence_source_fingerprint
 from .experiment_spec import inspect_experiment_specs
 from .freshness import artifact_freshness_summary
@@ -63,6 +64,8 @@ WORKSPACE_ARTIFACTS = [
     "data_profile.json",
     "data_expectations.json",
     "data_expectation_results.json",
+    "dataset_card.json",
+    "data_quality_gate.json",
     "quality_gate_summary.json",
     "claim_trace.json",
     "claim_trace_validation.json",
@@ -390,6 +393,8 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
     experiments = _experiment_summaries(project_dir)
     spec_summary = inspect_experiment_specs(project_dir)
     data_summary = data_index_summary(project_dir)
+    dataset_card = dataset_card_summary(project_dir)
+    data_quality = data_quality_gate_summary(project_dir)
     runs = _run_summaries(project_dir)
     quality_gates = quality_gate_summaries(project_dir)
     source_fingerprint = evidence_source_fingerprint(project_dir)
@@ -412,6 +417,8 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
         "experiments": experiments,
         "experiment_specs": spec_summary,
         "data_registry": data_summary,
+        "dataset_card": dataset_card,
+        "data_quality_gate": data_quality,
         "quality_gates": quality_gates,
         "claim_trace": {
             "schema_version": claim_trace.get("schema_version"),
@@ -732,6 +739,14 @@ def generate_evidence_package(project_dir: Path, export_zip: bool = False) -> di
                 "present": (project_dir / "workspace" / "ARTIFACT_FRESHNESS.md").exists(),
                 "path": str(project_dir / "workspace" / "ARTIFACT_FRESHNESS.md"),
             },
+            "dataset_card": {
+                "present": (project_dir / "workspace" / "DATASET_CARD.md").exists(),
+                "path": str(project_dir / "workspace" / "DATASET_CARD.md"),
+            },
+            "data_quality_gate": {
+                "present": (project_dir / "workspace" / "DATA_QUALITY_GATE.md").exists(),
+                "path": str(project_dir / "workspace" / "DATA_QUALITY_GATE.md"),
+            },
             "dashboard": {
                 "present": (project_dir / "reports" / "dashboard" / "index.html").exists(),
                 "path": str(project_dir / "reports" / "dashboard" / "index.html"),
@@ -837,6 +852,10 @@ def _render_markdown(package: dict[str, Any]) -> str:
 - experiment_spec_status_counts: {package['experiment_specs']['status_counts']}
 - data_registered_count: {package['data_registry']['registered_count']}
 - data_status_counts: {package['data_registry']['status_counts']}
+- dataset_card_status: {package['dataset_card']['status']}
+- dataset_card_dataset_count: {package['dataset_card']['dataset_count']}
+- data_quality_gate_status: {package['data_quality_gate']['status']}
+- data_quality_gate_failed_count: {package['data_quality_gate']['failed_count']}
 - quality_gate_passed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'passed')}
 - quality_gate_failed_count: {sum(1 for gate in package['quality_gates'] if gate.get('status') == 'failed')}
 - failed_quality_gate_check_names: {sorted({name for gate in package['quality_gates'] for name in gate.get('failed_check_names', [])})}

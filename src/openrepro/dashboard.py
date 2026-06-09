@@ -10,6 +10,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from .acceptance_criteria import acceptance_criteria_summary
 from .artifact_manager import sha256_file
 from .collaboration_pack import collaboration_pack_summary
+from .dataset_card import data_quality_gate_summary, dataset_card_summary
 from .evidence_fingerprint import evidence_package_status
 from .freshness import artifact_freshness_summary
 from .gaps import gaps_summary
@@ -40,6 +41,8 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
     decisions = review_decision_summary(project_dir)
     project_profile = project_profile_summary(project_dir)
     acceptance = acceptance_criteria_summary(project_dir)
+    dataset_card = dataset_card_summary(project_dir)
+    data_quality = data_quality_gate_summary(project_dir)
     status, top_command = _dashboard_status(project_dir, evidence, freshness, refresh, collaboration)
     dashboard = {
         "schema_version": DASHBOARD_SCHEMA_VERSION,
@@ -55,6 +58,9 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
             "gaps_open_count": gaps.get("open_count"),
             "review_decision_status": decisions.get("status"),
             "unresolved_review_decisions": decisions.get("unresolved_item_count"),
+            "dataset_card_status": dataset_card.get("status"),
+            "data_quality_status": data_quality.get("status"),
+            "data_quality_failed_count": data_quality.get("failed_count"),
         },
         "freshness": freshness,
         "refresh_run": refresh,
@@ -64,6 +70,8 @@ def generate_dashboard(project_dir: Path, export_zip: bool = False) -> dict[str,
         "review_site": review_site,
         "project_profile": project_profile,
         "acceptance_criteria": acceptance,
+        "dataset_card": dataset_card,
+        "data_quality_gate": data_quality,
         "evidence_package": evidence,
         "artifact_links": _artifact_links(project_dir),
         "policy": "Dashboards organize workflow state for project handoff; they do not prove scientific reproduction.",
@@ -99,6 +107,8 @@ def dashboard_summary(project_dir: Path) -> dict[str, Any]:
         "status": data.get("status", "present" if index_path.exists() else "missing"),
         "top_command": data.get("top_command"),
         "readiness_score": (data.get("readiness", {}) or {}).get("score") if isinstance(data.get("readiness"), dict) else None,
+        "data_quality_status": (data.get("readiness", {}) or {}).get("data_quality_status") if isinstance(data.get("readiness"), dict) else None,
+        "data_quality_failed_count": (data.get("readiness", {}) or {}).get("data_quality_failed_count") if isinstance(data.get("readiness"), dict) else 0,
         "stale_node_count": (data.get("freshness", {}) or {}).get("stale_node_count") if isinstance(data.get("freshness"), dict) else 0,
         "sha256": sha256_file(index_path) if index_path.exists() else None,
     }
@@ -130,6 +140,8 @@ def _artifact_links(project_dir: Path) -> list[dict[str, Any]]:
         project_dir / "workspace" / "REPRO_LOCK_VALIDATION.md",
         project_dir / "workspace" / "DATA_PROFILE.md",
         project_dir / "workspace" / "DATA_EXPECTATION_RESULTS.md",
+        project_dir / "workspace" / "DATASET_CARD.md",
+        project_dir / "workspace" / "DATA_QUALITY_GATE.md",
         project_dir / "workspace" / "RUN_INDEX.md",
         project_dir / "reports" / "run_explorer" / "index.html",
         project_dir / "workspace" / "EXPERIMENT_TRACKING.md",
@@ -237,6 +249,8 @@ def _render_html(dashboard: dict[str, Any]) -> str:
     collaboration = dashboard["collaboration_pack"]
     project_profile = dashboard["project_profile"]
     acceptance = dashboard["acceptance_criteria"]
+    dataset_card = dashboard["dataset_card"]
+    data_quality = dashboard["data_quality_gate"]
     timeline = dashboard["timeline"]
     reviewer_packet = dashboard["reviewer_packet"]
     artifact_rows = "\n".join(
@@ -299,6 +313,10 @@ def _render_html(dashboard: dict[str, Any]) -> str:
         <div class="metric"><span>Target claims</span><strong>{_cell(project_profile.get('target_claim_count'))}</strong></div>
         <div class="metric"><span>Acceptance</span><strong>{_badge(acceptance.get('status'))}</strong></div>
         <div class="metric"><span>Criteria needs work</span><strong>{_cell(acceptance.get('needs_work_count'))}</strong></div>
+        <div class="metric"><span>Dataset card</span><strong>{_badge(dataset_card.get('status'))}</strong></div>
+        <div class="metric"><span>Datasets</span><strong>{_cell(dataset_card.get('dataset_count'))}</strong></div>
+        <div class="metric"><span>Data quality</span><strong>{_badge(data_quality.get('status'))}</strong></div>
+        <div class="metric"><span>Data failures</span><strong>{_cell(data_quality.get('failed_count'))}</strong></div>
       </div>
     </section>
     <section>

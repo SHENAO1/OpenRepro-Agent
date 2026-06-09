@@ -855,6 +855,16 @@ Released in v1.53.0 with a small reproducible benchmark pack aligned with high-s
 
 Released in v1.54.0 with safer executable integration handoff while preserving dependency-free defaults.
 
+## v1.55.0 — Dataset cards and data quality gates
+
+- [x] Add `openrepro dataset-card generate/summary`.
+- [x] Add `openrepro data-quality run/summary`.
+- [x] Summarize registered data hashes, formats, row/column profiles, missingness, duplicate samples, label-like columns, and split-like columns.
+- [x] Write `workspace/dataset_card.json`, `workspace/DATASET_CARD.md`, `workspace/data_quality_gate.json`, and `workspace/DATA_QUALITY_GATE.md`.
+- [x] Surface dataset card and data quality summaries in evidence packages, dashboards, and readiness reviews without treating missing quality artifacts as a new legacy-project blocker.
+
+Released in v1.55.0 with DVC/Great-Expectations-inspired data documentation and structural quality gates.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.

@@ -11,7 +11,7 @@ def test_cli_version():
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "OpenRepro-Agent v1.54.0" in result.output
+    assert "OpenRepro-Agent v1.55.0" in result.output
 
 
 def test_cli_full_workflow(tmp_path: Path, monkeypatch):
@@ -66,6 +66,8 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
         ["approve-candidates", "boc_demo", "--all", "--reviewer", "cli-test"],
         ["register-data", "boc_demo", "--path", str(data_file), "--role", "dataset", "--note", "CLI fixture data"],
         ["validate-data", "boc_demo"],
+        ["dataset-card", "generate", "boc_demo"],
+        ["data-quality", "run", "boc_demo"],
         ["scaffold-experiment", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-inputs", "boc_demo", "--experiment-id", "cli_exp"],
         ["validate-experiment-spec", "boc_demo", "--experiment-id", "cli_exp"],
@@ -167,6 +169,10 @@ def test_cli_full_workflow(tmp_path: Path, monkeypatch):
     assert (project / "workspace" / "experiment_spec_validation.json").exists()
     assert (project / "workspace" / "DATA_INDEX.md").exists()
     assert (project / "workspace" / "DATA_VALIDATION.md").exists()
+    assert (project / "workspace" / "dataset_card.json").exists()
+    assert (project / "workspace" / "DATASET_CARD.md").exists()
+    assert (project / "workspace" / "data_quality_gate.json").exists()
+    assert (project / "workspace" / "DATA_QUALITY_GATE.md").exists()
     assert (project / "workspace" / "quality_gate_summary.json").exists()
     assert (project / "workspace" / "QUALITY_GATE_SUMMARY.md").exists()
     assert (project / "workspace" / "claim_trace.json").exists()

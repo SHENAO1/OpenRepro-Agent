@@ -2,16 +2,16 @@
 
 OpenRepro-Agent is a Python CLI workflow for paper reproduction projects. It initializes a reproducible workspace, ingests Markdown/txt/PDF sources, extracts candidate formulas and parameters, plans experiments, scaffolds human-gated experiment code, runs lightweight demos and parameter sweeps, validates generated artifacts, inspects project state, runs OpenRepro-Bench Lite, workflow-compliance benchmarks and suites, indexes benchmark evidence, classifies failures, tracks cache-aware provider usage, and produces multi-agent handoff files and evidence packages.
 
-Current version: **v1.54.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
+Current version: **v1.55.0**. This is still an alpha engineering scaffold, not a finished autonomous paper-reproduction system.
 
 ## Why this project exists
 
 Research-paper reproduction often fails because notes, assumptions, formulas, experiment code, logs, and reports are scattered across folders or chat histories. OpenRepro-Agent focuses on making the project loop runnable, inspectable, and auditable before adding more ambitious automation.
 
-The v1.54.0 workflow is:
+The v1.55.0 workflow is:
 
 ```text
-start → init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → data-expectations init/run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → integrations export/run/summary → promote plan/record/summary → github pr-summary/summary → security init/audit/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → bench-lite → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
+start → init → configure-provider → ingest → analyze → plan → list-templates → list-candidates → review-candidates → approve-candidates → register-data → validate-data → data-profile → dataset-card generate → data-expectations init/run → data-quality run → lock → validate-lock → scaffold-experiment → set-input → validate-inputs → validate-experiment-spec → run-experiment → quality-gate → rerun-experiment → compare-experiments → experiments track/list/show/compare/leaderboard → eval define/run → plugins register/list/validate/summary → integrations export/run/summary → promote plan/record/summary → github pr-summary/summary → security init/audit/summary → run-demo → validate --all → inspect → diagnose → repair-plan → repair --dry-run → run-sweep → quality-gate → compare-runs → runs index/list/show/compare → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → quality-gate --all → lineage → trace-claims → validate-claims → scorecard → gaps → todo → checkpoints → advance --dry-run → review-board → review-decision → protocol → protocol-coverage → protocol-plan → protocol-preflight → evidence-binder → validate-evidence-binder → claim-signoff → validate-claim-signoffs → claim-evidence-report → validate-claim-evidence-report → reviewer-packet → timeline → profile → acceptance → doctor → bench-lite → benchmark → benchmark-suite → benchmark-index → report → handoff → evidence-package → review-site → evidence-explorer → evidence-query → collaboration-pack → refresh → freshness → dashboard → serve build/summary → readiness-review → validate-readiness-review → review-action-plan → delivery-bundle → multi-agent-plan → validate-multi-agent-plan → agent-board → agent-dispatch → agent-exec-plan --dry-run → agent run → agent-adapter → validate-agent-adapter → ci init/validate/summary → paper-lineage → workflow status/explain/preset/run/resume/execute → pipeline export/plan/validate → catalog build/list/show/graph → assets plan/materialize/summary → cache add/list/verify/gc → cache remote-add/remote-list/push/pull/restore → status
 ```
 
 ## What v0.4.0 supports
@@ -730,6 +730,14 @@ start → init → configure-provider → ingest → analyze → plan → list-t
 - Keep execution dry-run by default; external tools are invoked only with `--confirm`.
 - Record missing optional dependencies as skipped instead of claiming integration success.
 
+## What v1.55.0 adds
+
+- Add `openrepro dataset-card generate/summary`.
+- Add `openrepro data-quality run/summary`.
+- Write `workspace/dataset_card.json`, `workspace/DATASET_CARD.md`, `workspace/data_quality_gate.json`, and `workspace/DATA_QUALITY_GATE.md`.
+- Summarize registered data hashes, formats, rows, columns, missingness, duplicate samples, label-like columns, and split-like columns.
+- Surface dataset card and data quality gate summaries in evidence packages, dashboards, and readiness reviews.
+
 ## Current limitations
 
 - It does not fully read or understand papers.
@@ -802,8 +810,10 @@ openrepro approve-candidates boc_demo --all --reviewer human
 openrepro register-data boc_demo --path path/to/dataset.csv --role dataset
 openrepro validate-data boc_demo
 openrepro data-profile boc_demo
+openrepro dataset-card generate boc_demo
 openrepro data-expectations init boc_demo
 openrepro data-expectations run boc_demo
+openrepro data-quality run boc_demo
 openrepro scaffold-experiment boc_demo --experiment-id boc_candidate_exp --template boc-like
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name noise_std --value 0.05
 openrepro set-input boc_demo --experiment-id boc_candidate_exp --name code_length --value 128
@@ -1126,6 +1136,23 @@ null columns, constant columns, duplicate delimited headers, unsupported formats
 and sampled profiles. This is a structure check only; it does not validate data
 semantics, labels, or scientific quality.
 
+### `openrepro dataset-card generate <project_name> [--max-rows 5000]`
+
+Generates a lightweight dataset card and writes:
+
+```text
+workspace/dataset_card.json
+workspace/DATASET_CARD.md
+```
+
+The card summarizes registered data hashes, formats, rows, columns, missingness,
+sampled duplicates, label-like columns, split-like columns, and profile warnings.
+It is documentation evidence only; it does not verify dataset semantics.
+
+### `openrepro dataset-card summary <project_name>`
+
+Shows the existing dataset card status without mutating project files.
+
 ### `openrepro data-expectations init <project_name> [--overwrite] [--max-rows 5000]`
 
 Initializes a lightweight expectation suite from the current data profile and
@@ -1151,6 +1178,23 @@ workspace/DATA_EXPECTATION_RESULTS.md
 
 Expectation results are structural data contract evidence only. They do not
 verify labels, scientific semantics, or dataset suitability for a paper claim.
+
+### `openrepro data-quality run <project_name> [--max-rows 100000]`
+
+Runs the lightweight data quality gate and writes:
+
+```text
+workspace/data_quality_gate.json
+workspace/DATA_QUALITY_GATE.md
+```
+
+The gate checks registered-file hash validity, profile generation, expectation
+results, non-empty profiled datasets, sampled missingness, and sampled duplicate
+row ratios. Label-like and split-like columns are advisory warnings by default.
+
+### `openrepro data-quality summary <project_name>`
+
+Shows the existing data quality gate status without mutating project files.
 
 ### `openrepro lock <project_name>`
 
@@ -2804,12 +2848,13 @@ The `benchmarks/` directory contains a task schema, a sample task, a sample suit
 - v1.52.0: declaration-only MLflow, Aim, DVC, and Hydra integration exports.
 - v1.53.0: built-in OpenRepro-Bench Lite suite and summary artifacts.
 - v1.54.0: supervised integration execution plans and optional confirmed adapters.
+- v1.55.0: dataset cards and lightweight data quality gates.
 
 See `ROADMAP.md` for details.
 
 ## Disclaimer
 
-OpenRepro-Agent v1.54.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
+OpenRepro-Agent v1.55.0 is an engineering scaffold for reproducibility workflows. It should not be used to claim that a paper has been reproduced unless the user has independently verified formulas, parameters, code, data, and outputs.
 
 ## No fabricated results policy
 
