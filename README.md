@@ -2,33 +2,15 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-OpenRepro-Agent is a Python CLI for building auditable paper-reproduction workspaces. It helps you ingest sources, extract candidate evidence, scaffold guarded experiments, run toy or verified workflows, validate artifacts, and package results for human or agent handoff.
+OpenRepro-Agent is a Python CLI for building auditable paper-reproduction workspaces. It keeps notes, evidence, experiments, outputs, reports, and handoff files in one project layout so humans and supervised agents can continue work without losing provenance.
 
 Current version: **v1.58.0**. This is an alpha engineering scaffold, not an autonomous paper-reproduction system.
-
-## Why
-
-Paper reproduction often fails because notes, formulas, assumptions, datasets, code, logs, and review decisions are scattered across folders and chat histories. OpenRepro-Agent keeps those materials in one reproducible project layout and marks what is verified, missing, stale, or still human-reviewed.
-
-## Highlights
-
-- Reproducible project layout for paper notes, configs, data, experiments, outputs, reports, and handoff files.
-- Markdown, text, and PDF ingestion with source provenance.
-- Rule-based formula and parameter candidate extraction.
-- Human-gated candidate review before experiment scaffolding.
-- Experiment specs, input validation, run manifests, quality gates, and run comparisons.
-- Dataset cards, lightweight data quality gates, lineage, claim traceability, unified evidence graphs, readiness reviews, and evidence packages.
-- Runner-neutral supervised agent task specs with explicit result schemas and guardrails.
-- Static review surfaces including dashboard, evidence explorer, and reproduction cockpit.
-- Mock provider by default, with explicit opt-in OpenAI-compatible API support.
-- Built-in starter workflow and OpenRepro-Bench Lite for repeatable workflow checks.
 
 ## Install
 
 ```bash
 git clone https://github.com/SHENAO1/OpenRepro-Agent.git
 cd OpenRepro-Agent
-
 python -m venv .venv
 ```
 
@@ -50,104 +32,47 @@ Python 3.10+ is required.
 
 ## Quick Start
 
-Run the packaged random-search toy paper workflow:
+Run the packaged demo workflow:
 
 ```bash
 openrepro start random_search_demo
-```
-
-This creates a project, ingests packaged notes, analyzes candidate formulas and parameters, scaffolds a guarded experiment, runs it, evaluates the quality gate, and writes report/handoff artifacts.
-
-Useful next commands:
-
-```bash
 openrepro status random_search_demo
 openrepro cockpit build random_search_demo --zip
+```
+
+Useful review and handoff commands:
+
+```bash
 openrepro evidence-graph random_search_demo
 openrepro agent-task-spec random_search_demo
 openrepro evidence-package random_search_demo --zip
 openrepro bench-lite
 ```
 
-The output is workflow evidence and toy execution evidence only. It is not a claim that a paper has been reproduced.
+The demo produces workflow evidence and toy execution evidence. It does not prove that a paper has been reproduced.
 
-## API Configuration
-
-OpenRepro uses a deterministic mock provider by default. Real API calls are disabled unless you explicitly enable them and provide a key through an environment variable.
-
-Mock mode:
-
-```bash
-openrepro configure-provider random_search_demo --provider mock --disable-real-api
-```
-
-OpenAI-compatible API:
-
-```bash
-openrepro configure-provider random_search_demo \
-  --provider openai \
-  --model gpt-4.1-mini \
-  --enable-real-api \
-  --api-key-env OPENAI_API_KEY \
-  --endpoint https://api.openai.com/v1/chat/completions
-```
-
-Set the key before running commands that make real provider calls:
-
-```bash
-export OPENAI_API_KEY="<your-api-key>"
-```
-
-Windows PowerShell:
-
-```powershell
-$env:OPENAI_API_KEY = "<your-api-key>"
-```
-
-For a third-party OpenAI-compatible Base URL, pass the full chat completions endpoint. If the provider gives `https://example.com/v1`, configure `https://example.com/v1/chat/completions`.
-
-Token Plan example:
-
-```powershell
-$env:OPENREPRO_API_KEY = "<your-token-plan-api-key>"
-openrepro configure-provider random_search_demo `
-  --provider openai `
-  --model mimo-v2.5 `
-  --enable-real-api `
-  --api-key-env OPENREPRO_API_KEY `
-  --endpoint https://token-plan-cn.xiaomimimo.com/v1/chat/completions
-```
-
-OpenRepro stores the provider name, model name, endpoint, cache policy, redaction policy, and API-key environment variable name in `project_config.yaml`. It does **not** store API key values.
-
-## Core Workflow
-
-For a manual project, the usual path is:
+## Manual Workflow
 
 ```bash
 openrepro init my_repro
 openrepro ingest my_repro --source path/to/paper_or_notes.pdf
 openrepro analyze my_repro
 openrepro plan my_repro
-openrepro list-candidates my_repro
 openrepro approve-candidates my_repro --all --reviewer human
 openrepro scaffold-experiment my_repro --experiment-id baseline --template basic
-openrepro validate-experiment-spec my_repro --experiment-id baseline
 openrepro run-experiment my_repro --experiment-id baseline --confirm
 openrepro quality-gate my_repro --all
 openrepro evidence-package my_repro --zip
 ```
 
-Use `openrepro --help` and `openrepro <command> --help` for the full command reference.
+Use `openrepro --help` and `openrepro <command> --help` for the full command list.
 
-## Important Outputs
+## Notes
 
-- `workspace/`: analysis, candidate review, data quality, lineage, readiness, and workflow status artifacts.
-- `experiments/`: guarded experiment scaffolds and experiment specs.
-- `outputs/`: timestamped run outputs, metrics, logs, manifests, and quality gates.
-- `reports/`: report, dashboard, evidence package, review site, and cockpit artifacts.
-- `handoff/`: files for human maintainers and coding agents.
-- `benchmarks/`: workflow-compliance benchmark tasks and indexes.
+- Real model API calls are disabled by default. OpenRepro uses a deterministic mock provider unless a real provider is explicitly configured.
+- API keys are read from environment variables and are not stored in project files.
+- Human review is still required for formulas, parameters, dataset meaning, implementation choices, and final reproduction claims.
+- Do not fabricate benchmark results, usage numbers, cost estimates, accuracy gains, or reproduction success claims.
 
 ## Documentation
 
@@ -156,14 +81,6 @@ Use `openrepro --help` and `openrepro <command> --help` for the full command ref
 - [Developer guide](docs/developer_guide.md)
 - [API usage policy](API_USAGE.md)
 - [Contributing](CONTRIBUTING.md)
-
-## Current Limits
-
-OpenRepro-Agent does not fully read or understand papers, verify mathematical formulas automatically, verify dataset semantics automatically, generate complete simulation code for arbitrary papers, or claim scientific reproduction success. Human review is required for formulas, parameters, data semantics, implementation choices, and final reproduction claims.
-
-## No Fabricated Results Policy
-
-The project must not fabricate benchmark results, user counts, token usage, cost estimates, accuracy improvements, efficiency improvements, or claims that a lightweight demo is a complete paper reproduction.
 
 ## License
 
