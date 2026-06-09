@@ -61,7 +61,7 @@ from .github_pr_summary import generate_github_pr_summary, github_pr_summary_sta
 from .golden_path import run_golden_path
 from .handoff_generator import generate_handoff
 from .inspector import inspect_project
-from .integrations import export_integrations, integrations_summary
+from .integrations import export_integrations, integrations_summary, run_integration_execution
 from .lineage import generate_run_lineage
 from .local_ui import generate_local_ui, local_ui_summary
 from .multi_agent_plan import generate_multi_agent_plan
@@ -973,9 +973,46 @@ def integrations_summary_cmd(project_name: str = typer.Argument(..., help="Proje
     table = Table(title=f"Integration Summary: {project_name}")
     table.add_column("Item", style="bold")
     table.add_column("Value")
-    for key in ["present", "status", "target_count", "targets", "path", "markdown_path"]:
+    for key in ["present", "status", "target_count", "targets", "path", "markdown_path", "execution_present", "execution_status", "execution_path"]:
         table.add_row(key, str(summary.get(key)))
     console.print(table)
+
+
+@integrations_app.command("run")
+def integrations_run_cmd(
+    project_name: str = typer.Argument(..., help="Project directory."),
+    target: list[str] | None = typer.Option(None, "--target", help="Integration target. Repeat for mlflow, aim, dvc, or hydra."),
+    confirm: bool = typer.Option(False, "--confirm", help="Actually run adapter commands when optional dependencies are available."),
+    timeout_seconds: int = typer.Option(120, "--timeout-seconds", help="Maximum seconds for each confirmed adapter command."),
+) -> None:
+    """Plan and optionally execute supervised integration adapter commands."""
+    project_dir = require_project(project_name)
+    result = run_integration_execution(project_dir, targets=target, confirm=confirm, timeout_seconds=timeout_seconds)
+    table = Table(title=f"Integration Execution: {project_name}")
+    table.add_column("Target", style="bold")
+    table.add_column("Status")
+    table.add_column("Dependency")
+    table.add_column("Command")
+    for item in result["executions"]:
+        dependency = item.get("dependency") or {}
+        table.add_row(
+            str(item.get("target")),
+            str(item.get("status")),
+            str(dependency.get("name")),
+            " ".join(str(part) for part in item.get("command", [])),
+        )
+    console.print(table)
+    console.print(f"JSON: {project_dir / 'workspace' / 'integration_execution.json'}")
+    console.print(f"Markdown: {project_dir / 'workspace' / 'INTEGRATION_EXECUTION.md'}")
+    if result["status"] == "needs_review":
+        _warn("Integration execution completed with failures.")
+        raise typer.Exit(1)
+    if result["status"] == "planned":
+        _success("Integration execution plan written.")
+    elif result["status"] == "skipped_missing_dependency":
+        _warn("Integration execution skipped because optional dependencies are missing.")
+    else:
+        _success("Integration execution completed.")
 
 
 @app.command("trace-claims")

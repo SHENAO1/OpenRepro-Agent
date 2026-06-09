@@ -1,6 +1,6 @@
 # Architecture
 
-OpenRepro-Agent v1.53.0 uses a small modular CLI architecture.
+OpenRepro-Agent v1.54.0 uses a small modular CLI architecture.
 
 ## Modules
 
@@ -45,7 +45,7 @@ OpenRepro-Agent v1.53.0 uses a small modular CLI architecture.
 - `github_pr_summary.py`: local GitHub PR comment summary generation from project evidence and local git metadata.
 - `security_policy.py`: local security policy initialization and static audit checks for likely secrets and workflow guardrails.
 - `golden_path.py`: one-command starter workflow over the packaged random-search toy paper example.
-- `integrations.py`: declaration-only MLflow, Aim, DVC, and Hydra adapter artifact export.
+- `integrations.py`: MLflow, Aim, DVC, and Hydra adapter exports plus supervised execution plans.
 - `workflow_registry.py`: registered workflow DAG metadata, state generation, step explanation, and safe derived-step execution.
 - `workflow_preset.py`: goal-oriented workflow preset plans over the registered DAG.
 - `workflow_executor.py`: durable workflow execution sessions with events, logs, retries, and output hashes.
@@ -87,6 +87,7 @@ sources/ + project_config.yaml
   → workspace/security_policy.json + security_audit.json
   → workspace/golden_path.json + GOLDEN_PATH.md
   → integrations/* + workspace/integrations.json + INTEGRATIONS.md
+  → workspace/integration_execution.json + INTEGRATION_EXECUTION.md
   → reports/evidence_explorer/index.html
   → workspace/evidence_query.json + EVIDENCE_QUERY.md
   → reports/local_ui/index.html + workspace/local_ui_summary.json

@@ -845,6 +845,16 @@ Released in v1.52.0 with lightweight interoperability artifacts for common exper
 
 Released in v1.53.0 with a small reproducible benchmark pack aligned with high-star project practices around public suites, repeatable runs, and summary artifacts.
 
+## v1.54.0 — Supervised integration execution plans
+
+- [x] Add `openrepro integrations run`.
+- [x] Generate supervised MLflow, Aim, and Hydra adapter scripts plus DVC dependency preflight plans.
+- [x] Keep execution dry-run by default and require `--confirm` before invoking optional external tools.
+- [x] Write `workspace/integration_execution.json`, `workspace/INTEGRATION_EXECUTION.md`, and per-target execution plans.
+- [x] Record missing optional dependencies as skipped instead of claiming integration success.
+
+Released in v1.54.0 with safer executable integration handoff while preserving dependency-free defaults.
+
 ## Long-term ideas
 
 - Paper-to-code workflows with human approval gates.
